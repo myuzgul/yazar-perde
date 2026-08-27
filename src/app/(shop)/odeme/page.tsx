@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { useCart } from '@/lib/cart-context';
@@ -49,12 +49,28 @@ export default function CheckoutPage() {
   // Ödeme Yöntemi
   const [paymentMethod, setPaymentMethod] = useState<'CREDIT_CARD' | 'BANK_TRANSFER' | 'CASH_ON_DELIVERY'>('CREDIT_CARD');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const freeShippingThreshold = 1500;
   const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 75;
   const codFee = paymentMethod === 'CASH_ON_DELIVERY' ? 35 : 0;
   const grandTotal = subtotal + shippingFee + codFee;
+
+  // Sipariş başarıyla oluşturulduğunda veya gönderilirken yönlendirme ekranı göster (Sepetiniz Boş çıkmasını engeller)
+  if (isSubmitting || isSuccess) {
+    return (
+      <main className="max-w-7xl mx-auto px-4 py-16 text-center min-h-[60vh] flex items-center justify-center">
+        <div className="max-w-md w-full border border-slate-200 p-8 rounded-sm bg-white shadow-sm space-y-4 animate-in fade-in">
+          <div className="w-10 h-10 border-3 border-[#1B84F8] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div>
+            <h1 className="text-base font-bold text-slate-900">Siparişiniz Hazırlanıyor...</h1>
+            <p className="text-xs text-slate-500 mt-1">Lütfen bekleyiniz, sipariş onay sayfasına yönlendiriliyorsunuz.</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -111,6 +127,7 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (data.success && data.data?.redirectUrl) {
+        setIsSuccess(true);
         clearCart();
         router.push(data.data.redirectUrl);
       } else {
