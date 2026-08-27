@@ -1,9 +1,9 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useCart } from '@/lib/cart-context';
 import { calculateCurtainPrice, CalculationResult } from '@/modules/pricing-engine';
-import { DEFAULT_SETTINGS } from '@/lib/settings';
+import { DEFAULT_SETTINGS } from '@/lib/settings-constants';
 import { Star, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import ProductGallery from './detail/ProductGallery';
