@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { hashPassword, createSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth';
 import { cookies } from 'next/headers';
@@ -39,7 +39,6 @@ export async function POST(req: NextRequest) {
         phone: phone ? phone.trim() : null,
         passwordHash: hashedPassword,
         role: 'CUSTOMER',
-        isActive: true,
       },
     });
 

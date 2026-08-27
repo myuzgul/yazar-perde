@@ -56,7 +56,6 @@ export async function POST(req: NextRequest) {
               phone: phone ? phone.trim() : null,
               passwordHash,
               role: 'CUSTOMER',
-              isActive: true,
             },
           });
           finalUserId = newUser.id;

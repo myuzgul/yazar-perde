@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPassword, createSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth';
 import { cookies } from 'next/headers';
@@ -33,13 +33,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'E-posta veya şifre hatalı.' },
         { status: 401 }
-      );
-    }
-
-    if (!user.isActive) {
-      return NextResponse.json(
-        { success: false, message: 'Hesabınız pasife alınmıştır.' },
-        { status: 403 }
       );
     }
 
