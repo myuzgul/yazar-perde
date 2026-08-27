@@ -29,7 +29,8 @@ const CATEGORIES = [
   { name: 'Plise Perdeler (Cam Balkon)', slug: 'plise-perdeler' },
   { name: 'Fon Perdeler', slug: 'fon-perdeler' },
   { name: 'Ahşap Jaluziler', slug: 'ahsap-jaluziler' },
-  { name: 'İp & Rustikler', slug: 'ip-ve-rustik-perdeler' },
+  { name: 'İp Perdeler', slug: 'ip-perdeler' },
+  { name: 'Rustik Perdeler', slug: 'rustikler' },
 ];
 
 export default function Header({ cartCount = 0, onOpenCart, onOpenAuth }: HeaderProps) {

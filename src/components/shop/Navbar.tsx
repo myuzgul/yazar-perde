@@ -11,14 +11,15 @@ export const DEFAULT_CATEGORIES = [
   { name: 'PLİSE PERDELER (CAM BALKON)', slug: 'plise-perdeler' },
   { name: 'FON PERDELER', slug: 'fon-perdeler' },
   { name: 'AHŞAP JALUZİ', slug: 'ahsap-jaluziler' },
-  { name: 'İP & RUSTİK', slug: 'ip-ve-rustik-perdeler' },
+  { name: 'İP PERDELER', slug: 'ip-perdeler' },
+  { name: 'RUSTİK PERDELER', slug: 'rustikler' },
   { name: 'ÖLÇÜ REHBERİ', slug: 'perde-olcusu-nasil-alinir', isGuide: true },
 ];
 
 export default function Navbar() {
   return (
     <nav className="bg-white border-b border-slate-200 overflow-x-auto scrollbar-none hidden md:block">
-      <div className="max-w-7xl mx-auto px-4 flex items-center gap-6 whitespace-nowrap">
+      <div className="max-w-7xl mx-auto px-4 flex items-center gap-5 whitespace-nowrap">
         {DEFAULT_CATEGORIES.map((item) => (
           <Link
             key={item.slug}
