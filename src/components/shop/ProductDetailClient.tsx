@@ -219,6 +219,7 @@ export default function ProductDetailClient({ product, similarProducts }: Produc
 
       {/* ALT SEKMELER */}
       <ProductTabs
+        productId={product.id}
         descriptionHtml={product.descriptionHtml}
         mountingVideoUrl={product.mountingVideoUrl}
         mountingGuideHtml={product.mountingGuideHtml}

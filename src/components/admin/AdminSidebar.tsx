@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -16,7 +16,8 @@ import {
   Award, 
   Tag, 
   Sparkles,
-  FileText
+  FileText,
+  MessageSquare
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -36,7 +37,7 @@ export default function AdminSidebar() {
     { label: 'Toplu Fiyat Güncelle', href: '/panel/urunler/toplu-guncelle', icon: Sparkles },
     { label: 'Kategoriler', href: '/panel/kategoriler', icon: FolderTree },
     { label: 'Markalar', href: '/panel/markalar', icon: Award },
-    { label: 'Ürün Etiketleri', href: '/panel/etiketler', icon: Tag },
+    { label: 'Müşteri Yorumları', href: '/panel/yorumlar', icon: MessageSquare },
     { label: 'Perde Katsayıları', href: '/panel/katsayilar', icon: Sliders },
     { label: 'Müşteriler & Üyeler', href: '/panel/uyeler', icon: Users },
     { label: 'SMS & E-Posta Şablonları', href: '/panel/bildirimler', icon: Bell },

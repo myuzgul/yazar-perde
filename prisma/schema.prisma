@@ -129,6 +129,7 @@ model Product {
   updatedAt     DateTime      @updatedAt
   images        ProductImage[]
   orderItems    OrderItem[]
+  reviews       ProductReview[]
 
   @@map("products")
 }
@@ -288,4 +289,19 @@ model StaticPage {
   updatedAt     DateTime    @updatedAt
 
   @@map("static_pages")
+}
+
+model ProductReview {
+  id            String      @id @default(cuid())
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerName  String
+  rating        Int         @default(5)
+  comment       String
+  imageUrl      String?
+  isApproved    Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("product_reviews")
 }
