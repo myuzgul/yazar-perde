@@ -30,7 +30,7 @@ const CATEGORIES = [
   { name: 'Fon Perdeler', slug: 'fon-perdeler' },
   { name: 'Ahşap Jaluziler', slug: 'ahsap-jaluziler' },
   { name: 'İp Perdeler', slug: 'ip-perdeler' },
-  { name: 'Rustik Perdeler', slug: 'rustikler' },
+  { name: 'Rustikler', slug: 'rustikler' },
 ];
 
 export default function Header({ cartCount = 0, onOpenCart, onOpenAuth }: HeaderProps) {

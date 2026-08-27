@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ export const DEFAULT_CATEGORIES = [
   { name: 'FON PERDELER', slug: 'fon-perdeler' },
   { name: 'AHŞAP JALUZİ', slug: 'ahsap-jaluziler' },
   { name: 'İP PERDELER', slug: 'ip-perdeler' },
-  { name: 'RUSTİK PERDELER', slug: 'rustikler' },
+  { name: 'RUSTİKLER', slug: 'rustikler' },
   { name: 'ÖLÇÜ REHBERİ', slug: 'perde-olcusu-nasil-alinir', isGuide: true },
 ];
 
