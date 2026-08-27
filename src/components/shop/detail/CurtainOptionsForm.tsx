@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 
@@ -64,11 +64,15 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     setHeightInput(String(height));
   }, [height]);
 
-  // En için 10cm adımlı seçenek listesi
+  // Ölçü adımı: Plise perde için 0.5 cm, diğerleri için 1 cm
+  const isPlisse = curtainType === 'PLISSE';
+  const step = isPlisse ? 0.5 : 1;
+
+  // En için seçenek listesi (1'er cm veya 0.5 cm)
   const widthOptions: number[] = [];
-  const startW = Math.max(minWidth, 40);
-  const endW = Math.min(maxWidth, 400);
-  for (let w = startW; w <= endW; w += (curtainType === 'PLISSE' ? 5 : 10)) {
+  const startW = Math.max(minWidth, isPlisse ? 20 : 40);
+  const endW = Math.min(maxWidth, 500);
+  for (let w = startW; w <= endW; w = Math.round((w + step) * 10) / 10) {
     widthOptions.push(w);
   }
   if (!widthOptions.includes(width) && width >= minWidth && width <= maxWidth) {
@@ -76,11 +80,11 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     widthOptions.sort((a, b) => a - b);
   }
 
-  // Boy için 10cm adımlı seçenek listesi
+  // Boy için seçenek listesi (1'er cm veya 0.5 cm)
   const heightOptions: number[] = [];
-  const startH = Math.max(minHeight, 100);
-  const endH = Math.min(maxHeight, 320);
-  for (let h = startH; h <= endH; h += 10) {
+  const startH = Math.max(minHeight, isPlisse ? 30 : 50);
+  const endH = Math.min(maxHeight, 350);
+  for (let h = startH; h <= endH; h = Math.round((h + step) * 10) / 10) {
     heightOptions.push(h);
   }
   if (!heightOptions.includes(height) && height >= minHeight && height <= maxHeight) {
