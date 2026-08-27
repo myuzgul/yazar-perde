@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '@/lib/cart-context';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -12,18 +12,27 @@ import {
   UserCheck, 
   Truck, 
   ArrowLeft, 
-  ChevronRight
+  ChevronRight,
+  UserPlus,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
 
+  // Giriş Yapmış Kullanıcı Bilgisi
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
   // Müşteri & İletişim Bilgileri
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+
+  // Otomatik Üyelik Oluşturma State
+  const [createAccount, setCreateAccount] = useState(false);
+  const [accountPassword, setAccountPassword] = useState('');
 
   // Teslimat Adresi
   const [city, setCity] = useState('');
@@ -51,6 +60,21 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+          if (data.user.email) setEmail(data.user.email);
+          if (data.user.name) setFirstName(data.user.name);
+          if (data.user.surname) setLastName(data.user.surname);
+          if (data.user.phone) setPhone(data.user.phone);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const freeShippingThreshold = 1500;
   const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 75;
@@ -122,6 +146,8 @@ export default function CheckoutPage() {
           orderNote,
           paymentMethod,
           items,
+          createAccount,
+          accountPassword,
         }),
       });
 
@@ -166,11 +192,18 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
               <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <UserCheck className="w-4 h-4 text-[#1B84F8]" />
-                <span>1. İletişim Bilgileri (Hızlı Sipariş)</span>
+                <span>1. İletişim Bilgileri</span>
               </h2>
-              <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-sm">
-                Üyeliksiz Tamamlama
-              </span>
+              {currentUser ? (
+                <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2.5 py-0.5 rounded flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#1B84F8]" />
+                  <span>Kayıtlı Üye ({currentUser.name})</span>
+                </span>
+              ) : (
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-sm">
+                  Hızlı Sipariş / Üyeliksiz
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -198,6 +231,34 @@ export default function CheckoutPage() {
                 />
               </div>
             </div>
+
+            {/* Misafir Kullanıcı İçin Kolay Üyelik Seçeneği */}
+            {!currentUser && (
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={createAccount}
+                    onChange={(e) => setCreateAccount(e.target.checked)}
+                    className="w-3.5 h-3.5 text-[#1B84F8] rounded border-slate-300"
+                  />
+                  <span>Bu bilgilerle üye hesabı oluştur (Siparişimi takip etmek istiyorum)</span>
+                </label>
+
+                {createAccount && (
+                  <div className="pl-6 pt-1 animate-in fade-in">
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Hesap Şifrenizi Belirleyin *</label>
+                    <input
+                      type="password"
+                      placeholder="En az 6 karakterli şifre"
+                      value={accountPassword}
+                      onChange={(e) => setAccountPassword(e.target.value)}
+                      className="w-full sm:w-64 border border-slate-300 rounded-sm px-3 py-1.5 text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 2. Teslimat Adresi */}

@@ -1,8 +1,10 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSystemSettings } from '@/lib/settings';
 import { generatePayTRToken } from '@/lib/paytr';
 import { triggerOrderNotification } from '@/lib/notification-service';
+import { getCustomerSession, hashPassword, createSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,10 +27,60 @@ export async function POST(req: NextRequest) {
       orderNote,
       paymentMethod,
       items,
+      createAccount,
+      accountPassword,
     } = body;
 
     if (!email || !phone || !firstName || !lastName || !city || !district || !addressLine || !items || items.length === 0) {
       return NextResponse.json({ success: false, error: 'Eksik sipariş bilgisi' }, { status: 400 });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Kullanıcı Oturumu & Üyelik İlişkilendirmesi
+    const customerSession = await getCustomerSession();
+    let finalUserId: string | null = customerSession?.userId || null;
+
+    if (!finalUserId) {
+      const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+      if (existingUser) {
+        finalUserId = existingUser.id;
+      } else if (createAccount && accountPassword) {
+        try {
+          const passwordHash = await hashPassword(accountPassword);
+          const newUser = await prisma.user.create({
+            data: {
+              name: firstName.trim(),
+              surname: lastName.trim(),
+              email: cleanEmail,
+              phone: phone ? phone.trim() : null,
+              passwordHash,
+              role: 'CUSTOMER',
+              isActive: true,
+            },
+          });
+          finalUserId = newUser.id;
+
+          const token = await createSessionToken({
+            userId: newUser.id,
+            email: newUser.email,
+            name: newUser.name,
+            surname: newUser.surname,
+            role: newUser.role,
+          });
+
+          const cookieStore = await cookies();
+          cookieStore.set(CUSTOMER_COOKIE_NAME, token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30,
+          });
+        } catch (e) {
+          console.error('Auto register on checkout error:', e);
+        }
+      }
     }
 
     const settings = await getSystemSettings();
@@ -76,9 +128,10 @@ export async function POST(req: NextRequest) {
     const order = await prisma.order.create({
       data: {
         orderNumber,
+        userId: finalUserId,
         customerName: firstName,
         customerSurname: lastName,
-        customerEmail: email,
+        customerEmail: cleanEmail,
         customerPhone: phone,
         customerNote: orderNote || null,
         subtotal,

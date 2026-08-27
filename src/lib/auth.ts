@@ -53,3 +53,12 @@ export async function getAdminSession(): Promise<TokenPayload | null> {
   }
   return payload;
 }
+
+export async function getCustomerSession(): Promise<TokenPayload | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(CUSTOMER_COOKIE_NAME)?.value;
+  if (!token) return null;
+  const payload = await verifySessionToken(token);
+  if (!payload) return null;
+  return payload;
+}
