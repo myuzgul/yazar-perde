@@ -335,18 +335,18 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
               onChange={(e) => setTullePleatType(e.target.value)}
               className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 px-3 text-xs font-semibold text-slate-900 bg-white"
             >
-              <option value="FLAT_NO_PLEAT">Pilesiz Düz Dikim (En + 20cm ek pay)</option>
-              <option value="PLEAT_1X2">1x2 Seyrek Pile (En x 2 + 20cm)</option>
-              <option value="PLEAT_1X2_5">1x2.5 Normal Pile (En x 2.5 + 20cm) [Tavsiye Edilen]</option>
-              <option value="PLEAT_1X3">1x3 Sık Pile (En x 3 + 20cm)</option>
+              <option value="FLAT_NO_PLEAT">Pilesiz Düz Dikim</option>
+              <option value="PLEAT_1X2">1x2 Seyrek Pile</option>
+              <option value="PLEAT_1X2_5">1x2.5 Normal Pile</option>
+              <option value="PLEAT_1X3">1x3 Sık Pile</option>
               {curtainType === 'TULLE' && (
                 <>
-                  <option value="KRUVAZE_MECHANISM">Kruvaze (Mekanizmalı) (+100 TL Mekanizma)</option>
+                  <option value="KRUVAZE_MECHANISM">Kruvaze (Mekanizmalı)</option>
                   <option value="KRUVAZE_ROPE">Kruvaze (İple Toplamalı)</option>
                 </>
               )}
-              <option value="S_PLEAT">S Pile (Metreye +60 TL Ek Ücret)</option>
-              <option value="AMERICAN_PLEAT">Amerikan Pile (Metreye +60 TL Ek Ücret)</option>
+              <option value="S_PLEAT">S Pile</option>
+              <option value="AMERICAN_PLEAT">Amerikan Pile</option>
             </select>
 
             {/* Görsel Önizleme Küçük Kartları */}
