@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 
@@ -9,9 +9,9 @@ export async function GET() {
   }
 
   try {
-    // Kayıtlı müşteriler
+    // 1. Tüm Kayıtlı Müşteriler
     const users = await prisma.user.findMany({
-      where: { role: 'CUSTOMER' },
+      where: { role: { not: 'ADMIN' } },
       include: {
         orders: { select: { id: true, grandTotal: true, createdAt: true } },
         addresses: true,
@@ -19,25 +19,42 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Üyeliksiz sipariş vermiş benzersiz e-posta/telefonlar
-    const guestOrders = await prisma.order.findMany({
-      where: { userId: null },
+    // Her kullanıcının e-postasıyla eşleşen tüm siparişleri de hesaba kat
+    const allOrders = await prisma.order.findMany({
       select: {
+        id: true,
+        userId: true,
         customerName: true,
         customerSurname: true,
         customerEmail: true,
         customerPhone: true,
         grandTotal: true,
         createdAt: true,
-        id: true,
       },
       orderBy: { createdAt: 'desc' },
     });
 
+    const registeredUserEmails = new Set(users.map((u) => u.email.toLowerCase()));
+
+    const enrichedUsers = users.map((u) => {
+      const userOrders = allOrders.filter(
+        (o) => o.userId === u.id || o.customerEmail.toLowerCase() === u.email.toLowerCase()
+      );
+      return {
+        ...u,
+        orders: userOrders,
+      };
+    });
+
+    // 2. Üyeliksiz Siparişler (E-postası kayıtlı üyeler arasında olmayanlar)
+    const guestOrders = allOrders.filter(
+      (o) => !o.userId && !registeredUserEmails.has(o.customerEmail.toLowerCase())
+    );
+
     return NextResponse.json({
       success: true,
       data: {
-        registeredUsers: users,
+        registeredUsers: enrichedUsers,
         guestOrders,
       },
     });

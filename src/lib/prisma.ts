@@ -1,15 +1,21 @@
 ﻿import { PrismaClient } from '@prisma/client';
+import path from 'path';
 
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'file:./dev.db';
-}
+// SQLite veritabanı dosyasının mutlak yolunu garanti et
+const dbPath = path.resolve(process.cwd(), 'prisma', 'dev.db');
+process.env.DATABASE_URL = `file:${dbPath}`;
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    datasources: {
+      db: {
+        url: `file:${dbPath}`,
+      },
+    },
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
