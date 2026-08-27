@@ -1,11 +1,15 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
+
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = "file:./dev.db";
+}
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  env: {
+    DATABASE_URL: process.env.DATABASE_URL || "file:./dev.db",
   },
 };
 
