@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface CurtainOptionsFormProps {
   curtainType: string;
@@ -51,53 +51,198 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     fonMountingType, setFonMountingType, withRenso, setWithRenso,
   } = props;
 
+  // Akıllı Input String State (0 yapışmasını önler)
+  const [widthInput, setWidthInput] = useState<string>(String(width || 120));
+  const [heightInput, setHeightInput] = useState<string>(String(height || 220));
+  const [inputMode, setInputMode] = useState<'SELECT' | 'CUSTOM'>('SELECT');
+
+  useEffect(() => {
+    setWidthInput(String(width));
+  }, [width]);
+
+  useEffect(() => {
+    setHeightInput(String(height));
+  }, [height]);
+
+  // En için 10cm adımlı seçenek listesi
+  const widthOptions: number[] = [];
+  const startW = Math.max(minWidth, 40);
+  const endW = Math.min(maxWidth, 400);
+  for (let w = startW; w <= endW; w += (curtainType === 'PLISSE' ? 5 : 10)) {
+    widthOptions.push(w);
+  }
+  if (!widthOptions.includes(width) && width >= minWidth && width <= maxWidth) {
+    widthOptions.push(width);
+    widthOptions.sort((a, b) => a - b);
+  }
+
+  // Boy için 10cm adımlı seçenek listesi
+  const heightOptions: number[] = [];
+  const startH = Math.max(minHeight, 100);
+  const endH = Math.min(maxHeight, 320);
+  for (let h = startH; h <= endH; h += 10) {
+    heightOptions.push(h);
+  }
+  if (!heightOptions.includes(height) && height >= minHeight && height <= maxHeight) {
+    heightOptions.push(height);
+    heightOptions.sort((a, b) => a - b);
+  }
+
+  const handleWidthChange = (val: string) => {
+    setWidthInput(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > 0) {
+      setWidth(num);
+    }
+  };
+
+  const handleWidthBlur = () => {
+    const num = parseFloat(widthInput);
+    if (isNaN(num) || num < minWidth) {
+      setWidth(minWidth);
+      setWidthInput(String(minWidth));
+    } else if (num > maxWidth) {
+      setWidth(maxWidth);
+      setWidthInput(String(maxWidth));
+    }
+  };
+
+  const handleHeightChange = (val: string) => {
+    setHeightInput(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > 0) {
+      setHeight(num);
+    }
+  };
+
+  const handleHeightBlur = () => {
+    const num = parseFloat(heightInput);
+    if (isNaN(num) || num < minHeight) {
+      setHeight(minHeight);
+      setHeightInput(String(minHeight));
+    } else if (num > maxHeight) {
+      setHeight(maxHeight);
+      setHeightInput(String(maxHeight));
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. ÖLÇÜ ALANLARI */}
       <div className="border-t border-slate-200 pt-5 space-y-3">
-        <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-          1. ÖLÇÜ SEÇİMİ (cm)
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
+            1. ÖLÇÜ SEÇİMİ
+          </h3>
+          {/* Seçim Modu Değiştirici */}
+          <div className="flex items-center text-[11px] gap-2">
+            <button
+              type="button"
+              onClick={() => setInputMode('SELECT')}
+              className={`px-2 py-0.5 rounded transition cursor-pointer font-bold ${
+                inputMode === 'SELECT'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              Açılır Liste
+            </button>
+            <span className="text-slate-300">|</span>
+            <button
+              type="button"
+              onClick={() => setInputMode('CUSTOM')}
+              className={`px-2 py-0.5 rounded transition cursor-pointer font-bold ${
+                inputMode === 'CUSTOM'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              Manuel Elle Yaz
+            </button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
+          {/* EN SEÇİMİ */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              En Ölçüsü (Genişlik)
+              En (Genişlik)
             </label>
-            <div className="relative flex items-center">
-              <input
-                type="number"
-                min={minWidth}
-                max={maxWidth}
-                step={curtainType === 'PLISSE' ? '0.5' : '1'}
+
+            {inputMode === 'SELECT' ? (
+              <select
                 value={width}
-                onChange={(e) => setWidth(Number(e.target.value))}
-                className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 px-3 text-sm font-bold text-slate-900"
-              />
-              <span className="absolute right-3 text-xs text-slate-400 font-semibold pointer-events-none">cm</span>
-            </div>
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setWidth(val);
+                  setWidthInput(String(val));
+                }}
+                className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 px-3 text-xs font-bold text-slate-900 bg-white"
+              >
+                {widthOptions.map((w) => (
+                  <option key={w} value={w}>
+                    {w} cm
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder={`${minWidth}-${maxWidth}`}
+                  value={widthInput}
+                  onChange={(e) => handleWidthChange(e.target.value)}
+                  onBlur={handleWidthBlur}
+                  className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 pl-3 pr-8 text-xs font-bold text-slate-900 bg-white"
+                />
+                <span className="absolute right-3 text-xs text-slate-400 font-semibold pointer-events-none">cm</span>
+              </div>
+            )}
+
             <span className="text-[10px] text-slate-400 block mt-1">
               Min: {minWidth} cm - Max: {maxWidth} cm
             </span>
           </div>
 
+          {/* BOY SEÇİMİ */}
           {curtainType !== 'STRING' && curtainType !== 'RUSTIC' && (
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Boy Ölçüsü (Yükseklik)
+                Boy (Yükseklik)
               </label>
-              <div className="relative flex items-center">
-                <input
-                  type="number"
-                  min={minHeight}
-                  max={maxHeight}
-                  step={curtainType === 'PLISSE' ? '0.5' : '1'}
+
+              {inputMode === 'SELECT' ? (
+                <select
                   value={height}
-                  onChange={(e) => setHeight(Number(e.target.value))}
-                  className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 px-3 text-sm font-bold text-slate-900"
-                />
-                <span className="absolute right-3 text-xs text-slate-400 font-semibold pointer-events-none">cm</span>
-              </div>
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setHeight(val);
+                    setHeightInput(String(val));
+                  }}
+                  className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 px-3 text-xs font-bold text-slate-900 bg-white"
+                >
+                  {heightOptions.map((h) => (
+                    <option key={h} value={h}>
+                      {h} cm
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={`${minHeight}-${maxHeight}`}
+                    value={heightInput}
+                    onChange={(e) => handleHeightChange(e.target.value)}
+                    onBlur={handleHeightBlur}
+                    className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 pl-3 pr-8 text-xs font-bold text-slate-900 bg-white"
+                  />
+                  <span className="absolute right-3 text-xs text-slate-400 font-semibold pointer-events-none">cm</span>
+                </div>
+              )}
+
               <span className="text-[10px] text-slate-400 block mt-1">
                 {curtainType === 'TULLE' || curtainType === 'FON'
                   ? 'Boy standart kumaş enine dahildir'
