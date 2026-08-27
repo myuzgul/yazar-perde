@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { X, ZoomIn, Check } from 'lucide-react';
 
 interface CurtainOptionsFormProps {
   curtainType: string;
@@ -38,6 +39,14 @@ interface CurtainOptionsFormProps {
   setWithRenso: (v: boolean) => void;
 }
 
+interface PreviewModalData {
+  title: string;
+  description: string;
+  svgType: string;
+  onSelect?: () => void;
+  isSelected?: boolean;
+}
+
 export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
   const {
     curtainType, minWidth, maxWidth, minHeight, maxHeight,
@@ -51,10 +60,13 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     fonMountingType, setFonMountingType, withRenso, setWithRenso,
   } = props;
 
-  // Akıllı Input String State (0 yapışmasını önler)
+  // Akıllı Input String State
   const [widthInput, setWidthInput] = useState<string>(String(width || 120));
   const [heightInput, setHeightInput] = useState<string>(String(height || 220));
   const [inputMode, setInputMode] = useState<'SELECT' | 'CUSTOM'>('SELECT');
+
+  // Görsel Büyütme Modalı State
+  const [modalData, setModalData] = useState<PreviewModalData | null>(null);
 
   useEffect(() => {
     setWidthInput(String(width));
@@ -130,6 +142,56 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     }
   };
 
+  // Küçük Resimli Önizleme Kartı Bileşeni
+  const OptionThumb = ({
+    title,
+    desc,
+    selected,
+    onSelect,
+    svgType
+  }: {
+    title: string;
+    desc: string;
+    selected: boolean;
+    onSelect: () => void;
+    svgType: string;
+  }) => {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setModalData({
+            title,
+            description: desc,
+            svgType,
+            isSelected: selected,
+            onSelect: () => {
+              onSelect();
+              setModalData(null);
+            }
+          });
+        }}
+        className={`flex items-center gap-1.5 p-1.5 rounded border transition cursor-pointer text-left ${
+          selected
+            ? 'border-slate-900 bg-slate-100 ring-1 ring-slate-900'
+            : 'border-slate-200 bg-white hover:border-slate-400'
+        }`}
+        title={`${title} - Görseli İncele`}
+      >
+        <div className="w-8 h-8 rounded bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden relative">
+          <RenderSvgIcon type={svgType} />
+          <div className="absolute inset-0 bg-black/0 hover:bg-black/10 flex items-center justify-center transition">
+            <ZoomIn className="w-3 h-3 text-slate-700 opacity-60" />
+          </div>
+        </div>
+        <div className="min-w-0 pr-1">
+          <span className="text-[10px] font-bold text-slate-800 block truncate leading-tight">{title}</span>
+          <span className="text-[9px] text-slate-400 block truncate leading-none mt-0.5">Büyüt / İncele</span>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. ÖLÇÜ ALANLARI */}
@@ -138,7 +200,6 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
           <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
             1. ÖLÇÜ SEÇİMİ
           </h3>
-          {/* Seçim Modu Değiştirici */}
           <div className="flex items-center text-[11px] gap-2">
             <button
               type="button"
@@ -257,16 +318,16 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
         </div>
       </div>
 
-      {/* 2. DİNAMİK EK ÖZELLİKLER */}
-      <div className="border-t border-slate-200 pt-5 space-y-4">
+      {/* 2. DİNAMİK EK ÖZELLİKLER & GÖRSEL KARTLAR */}
+      <div className="border-t border-slate-200 pt-5 space-y-5">
         <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
           2. DİKİM & MEKANİZMA SEÇENEKLERİ
         </h3>
 
         {/* Tül ve Fon Pile Seçimi */}
         {(curtainType === 'TULLE' || curtainType === 'FON') && (
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-700">
               Pile Sıklığı & Dikim Modeli
             </label>
             <select
@@ -287,6 +348,38 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
               <option value="S_PLEAT">S Pile (Metreye +60 TL Ek Ücret)</option>
               <option value="AMERICAN_PLEAT">Amerikan Pile (Metreye +60 TL Ek Ücret)</option>
             </select>
+
+            {/* Görsel Önizleme Küçük Kartları */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              <OptionThumb
+                title="1x2 Seyrek Pile"
+                desc="Geniş dalgalı, ekonomik tül dikim modelidir. 1 metre için 2 metre kumaş harcanır."
+                selected={tullePleatType === 'PLEAT_1X2'}
+                onSelect={() => setTullePleatType('PLEAT_1X2')}
+                svgType="pleat-loose"
+              />
+              <OptionThumb
+                title="1x2.5 Normal Pile"
+                desc="En çok tercih edilen standart dökümlü salon tülü dikimidir. 1 metre için 2.5 metre kumaş kullanılır."
+                selected={tullePleatType === 'PLEAT_1X2_5'}
+                onSelect={() => setTullePleatType('PLEAT_1X2_5')}
+                svgType="pleat-medium"
+              />
+              <OptionThumb
+                title="1x3 Sık Pile"
+                desc="Yoğun ve kusursuz dökümlü lüks dikimdir. 1 metre için 3 metre kumaş kullanılır."
+                selected={tullePleatType === 'PLEAT_1X3'}
+                onSelect={() => setTullePleatType('PLEAT_1X3')}
+                svgType="pleat-tight"
+              />
+              <OptionThumb
+                title="S Pile / Amerikan"
+                desc="Modern ray sistemlerine uyumlu, şık dalgalı boru pile görünümü sağlar."
+                selected={tullePleatType === 'S_PLEAT' || tullePleatType === 'AMERICAN_PLEAT'}
+                onSelect={() => setTullePleatType('S_PLEAT')}
+                svgType="pleat-s"
+              />
+            </div>
           </div>
         )}
 
@@ -321,21 +414,63 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer pt-1">
-              <input
-                type="checkbox"
-                checked={withRenso}
-                onChange={(e) => setWithRenso(e.target.checked)}
-                className="w-3.5 h-3.5 rounded-sm border-slate-300 text-[#1B84F8]"
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <OptionThumb
+                title="Korniş Dikimi"
+                desc="Standart tavana monteli plastik veya alüminyum korniş raylarına doğrudan takılır."
+                selected={fonMountingType === 'CORNICE'}
+                onSelect={() => setFonMountingType('CORNICE')}
+                svgType="fon-cornice"
               />
-              <span>Renso (Fon Kol Bağı Demiri) İstiyorum (+{fonWingType === 'DOUBLE_WING' ? '200 TL / 2 Adet' : '100 TL / 1 Adet'})</span>
-            </label>
+              <OptionThumb
+                title="Rustik Halkalı"
+                desc="Ahşap veya metal rustik boruları üzerinde kayan halkalarla şık görünüm sunar."
+                selected={fonMountingType === 'RUSTIC_RING'}
+                onSelect={() => setFonMountingType('RUSTIC_RING')}
+                svgType="fon-rustic-ring"
+              />
+              <OptionThumb
+                title="Rustik Borulu"
+                desc="Rustik borusunun kumaşın içindeki tünelden geçtiği modern büzgülü modeldir."
+                selected={fonMountingType === 'RUSTIC_ROD_POCKET'}
+                onSelect={() => setFonMountingType('RUSTIC_ROD_POCKET')}
+                svgType="fon-rustic-pocket"
+              />
+            </div>
+
+            <div className="border border-slate-200 p-2.5 rounded-sm bg-slate-50 flex items-center justify-between">
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={withRenso}
+                  onChange={(e) => setWithRenso(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded-sm border-slate-300 text-[#1B84F8]"
+                />
+                <span>Renso (Fon Kol Bağı Demiri) İstiyorum (+{fonWingType === 'DOUBLE_WING' ? '200 TL / 2 Adet' : '100 TL / 1 Adet'})</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setModalData({
+                  title: 'Renso (Fon Perde Kol Bağı Demiri)',
+                  description: 'Duvara monte edilen, fon perdelerinizi gündüz şık ve düzenli bir şekilde toplamanızı sağlayan dekoratif metal tutucudur.',
+                  svgType: 'renso',
+                  isSelected: withRenso,
+                  onSelect: () => {
+                    setWithRenso(!withRenso);
+                    setModalData(null);
+                  }
+                })}
+                className="text-[10px] text-[#1B84F8] font-bold underline cursor-pointer"
+              >
+                Görseli Gör
+              </button>
+            </div>
           </div>
         )}
 
         {/* Stor, Zebra ve Çiftli Sistem */}
         {(curtainType === 'ROLLER' || curtainType === 'ZEBRA' || curtainType === 'DOUBLE_ROLLER') && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {curtainType === 'DOUBLE_ROLLER' && (
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Stor Kumaş Seçimi</label>
@@ -376,35 +511,96 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Zincir Tipi</label>
-                <select
-                  value={chainType}
-                  onChange={(e) => setChainType(e.target.value as any)}
-                  className="w-full border border-slate-300 rounded-sm py-2 px-3 text-xs font-semibold text-slate-900 bg-white"
-                >
-                  <option value="PLASTIC">Plastik Zincir</option>
-                  <option value="METAL">
-                    Metal Zincir (+{curtainType === 'DOUBLE_ROLLER' ? '200 TL / Çift' : '100 TL'})
-                  </option>
-                </select>
-              </div>
+            {/* KASA ÖNİZLEME KARTLARI */}
+            <div className="grid grid-cols-2 gap-2">
+              <OptionThumb
+                title="Açık Kasa"
+                desc="Rulo kumaşın açıkta sarıldığı standart ve ekonomik perde mekanizmasıdır."
+                selected={caseType === 'OPEN'}
+                onSelect={() => setCaseType('OPEN')}
+                svgType="case-open"
+              />
+              <OptionThumb
+                title="Kapalı Alüminyum Kasa"
+                desc="Kumaşın üst rulosunu tamamen örten, toza karşı koruyan estetik alüminyum kutu sistemidir."
+                selected={caseType === 'CLOSED'}
+                onSelect={() => setCaseType('CLOSED')}
+                svgType="case-closed"
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Montaj Aparatı</label>
-                <select
-                  value={bracketType}
-                  onChange={(e) => setBracketType(e.target.value as any)}
-                  className="w-full border border-slate-300 rounded-sm py-2 px-3 text-xs font-semibold text-slate-900 bg-white"
-                >
-                  <option value="PLASTIC_CORNICE">Plastik Korniş Aparatı (Ücretsiz)</option>
-                  <option value="METAL_CEILING">Metal Tavan Montaj Aparatı (50cm adımlı)</option>
-                  <option value="L_BRACKET_WALL">L Ayak Duvara Montaj Aparatı (50cm adımlı)</option>
-                </select>
+            {/* ZİNCİR TİPİ VE ÖNİZLEME */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-700">Zincir Tipi</label>
+              <select
+                value={chainType}
+                onChange={(e) => setChainType(e.target.value as any)}
+                className="w-full border border-slate-300 rounded-sm py-2 px-3 text-xs font-semibold text-slate-900 bg-white"
+              >
+                <option value="PLASTIC">Plastik Zincir (Standart)</option>
+                <option value="METAL">
+                  Metal Zincir (+{curtainType === 'DOUBLE_ROLLER' ? '200 TL / Çift' : '100 TL'})
+                </option>
+              </select>
+
+              {/* ZİNCİR TİPİ KÜÇÜK RESİM KARTLARI */}
+              <div className="grid grid-cols-2 gap-2">
+                <OptionThumb
+                  title="Plastik Zincir"
+                  desc="Kopmaya dayanıklı beyaz renkli standart perde zinciridir."
+                  selected={chainType === 'PLASTIC'}
+                  onSelect={() => setChainType('PLASTIC')}
+                  svgType="chain-plastic"
+                />
+                <OptionThumb
+                  title="Metal Zincir"
+                  desc="1. sınıf parlak nikel kaplama, şık ve ömür boyu dayanıklı metal bilyeli zincirdir."
+                  selected={chainType === 'METAL'}
+                  onSelect={() => setChainType('METAL')}
+                  svgType="chain-metal"
+                />
               </div>
             </div>
 
+            {/* MONTAJ APARATI */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-700">Montaj Aparatı</label>
+              <select
+                value={bracketType}
+                onChange={(e) => setBracketType(e.target.value as any)}
+                className="w-full border border-slate-300 rounded-sm py-2 px-3 text-xs font-semibold text-slate-900 bg-white"
+              >
+                <option value="PLASTIC_CORNICE">Plastik Korniş Aparatı (Ücretsiz)</option>
+                <option value="METAL_CEILING">Metal Tavan Montaj Aparatı (50cm adımlı)</option>
+                <option value="L_BRACKET_WALL">L Ayak Duvara Montaj Aparatı (50cm adımlı)</option>
+              </select>
+
+              <div className="grid grid-cols-3 gap-2">
+                <OptionThumb
+                  title="Korniş Aparatı"
+                  desc="Korniş kanalına kolayca çevrilerek takılan, matkapsız pratik montaj aparatıdır."
+                  selected={bracketType === 'PLASTIC_CORNICE'}
+                  onSelect={() => setBracketType('PLASTIC_CORNICE')}
+                  svgType="bracket-cornice"
+                />
+                <OptionThumb
+                  title="Metal Tavan Klipsi"
+                  desc="Beton veya ahşap tavana doğrudan vidalanan sağlam yaylı çelik klipstir."
+                  selected={bracketType === 'METAL_CEILING'}
+                  onSelect={() => setBracketType('METAL_CEILING')}
+                  svgType="bracket-ceiling"
+                />
+                <OptionThumb
+                  title="L Ayak Duvar"
+                  desc="Korniş olmayan pencerelerde perdeyi duvara montajlamak için kullanılır."
+                  selected={bracketType === 'L_BRACKET_WALL'}
+                  onSelect={() => setBracketType('L_BRACKET_WALL')}
+                  svgType="bracket-wall"
+                />
+              </div>
+            </div>
+
+            {/* ETEK VE BONCUK KESİMİ */}
             <div className="border border-slate-200 rounded-sm p-3 space-y-2 bg-slate-50">
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
                 <input
@@ -420,15 +616,34 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
               </label>
 
               {skirtCut && (
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer pl-5 pt-1">
-                  <input
-                    type="checkbox"
-                    checked={withBeads}
-                    onChange={(e) => setWithBeads(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded-sm border-slate-300 text-[#1B84F8]"
-                  />
-                  <span>Perdeye Uygun Kristal Boncuk İstiyorum (+40 TL/m²)</span>
-                </label>
+                <div className="space-y-2 pl-5 pt-1">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={withBeads}
+                      onChange={(e) => setWithBeads(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded-sm border-slate-300 text-[#1B84F8]"
+                    />
+                    <span>Perdeye Uygun Kristal Boncuk İstiyorum (+40 TL/m²)</span>
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <OptionThumb
+                      title="Dilimli Etek"
+                      desc="Stor ve zebra perdenin alt ucuna dalgalı lazer kesim dilim modeli uygulanır."
+                      selected={skirtCut && !withBeads}
+                      onSelect={() => { setSkirtCut(true); setWithBeads(false); }}
+                      svgType="skirt-plain"
+                    />
+                    <OptionThumb
+                      title="Boncuklu Etek"
+                      desc="Dilimli eteğin uç kısımlarına şık kristal boncuk saçakları dikilir."
+                      selected={skirtCut && withBeads}
+                      onSelect={() => { setSkirtCut(true); setWithBeads(true); }}
+                      svgType="skirt-beads"
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -436,43 +651,225 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
 
         {/* Plise Perde */}
         {curtainType === 'PLISSE' && (
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-700">
               Montaj Şekli
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setMountingType('SCREW')}
-                className={`p-3 rounded-sm border text-xs font-semibold text-left transition cursor-pointer ${
-                  mountingType === 'SCREW'
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-300 bg-white text-slate-700'
-                }`}
-              >
-                <div className="font-bold">Vidalı Montaj</div>
-                <div className="text-[10px] opacity-80">(PVC + Cam Balkon)</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setMountingType('HOOK')}
-                className={`p-3 rounded-sm border text-xs font-semibold text-left transition cursor-pointer ${
-                  mountingType === 'HOOK'
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-300 bg-white text-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between font-bold">
-                  <span>Kancalı Montaj</span>
-                  <span className="text-[10px]">+50 TL</span>
-                </div>
-                <div className="text-[10px] opacity-80">(Cam Balkon Delmeden)</div>
-              </button>
+              <OptionThumb
+                title="Vidalı Montaj (Standart)"
+                desc="Cam balkon kanat profiline veya PVC pencere kasasına küçük vidalarla sabitlenir."
+                selected={mountingType === 'SCREW'}
+                onSelect={() => setMountingType('SCREW')}
+                svgType="plisse-screw"
+              />
+              <OptionThumb
+                title="Kancalı Montaj (+50 TL)"
+                desc="Cam balkon kanatlarının üzerine kancalarla asılır, camı veya profili delmeden takılır."
+                selected={mountingType === 'HOOK'}
+                onSelect={() => setMountingType('HOOK')}
+                svgType="plisse-hook"
+              />
             </div>
           </div>
         )}
       </div>
+
+      {/* BÜYÜK GÖRSEL VE AÇIKLAMA MODALI (POPUP) */}
+      {modalData && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-2xs flex items-center justify-center p-4">
+          <div className="relative w-full max-w-sm bg-white rounded-sm border border-slate-300 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between">
+              <span className="text-xs font-bold">{modalData.title}</span>
+              <button
+                type="button"
+                onClick={() => setModalData(null)}
+                className="p-1 text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Büyük Görsel Alanı */}
+            <div className="p-6 bg-slate-50 flex items-center justify-center border-b border-slate-200">
+              <div className="w-32 h-32 rounded bg-white border border-slate-200 shadow-xs flex items-center justify-center p-2">
+                <RenderSvgIcon type={modalData.svgType} large />
+              </div>
+            </div>
+
+            {/* Açıklama & Buton */}
+            <div className="p-4 space-y-3">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {modalData.description}
+              </p>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalData(null)}
+                  className="flex-1 py-2 px-3 border border-slate-300 bg-white hover:bg-slate-100 rounded-sm text-xs font-semibold text-slate-700 transition cursor-pointer"
+                >
+                  Kapat (X)
+                </button>
+                {modalData.onSelect && (
+                  <button
+                    type="button"
+                    onClick={modalData.onSelect}
+                    className="flex-1 py-2 px-3 bg-[#1B84F8] hover:bg-[#156cd1] text-white rounded-sm text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Bu Modeli Seç</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function RenderSvgIcon({ type, large }: { type: string; large?: boolean }) {
+  const sz = large ? 'w-24 h-24' : 'w-6 h-6';
+  
+  if (type === 'chain-metal') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="6" cy="6" r="2.5" fill="#94a3b8" />
+        <circle cx="12" cy="6" r="2.5" fill="#94a3b8" />
+        <circle cx="18" cy="6" r="2.5" fill="#94a3b8" />
+        <circle cx="18" cy="18" r="2.5" fill="#94a3b8" />
+        <circle cx="12" cy="18" r="2.5" fill="#94a3b8" />
+        <circle cx="6" cy="18" r="2.5" fill="#94a3b8" />
+        <path d="M8.5 6h1M14.5 6h1M18 8.5v7M15.5 18h-1M9.5 18h-1M6 15.5v-7" stroke="#64748b" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+
+  if (type === 'chain-plastic') {
+    return (
+      <svg className={`${sz} text-slate-400`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="6" cy="2" r="2" fill="#e2e8f0" stroke="#94a3b8" />
+        <circle cx="12" cy="2" r="2" fill="#e2e8f0" stroke="#94a3b8" />
+        <circle cx="18" cy="2" r="2" fill="#e2e8f0" stroke="#94a3b8" />
+        <circle cx="18" cy="18" r="2" fill="#e2e8f0" stroke="#94a3b8" />
+        <circle cx="12" cy="18" r="2" fill="#e2e8f0" stroke="#94a3b8" />
+        <circle cx="6" cy="18" r="2" fill="#e2e8f0" stroke="#94a3b8" />
+        <path d="M8 2h2M14 2h2M18 4v12M16 18h-2M10 18H8M6 16V4" stroke="#cbd5e1" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+
+  if (type === 'case-closed') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="3" y="4" width="18" height="7" rx="1.5" fill="#e2e8f0" stroke="#475569" strokeWidth="2" />
+        <rect x="5" y="11" width="14" height="9" fill="#f8fafc" stroke="#94a3b8" strokeDasharray="2 2" />
+        <line x1="4" y1="20" x2="20" y2="20" stroke="#475569" strokeWidth="2" />
+      </svg>
+    );
+  }
+
+  if (type === 'case-open') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="5" cy="7" r="3" fill="#cbd5e1" stroke="#475569" />
+        <circle cx="19" cy="7" r="3" fill="#cbd5e1" stroke="#475569" />
+        <line x1="5" y1="7" x2="19" y2="7" stroke="#475569" strokeWidth="3" />
+        <rect x="5" y="8" width="14" height="12" fill="#f8fafc" stroke="#94a3b8" strokeDasharray="2 2" />
+        <line x1="4" y1="20" x2="20" y2="20" stroke="#475569" strokeWidth="2" />
+      </svg>
+    );
+  }
+
+  if (type === 'bracket-cornice') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="4" width="18" height="4" fill="#cbd5e1" />
+        <path d="M8 8v6l4 4 4-4V8" fill="#e2e8f0" stroke="#475569" />
+        <circle cx="12" cy="11" r="1.5" fill="#475569" />
+      </svg>
+    );
+  }
+
+  if (type === 'bracket-ceiling') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <line x1="2" y1="4" x2="22" y2="4" stroke="#475569" strokeWidth="2.5" />
+        <path d="M6 4v5h12V4" fill="#94a3b8" stroke="#334155" />
+        <path d="M9 9v7h6V9" fill="#e2e8f0" stroke="#334155" />
+      </svg>
+    );
+  }
+
+  if (type === 'bracket-wall') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M4 2v18h16" stroke="#334155" strokeWidth="3" strokeLinecap="round" />
+        <path d="M4 10l8 10" stroke="#94a3b8" strokeWidth="1.5" />
+        <circle cx="16" cy="20" r="2" fill="#1B84F8" />
+      </svg>
+    );
+  }
+
+  if (type === 'skirt-plain') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="4" y="3" width="16" height="12" fill="#f8fafc" stroke="#94a3b8" />
+        <path d="M4 15c2 3 4 3 6 0s4 3 6 0" fill="#e2e8f0" stroke="#334155" strokeWidth="2" />
+      </svg>
+    );
+  }
+
+  if (type === 'skirt-beads') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="4" y="3" width="16" height="11" fill="#f8fafc" stroke="#94a3b8" />
+        <path d="M4 14c2 2 4 2 6 0s4 2 6 0" stroke="#334155" strokeWidth="1.5" />
+        <circle cx="7" cy="18" r="1.5" fill="#38bdf8" />
+        <circle cx="13" cy="18" r="1.5" fill="#38bdf8" />
+        <circle cx="19" cy="18" r="1.5" fill="#38bdf8" />
+      </svg>
+    );
+  }
+
+  if (type === 'plisse-screw') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="4" y="4" width="16" height="16" rx="1" fill="#f8fafc" stroke="#94a3b8" />
+        <circle cx="7" cy="7" r="1.5" fill="#334155" />
+        <circle cx="17" cy="7" r="1.5" fill="#334155" />
+        <circle cx="7" cy="17" r="1.5" fill="#334155" />
+        <circle cx="17" cy="17" r="1.5" fill="#334155" />
+      </svg>
+    );
+  }
+
+  if (type === 'plisse-hook') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M5 3v6a3 3 0 0 0 6 0V6a2 2 0 0 1 4 0v12" stroke="#334155" strokeWidth="2.5" fill="none" />
+        <circle cx="15" cy="18" r="2" fill="#1B84F8" />
+      </svg>
+    );
+  }
+
+  if (type === 'renso') {
+    return (
+      <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M4 12h8a4 4 0 0 1 4 4v4" stroke="#334155" strokeWidth="2.5" />
+        <circle cx="4" cy="12" r="2" fill="#1B84F8" />
+      </svg>
+    );
+  }
+
+  // Varsayılan Pile
+  return (
+    <svg className={`${sz} text-slate-700`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M3 4c1 0 1 16 3 16s2-16 3-16 1 16 3 16 2-16 3-16 1 16 3 16 2-16 3-16" stroke="#475569" strokeWidth="2" />
+      <line x1="2" y1="4" x2="22" y2="4" stroke="#94a3b8" strokeWidth="2" />
+    </svg>
   );
 }
