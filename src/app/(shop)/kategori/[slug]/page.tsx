@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import prisma from '@/lib/prisma';
 import ProductCard from '@/components/shop/ProductCard';
 import Link from 'next/link';
@@ -93,20 +93,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
             </ul>
           </div>
 
-          {/* Mekan Filtresi */}
-          <div className="border-b border-slate-200 pb-5">
-            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-3">
-              Kullanım Alanı
-            </h3>
-            <div className="space-y-2 text-xs text-slate-700">
-              {['Salon & Oturma Odası', 'Yatak Odası', 'Mutfak', 'Cam Balkon', 'Ofis & İş Yeri'].map((m) => (
-                <label key={m} className="flex items-center gap-2 cursor-pointer hover:text-slate-950">
-                  <input type="checkbox" className="w-3.5 h-3.5 rounded-sm border-slate-300 text-[#1B84F8]" />
-                  <span>{m}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+
 
           {/* Markalar */}
           {brands.length > 0 && (
