@@ -45,18 +45,21 @@ model Address {
 }
 
 model Category {
-  id            String    @id @default(cuid())
+  id            String      @id @default(cuid())
   name          String
-  slug          String    @unique
+  slug          String      @unique
   description   String?
   imageUrl      String?
   parentId      String?
-  sortOrder     Int       @default(0)
-  isActive      Boolean   @default(true)
+  parent        Category?   @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children      Category[]  @relation("CategoryChildren")
+  showInMenu    Boolean     @default(true)
+  sortOrder     Int         @default(0)
+  isActive      Boolean     @default(true)
   seoTitle      String?
   seoDesc       String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   products      Product[]
 
   @@map("categories")

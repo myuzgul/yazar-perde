@@ -3,11 +3,27 @@ import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 
 export async function GET() {
-  const categories = await prisma.category.findMany({
-    orderBy: { sortOrder: 'asc' },
-    include: { _count: { select: { products: true } } },
-  });
-  return NextResponse.json({ success: true, data: categories });
+  try {
+    const categories = await prisma.category.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      include: {
+        parent: {
+          select: { id: true, name: true, slug: true },
+        },
+        children: {
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+          include: {
+            _count: { select: { products: true } },
+          },
+        },
+        _count: { select: { products: true } },
+      },
+    });
+    return NextResponse.json({ success: true, data: categories });
+  } catch (error) {
+    console.error('Categories get error:', error);
+    return NextResponse.json({ success: false, message: 'Kategoriler yüklenemedi' }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -17,17 +33,23 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-    
+
     const category = await prisma.category.create({
       data: {
-        name: body.name,
+        name: body.name.trim(),
         slug,
         description: body.description || null,
         imageUrl: body.imageUrl || null,
+        parentId: body.parentId || null,
+        showInMenu: body.showInMenu !== undefined ? Boolean(body.showInMenu) : true,
         sortOrder: Number(body.sortOrder) || 0,
-        isActive: body.isActive ?? true,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
         seoTitle: body.seoTitle || null,
         seoDesc: body.seoDesc || null,
+      },
+      include: {
+        parent: true,
+        children: true,
       },
     });
     return NextResponse.json({ success: true, data: category });
@@ -43,17 +65,30 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
+    if (!body.id) return NextResponse.json({ success: false, message: 'ID gerekli' }, { status: 400 });
+
+    // Kendisini üst kategori olarak seçmesini engelle
+    if (body.parentId === body.id) {
+      return NextResponse.json({ success: false, message: 'Bir kategori kendisinin üst kategorisi olamaz.' }, { status: 400 });
+    }
+
     const category = await prisma.category.update({
       where: { id: body.id },
       data: {
-        name: body.name,
+        name: body.name.trim(),
         slug: body.slug,
-        description: body.description,
-        imageUrl: body.imageUrl,
-        sortOrder: Number(body.sortOrder) || 0,
-        isActive: body.isActive,
+        description: body.description !== undefined ? body.description : undefined,
+        imageUrl: body.imageUrl !== undefined ? body.imageUrl : undefined,
+        parentId: body.parentId || null,
+        showInMenu: body.showInMenu !== undefined ? Boolean(body.showInMenu) : undefined,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : undefined,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : undefined,
         seoTitle: body.seoTitle,
         seoDesc: body.seoDesc,
+      },
+      include: {
+        parent: true,
+        children: true,
       },
     });
     return NextResponse.json({ success: true, data: category });
@@ -73,7 +108,7 @@ export async function DELETE(req: NextRequest) {
     if (!id) return NextResponse.json({ success: false, message: 'ID gerekli' }, { status: 400 });
 
     await prisma.category.delete({ where: { id } });
-    return NextResponse.json({ success: true, message: 'Kategori silindi' });
+    return NextResponse.json({ success: true, message: 'Kategori ve bağlı alt kategorileri başarıyla silindi.' });
   } catch (error) {
     console.error('Category delete error:', error);
     return NextResponse.json({ success: false, message: 'Kategori silinemedi' }, { status: 500 });

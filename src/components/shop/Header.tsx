@@ -21,23 +21,31 @@ interface HeaderProps {
   onOpenAuth?: () => void;
 }
 
-const CATEGORIES = [
-  { name: 'Tül Perdeler', slug: 'tul-perdeler' },
-  { name: 'Stor Perdeler', slug: 'stor-perdeler' },
-  { name: 'Zebra Perdeler', slug: 'zebra-perdeler' },
-  { name: 'Çiftli Sistem Tül+Stor', slug: 'ciftli-sistem-tul-stor' },
-  { name: 'Plise Perdeler (Cam Balkon)', slug: 'plise-perdeler' },
-  { name: 'Fon Perdeler', slug: 'fon-perdeler' },
-  { name: 'Ahşap Jaluziler', slug: 'ahsap-jaluziler' },
-  { name: 'İp Perdeler', slug: 'ip-perdeler' },
-  { name: 'Rustikler', slug: 'rustikler' },
-];
+interface MobileMenuCategory {
+  id: string;
+  name: string;
+  slug: string;
+  children?: { id: string; name: string; slug: string }[];
+}
 
 export default function Header({ cartCount = 0, onOpenCart, onOpenAuth }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileCategories, setMobileCategories] = useState<MobileMenuCategory[]>([]);
+  const [expandedCatId, setExpandedCatId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/shop/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setMobileCategories(data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSearch = async (q: string) => {
     setSearchQuery(q);
@@ -260,17 +268,62 @@ export default function Header({ cartCount = 0, onOpenCart, onOpenAuth }: Header
                   Kategoriler
                 </span>
                 <nav className="divide-y divide-slate-100">
-                  {CATEGORIES.map((cat) => (
-                    <Link
-                      key={cat.slug}
-                      href={`/kategori/${cat.slug}`}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between py-2.5 px-1 text-xs font-semibold text-slate-800 hover:text-[#1B84F8] transition"
-                    >
-                      <span>{cat.name}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                    </Link>
-                  ))}
+                  {mobileCategories.map((cat) => {
+                    const hasChildren = cat.children && cat.children.length > 0;
+                    const isExpanded = expandedCatId === cat.id;
+
+                    return (
+                      <div key={cat.id} className="py-1">
+                        <div className="flex items-center justify-between py-2 px-1">
+                          <Link
+                            href={`/kategori/${cat.slug}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="text-xs font-bold text-slate-800 hover:text-[#1B84F8] transition flex-1"
+                          >
+                            {cat.name}
+                          </Link>
+
+                          {hasChildren && (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedCatId(isExpanded ? null : cat.id)}
+                              className="p-1.5 text-slate-400 hover:text-slate-700 cursor-pointer"
+                            >
+                              <ChevronRight
+                                className={`w-4 h-4 transition-transform duration-200 ${
+                                  isExpanded ? 'rotate-90 text-[#1B84F8]' : ''
+                                }`}
+                              />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Alt Kategoriler (Akordiyon) */}
+                        {hasChildren && isExpanded && (
+                          <div className="pl-4 pr-1 py-1.5 space-y-1 bg-slate-50 rounded-sm mb-1 animate-in fade-in">
+                            {cat.children?.map((child) => (
+                              <Link
+                                key={child.id}
+                                href={`/kategori/${child.slug}`}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="flex items-center justify-between py-1.5 px-2 text-xs font-semibold text-slate-600 hover:text-[#1B84F8] hover:bg-slate-100/80 rounded transition"
+                              >
+                                <span>{child.name}</span>
+                                <ChevronRight className="w-3 h-3 text-slate-300" />
+                              </Link>
+                            ))}
+                            <Link
+                              href={`/kategori/${cat.slug}`}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block py-1 px-2 text-[11px] font-bold text-[#1B84F8]"
+                            >
+                              Tümünü Gör →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </nav>
               </div>
 

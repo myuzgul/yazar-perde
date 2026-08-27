@@ -18,7 +18,12 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-interface Category { id: string; name: string; }
+interface Category { 
+  id: string; 
+  name: string; 
+  parentId?: string | null;
+  parent?: { name: string } | null;
+}
 interface Brand { id: string; name: string; logoUrl: string | null; }
 interface ProductTag { id: string; name: string; badgeColor: string; }
 
@@ -316,11 +321,11 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 required
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#1B84F8]"
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#1B84F8]"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {c.parentId ? `↳ ${c.name} (${c.parent?.name || 'Alt Kategori'})` : `📁 ${c.name}`}
                   </option>
                 ))}
               </select>
