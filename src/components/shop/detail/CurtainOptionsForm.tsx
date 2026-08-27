@@ -731,8 +731,44 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
   );
 }
 
+const OPTION_IMAGE_MAP: Record<string, string> = {
+  'chain-metal': '/images/options/zincir-metal.jpg',
+  'chain-plastic': '/images/options/zincir-plastik.jpg',
+  'case-closed': '/images/options/kasa-kapali.jpg',
+  'case-open': '/images/options/kasa-acik.jpg',
+  'bracket-cornice': '/images/options/aparat-kornis.jpg',
+  'bracket-ceiling': '/images/options/aparat-tavan.jpg',
+  'bracket-wall': '/images/options/aparat-layak.jpg',
+  'skirt-plain': '/images/options/etek-dilimli.jpg',
+  'skirt-beads': '/images/options/etek-boncuklu.jpg',
+  'plisse-screw': '/images/options/plise-vidali.jpg',
+  'plisse-hook': '/images/options/plise-kancali.jpg',
+  'renso': '/images/options/renso.jpg',
+  'pleat-loose': '/images/options/pile-seyrek.jpg',
+  'pleat-medium': '/images/options/pile-normal.jpg',
+  'pleat-tight': '/images/options/pile-sik.jpg',
+  'pleat-s': '/images/options/pile-s.jpg',
+  'fon-cornice': '/images/options/fon-kornis.jpg',
+  'fon-rustic-ring': '/images/options/fon-rustik-halka.jpg',
+  'fon-rustic-pocket': '/images/options/fon-rustik-boru.jpg',
+};
+
 function RenderSvgIcon({ type, large }: { type: string; large?: boolean }) {
-  const sz = large ? 'w-24 h-24' : 'w-6 h-6';
+  const [imgError, setImgError] = React.useState(false);
+  const realImgUrl = OPTION_IMAGE_MAP[type];
+  const sz = large ? 'w-28 h-28' : 'w-7 h-7';
+
+  // Eğer public/images/options içine fotoğraf konulmuşsa doğrudan o fotoğrafı göster
+  if (realImgUrl && !imgError) {
+    return (
+      <img
+        src={realImgUrl}
+        alt={type}
+        className={`${sz} object-cover rounded-xs`}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
   
   if (type === 'chain-metal') {
     return (
