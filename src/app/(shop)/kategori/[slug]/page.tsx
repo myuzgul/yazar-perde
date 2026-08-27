@@ -7,12 +7,14 @@ import { ChevronRight } from 'lucide-react';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ sort?: string; minPrice?: string; maxPrice?: string }>;
+  searchParams?: Promise<{ sort?: string; minPrice?: string; maxPrice?: string }>;
 }
 
-export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
-  const { slug } = await params;
-  const { sort, minPrice, maxPrice } = await searchParams;
+export default async function CategoryPage(props: CategoryPageProps) {
+  const params = await props.params;
+  const searchParams = props.searchParams ? await props.searchParams : {};
+  const { slug } = params;
+  const { sort, minPrice, maxPrice } = searchParams;
 
   const category = await prisma.category.findUnique({
     where: { slug },
