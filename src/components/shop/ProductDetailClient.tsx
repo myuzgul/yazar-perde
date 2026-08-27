@@ -153,19 +153,34 @@ export default function ProductDetailClient({ product, similarProducts }: Produc
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-2 mt-2">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                ))}
-              </div>
-              <span className="text-xs font-semibold text-slate-600">(177 Değerlendirme)</span>
-              {product.brand && (
-                <span className="ml-auto text-xs font-semibold text-slate-600 border border-slate-200 px-2 py-0.5 rounded-sm">
-                  Marka: {product.brand.name}
-                </span>
-              )}
-            </div>
+            {(() => {
+              const approvedReviews = (product as any).reviews || [];
+              const revCount = approvedReviews.length;
+              const avgScore = revCount > 0 
+                ? Number((approvedReviews.reduce((acc: number, r: any) => acc + r.rating, 0) / revCount).toFixed(1))
+                : 5.0;
+
+              return (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex text-amber-400">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-3.5 h-3.5 ${star <= Math.round(avgScore) ? 'fill-current' : 'text-slate-200'}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-slate-600">
+                    {revCount > 0 ? `(${revCount} Değerlendirme)` : '(0 Değerlendirme)'}
+                  </span>
+                  {product.brand && (
+                    <span className="ml-auto text-xs font-semibold text-slate-600 border border-slate-200 px-2 py-0.5 rounded-sm">
+                      Marka: {product.brand.name}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Perde Ölçü ve Ek Özellikler Formu */}

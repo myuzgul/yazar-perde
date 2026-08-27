@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from '@/components/shop/ProductDetailClient';
@@ -33,6 +33,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       brand: true,
       tag: true,
       images: { orderBy: { sortOrder: 'asc' } },
+      reviews: {
+        where: { isApproved: true },
+        orderBy: { createdAt: 'desc' },
+      },
     },
   });
 

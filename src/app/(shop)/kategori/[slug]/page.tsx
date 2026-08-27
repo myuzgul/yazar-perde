@@ -52,6 +52,10 @@ export default async function CategoryPage(props: CategoryPageProps) {
       brand: true,
       tag: true,
       images: { orderBy: { sortOrder: 'asc' } },
+      reviews: {
+        where: { isApproved: true },
+        select: { rating: true },
+      },
     },
   });
 
@@ -123,9 +127,9 @@ export default async function CategoryPage(props: CategoryPageProps) {
             </div>
 
             {/* Sıralama Seçenekleri */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-400 text-[11px] font-medium">Sırala:</span>
-              <div className="flex items-center border border-slate-200 rounded-sm overflow-hidden bg-slate-50">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 font-medium">Sırala:</span>
+              <div className="inline-flex rounded-sm border border-slate-200 text-xs overflow-hidden">
                 <Link
                   href={`/kategori/${slug}?sort=price_asc`}
                   className={`px-3 py-1.5 transition ${
@@ -134,7 +138,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
                       : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  En Düşük Fiyat
+                  Fiyat Artan
                 </Link>
                 <Link
                   href={`/kategori/${slug}?sort=price_desc`}
@@ -144,7 +148,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
                       : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  En Yüksek Fiyat
+                  Fiyat Azalan
                 </Link>
                 <Link
                   href={`/kategori/${slug}?sort=name_asc`}
@@ -165,6 +169,12 @@ export default async function CategoryPage(props: CategoryPageProps) {
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
               {products.map((product) => {
                 const coverImg = product.images.find((i) => i.isCover) || product.images[0];
+                const approvedRevs = (product as any).reviews || [];
+                const revCount = approvedRevs.length;
+                const avgRating = revCount > 0 
+                  ? Math.round(approvedRevs.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / revCount) 
+                  : 5;
+
                 return (
                   <ProductCard
                     key={product.id}
@@ -179,6 +189,8 @@ export default async function CategoryPage(props: CategoryPageProps) {
                     brandName={product.brand?.name}
                     tag={product.tag}
                     imageUrl={coverImg?.imageUrl}
+                    reviewCount={revCount}
+                    rating={avgRating}
                   />
                 );
               })}

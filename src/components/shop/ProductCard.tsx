@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -33,7 +33,7 @@ export default function ProductCard({
   tag,
   imageUrl = '/static/sample/tulle_sample.jpg',
   rating = 5,
-  reviewCount = 124,
+  reviewCount = 0,
 }: ProductCardProps) {
   const hasDiscount = discountPrice && discountPrice < basePrice;
   const currentPrice = hasDiscount ? discountPrice : basePrice;
@@ -86,11 +86,16 @@ export default function ProductCard({
           {/* Yıldız / Değerlendirme */}
           <div className="flex items-center gap-1 mt-1.5">
             <div className="flex text-amber-400">
-              {[...Array(rating)].map((_, i) => (
-                <Star key={i} className="w-3 h-3 fill-current" />
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star 
+                  key={star} 
+                  className={`w-3 h-3 ${star <= (reviewCount > 0 ? rating : 5) ? 'fill-current' : 'text-slate-200'}`} 
+                />
               ))}
             </div>
-            <span className="text-[10px] text-slate-400">({reviewCount})</span>
+            <span className="text-[10px] text-slate-400">
+              ({reviewCount})
+            </span>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import StoryBar from '@/components/shop/StoryBar';
 import ProductCard from '@/components/shop/ProductCard';
 import SmallBanners from '@/components/shop/SmallBanners';
@@ -17,6 +17,10 @@ export default async function HomePage() {
       brand: true,
       tag: true,
       images: { orderBy: { sortOrder: 'asc' } },
+      reviews: {
+        where: { isApproved: true },
+        select: { rating: true },
+      },
     },
   });
 
@@ -92,6 +96,12 @@ export default async function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
           {products.map((product) => {
             const coverImg = product.images.find((i) => i.isCover) || product.images[0];
+            const approvedRevs = (product as any).reviews || [];
+            const revCount = approvedRevs.length;
+            const avgRating = revCount > 0 
+              ? Math.round(approvedRevs.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / revCount) 
+              : 5;
+
             return (
               <ProductCard
                 key={product.id}
@@ -106,6 +116,8 @@ export default async function HomePage() {
                 brandName={product.brand?.name}
                 tag={product.tag}
                 imageUrl={coverImg?.imageUrl}
+                reviewCount={revCount}
+                rating={avgRating}
               />
             );
           })}
