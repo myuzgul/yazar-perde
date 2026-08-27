@@ -220,6 +220,8 @@ export default function ProductDetailClient({ product, similarProducts }: Produc
       {/* ALT SEKMELER */}
       <ProductTabs
         descriptionHtml={product.descriptionHtml}
+        mountingVideoUrl={product.mountingVideoUrl}
+        mountingGuideHtml={product.mountingGuideHtml}
         grandTotal={calcResult ? calcResult.grandTotal : product.basePrice}
       />
 

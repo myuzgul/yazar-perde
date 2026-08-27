@@ -116,8 +116,10 @@ model Product {
   minHeight     Float         @default(50)
   maxHeight     Float         @default(350)
 
-  shortDesc       String?
-  descriptionHtml String?
+  shortDesc         String?
+  descriptionHtml   String?
+  mountingVideoUrl  String?
+  mountingGuideHtml String?
   
   seoTitle      String?
   seoDesc       String?

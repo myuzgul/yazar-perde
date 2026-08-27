@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 
@@ -73,6 +73,8 @@ export async function POST(req: NextRequest) {
         maxHeight: Number(body.maxHeight) || 350,
         shortDesc: body.shortDesc || null,
         descriptionHtml: body.descriptionHtml || null,
+        mountingVideoUrl: body.mountingVideoUrl || null,
+        mountingGuideHtml: body.mountingGuideHtml || null,
         seoTitle: body.seoTitle || null,
         seoDesc: body.seoDesc || null,
         seoKeywords: body.seoKeywords || null,
@@ -126,6 +128,8 @@ export async function PUT(req: NextRequest) {
         maxHeight: Number(body.maxHeight) || 350,
         shortDesc: body.shortDesc || null,
         descriptionHtml: body.descriptionHtml || null,
+        mountingVideoUrl: body.mountingVideoUrl || null,
+        mountingGuideHtml: body.mountingGuideHtml || null,
         seoTitle: body.seoTitle || null,
         seoDesc: body.seoDesc || null,
         seoKeywords: body.seoKeywords || null,

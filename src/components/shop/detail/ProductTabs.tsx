@@ -1,15 +1,28 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { Video, Star } from 'lucide-react';
 
 interface ProductTabsProps {
   descriptionHtml: string | null;
+  mountingVideoUrl?: string | null;
+  mountingGuideHtml?: string | null;
   grandTotal: number;
 }
 
-export default function ProductTabs({ descriptionHtml, grandTotal }: ProductTabsProps) {
+function getYouTubeEmbedUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (trimmed.includes('embed/')) return trimmed;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+  const match = trimmed.match(regExp);
+  return match && match[2].length === 11 ? `https://www.youtube-nocookie.com/embed/${match[2]}` : null;
+}
+
+export default function ProductTabs({ descriptionHtml, mountingVideoUrl, mountingGuideHtml, grandTotal }: ProductTabsProps) {
   const [activeTab, setActiveTab] = useState<'DESC' | 'VIDEO' | 'REVIEWS' | 'INSTALLMENT' | 'SHIPPING'>('DESC');
+
+  const youtubeEmbed = getYouTubeEmbedUrl(mountingVideoUrl);
 
   return (
     <div className="border border-slate-200 rounded-sm p-6 mb-16 bg-white">
@@ -17,7 +30,7 @@ export default function ProductTabs({ descriptionHtml, grandTotal }: ProductTabs
       <div className="flex flex-wrap gap-6 border-b border-slate-200 pb-3 mb-6">
         {[
           { id: 'DESC', label: 'Ürün Bilgileri & Özellikler' },
-          { id: 'VIDEO', label: 'Montaj Videosu' },
+          { id: 'VIDEO', label: 'Montaj & Kurulum Videosu' },
           { id: 'REVIEWS', label: 'Müşteri Yorumları (177)' },
           { id: 'INSTALLMENT', label: 'Taksit Tablosu' },
           { id: 'SHIPPING', label: 'Teslimat & İade' },
@@ -50,12 +63,59 @@ export default function ProductTabs({ descriptionHtml, grandTotal }: ProductTabs
       )}
 
       {activeTab === 'VIDEO' && (
-        <div className="max-w-xl mx-auto py-6 text-center space-y-3">
-          <div className="aspect-video bg-slate-900 rounded-sm flex items-center justify-center text-white relative">
-            <Video className="w-12 h-12 text-[#1B84F8]" />
-            <span className="absolute bottom-3 text-xs font-semibold text-slate-300">
-              Perde Montaj ve Kurulum Videosu
-            </span>
+        <div className="space-y-6">
+          {/* YouTube Video Oynatıcı */}
+          <div className="max-w-3xl mx-auto">
+            {youtubeEmbed ? (
+              <div className="aspect-video w-full rounded-sm overflow-hidden border border-slate-300 shadow-sm bg-black">
+                <iframe
+                  src={youtubeEmbed}
+                  title="Perde Montaj ve Kurulum Videosu"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="w-full h-full border-0"
+                />
+              </div>
+            ) : (
+              <div className="aspect-video w-full rounded-sm overflow-hidden border border-slate-300 bg-slate-950 flex flex-col items-center justify-center text-white p-6 text-center space-y-3">
+                <Video className="w-12 h-12 text-[#1B84F8]" />
+                <div>
+                  <h4 className="text-sm font-bold">Kolay ve Hızlı Perde Montajı</h4>
+                  <p className="text-xs text-slate-400 mt-1 max-w-md">
+                    Özel ölçülü perdeleriniz pratik montaj aparatları ile birlikte gönderilir. Matkap veya vida kullanmadan kornişe 5 dakikada takabilirsiniz.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Zengin Montaj ve Kurulum Rehberi */}
+          <div className="border-t border-slate-200 pt-6 max-w-3xl mx-auto">
+            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span>🛠️ Adım Adım Kurulum ve Montaj Talimatları</span>
+            </h3>
+
+            {mountingGuideHtml ? (
+              <div 
+                className="prose prose-sm max-w-none text-slate-700 text-xs sm:text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: mountingGuideHtml }}
+              />
+            ) : (
+              <div className="space-y-3 text-xs text-slate-700">
+                <div className="bg-slate-50 p-3.5 rounded border border-slate-200">
+                  <h4 className="font-bold text-slate-900 mb-1">1. Korniş Montajı (Pratik Çevir-Tak)</h4>
+                  <p className="text-slate-600">Paketinizden çıkan plastik montaj aparatlarını her 40-50 cm aralıkla korniş kanalına takıp saat yönünde çevirerek kilitleyin.</p>
+                </div>
+                <div className="bg-slate-50 p-3.5 rounded border border-slate-200">
+                  <h4 className="font-bold text-slate-900 mb-1">2. Perde Profilini Oturtma</h4>
+                  <p className="text-slate-600">Perdenizin üst alüminyum kasasını aparatların ön tırnağına oturtup hafifçe yukarı doğru bastırarak &quot;çıt&quot; sesini duyana kadar itin.</p>
+                </div>
+                <div className="bg-slate-50 p-3.5 rounded border border-slate-200">
+                  <h4 className="font-bold text-slate-900 mb-1">3. Mekanizma Testi</h4>
+                  <p className="text-slate-600">Yan zinciri yavaşça çekerek perdenin aşağı ve yukarı akıcı hareket ettiğini kontrol edin.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

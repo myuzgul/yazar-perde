@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -49,6 +49,8 @@ interface ProductFormData {
   maxHeight: number;
   shortDesc: string;
   descriptionHtml: string;
+  mountingVideoUrl?: string;
+  mountingGuideHtml?: string;
   seoTitle: string;
   seoDesc: string;
   seoKeywords: string;
@@ -91,6 +93,8 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
       maxHeight: 300,
       shortDesc: '',
       descriptionHtml: '',
+      mountingVideoUrl: '',
+      mountingGuideHtml: '',
       seoTitle: '',
       seoDesc: '',
       seoKeywords: '',
@@ -549,7 +553,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
           </div>
         )}
 
-        {/* SEKME 4: AÇIKLAMALAR */}
+        {/* SEKME 4: AÇIKLAMALAR & MONTAJ VİDEOSU */}
         {activeTab === 'DESCRIPTION' && (
           <div className="space-y-6">
             <div>
@@ -565,15 +569,93 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Detaylı Açıklama (Zengin HTML, Resim ve YouTube Video Desteği)
+                Detaylı Açıklama (Ürün Bilgileri Tabı)
               </label>
               <textarea
-                rows={10}
-                placeholder="<h1>1. Sınıf Bal Peteği Kumaş</h1><p>Metin, görsel linkleri ve YouTube iframe gömebilirsiniz...</p>"
+                rows={6}
+                placeholder="<h1>1. Sınıf Kumaş & Dayanıklı Mekanizma</h1><p>Metin, kumaş dokusu ve temizleme talimatları...</p>"
                 value={formData.descriptionHtml}
                 onChange={(e) => setFormData({ ...formData, descriptionHtml: e.target.value })}
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#1B84F8]"
               />
+            </div>
+
+            {/* MONTAJ VİDEOSU VE ZENGİN İÇERİK ALANI */}
+            <div className="pt-4 border-t border-slate-200 space-y-4 bg-slate-50 p-4 rounded-xl border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>🎬 YouTube Montaj Videosu & Rehberi</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">Ürün detay sayfasındaki &quot;Montaj Videosu&quot; sekmesinde görüntülenecek video ve zengin anlatım.</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  YouTube Video Linki
+                </label>
+                <input
+                  type="text"
+                  placeholder="Örn: https://www.youtube.com/watch?v=dQw4w9WgXcQ veya https://youtu.be/dQw4w9WgXcQ"
+                  value={formData.mountingVideoUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, mountingVideoUrl: e.target.value })}
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#1B84F8]"
+                />
+                <span className="text-[10px] text-slate-400 block mt-1">
+                  YouTube video adresini yapıştırmanız yeterlidir, otomatik olarak gömülü video oynatıcıya dönüştürülür.
+                </span>
+              </div>
+
+              {/* Hızlı Şablon Butonları */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700">
+                    Montaj ve Kurulum Rehberi (Zengin İçerik / HTML)
+                  </label>
+                  <div className="flex gap-1 text-[10px]">
+                    <span className="text-slate-400 font-semibold self-center mr-1">Hazır Şablonlar:</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        mountingGuideHtml: `<h3>Perde Montaj ve Kurulum Adımları</h3>
+<ul>
+  <li><strong>1. Adım:</strong> Korniş montaj aparatlarını her 50 cm mesafede bir korniş rayına saat yönünde çevirerek kilitleyin.</li>
+  <li><strong>2. Adım:</strong> Perdenin üst alüminyum profilini aparatların ön tırnağına oturtup hafifçe yukarı doğru bastırarak çıt sesini duyun.</li>
+  <li><strong>3. Adım:</strong> Yan zinciri çekerek perdenin aşağı yukarı akıcı çalıştığını kontrol edin.</li>
+</ul>
+<p><strong>Gereken Malzemeler:</strong> Tornavida veya matkap gerekmez, pratik korniş aparatları kutu içeriğine dahildir.</p>`
+                      })}
+                      className="px-2 py-0.5 bg-white border border-slate-300 hover:bg-slate-100 rounded text-slate-700 font-semibold cursor-pointer"
+                    >
+                      Korniş Montajı
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        mountingGuideHtml: `<h3>Plise Perde Montaj Rehberi</h3>
+<ul>
+  <li><strong>Kancalı Montaj (Delmeden):</strong> Cam balkon kanadının üst ve alt fitil köşelerine montaj kancalarını takın. İpleri gerdirerek kancalara sabitleyin.</li>
+  <li><strong>Vidalı Montaj:</strong> PVC veya alüminyum profile köşelerden 4 adet vidayı sıkarak montaj takozlarını sabitleyin.</li>
+</ul>
+<p><strong>İp Gerginliği:</strong> İplerin dengeli ve paralel olmasına dikkat ediniz.</p>`
+                      })}
+                      className="px-2 py-0.5 bg-white border border-slate-300 hover:bg-slate-100 rounded text-slate-700 font-semibold cursor-pointer"
+                    >
+                      Plise Montajı
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  rows={6}
+                  placeholder="<h3>Adım Adım Kurulum</h3><p>Montaj talimatları, dikkat edilmesi gerekenler...</p>"
+                  value={formData.mountingGuideHtml || ''}
+                  onChange={(e) => setFormData({ ...formData, mountingGuideHtml: e.target.value })}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-3 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#1B84F8]"
+                />
+              </div>
             </div>
           </div>
         )}
