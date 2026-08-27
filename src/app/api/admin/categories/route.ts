@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 
@@ -107,10 +107,52 @@ export async function DELETE(req: NextRequest) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ success: false, message: 'ID gerekli' }, { status: 400 });
 
+    const targetCategory = await prisma.category.findUnique({
+      where: { id },
+      include: { children: true },
+    });
+
+    if (!targetCategory) {
+      return NextResponse.json({ success: false, message: 'Kategori bulunamadı' }, { status: 404 });
+    }
+
+    // Bu kategoriye ait ürünleri aktaracak güvenli bir kategori bul
+    let targetFallbackId: string | null = targetCategory.parentId;
+
+    if (!targetFallbackId) {
+      const otherCat = await prisma.category.findFirst({
+        where: { id: { not: id } },
+      });
+      if (otherCat) {
+        targetFallbackId = otherCat.id;
+      }
+    }
+
+    // Eğer silinen kategoride ürünler varsa, ürünlerin kaybolmaması için onları üst/alternatif kategoriye taşı
+    if (targetFallbackId) {
+      await prisma.product.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: targetFallbackId },
+      });
+    }
+
+    // Alt kategorilerin ebeveynini üst kategoriye veya ana kategoriye bağla
+    if (targetCategory.children && targetCategory.children.length > 0) {
+      await prisma.category.updateMany({
+        where: { parentId: id },
+        data: { parentId: targetCategory.parentId || null },
+      });
+    }
+
+    // Kategoriyi sil
     await prisma.category.delete({ where: { id } });
-    return NextResponse.json({ success: true, message: 'Kategori ve bağlı alt kategorileri başarıyla silindi.' });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Kategori başarıyla silindi ve içerisindeki ürünler güvenle aktarıldı.',
+    });
   } catch (error) {
     console.error('Category delete error:', error);
-    return NextResponse.json({ success: false, message: 'Kategori silinemedi' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Kategori silinirken bir hata oluştu.' }, { status: 500 });
   }
 }
