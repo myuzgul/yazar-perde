@@ -188,7 +188,7 @@ export default function Header({ cartCount = 0, onOpenCart, onOpenAuth }: Header
                 </Link>
 
                 {userDropdownOpen && (
-                  <div className="absolute top-full right-0 min-w-[190px] bg-white border border-slate-200 shadow-xl rounded-md p-1.5 z-50 animate-in fade-in">
+                  <div className="absolute top-full right-0 min-w-[210px] bg-white border border-slate-200 shadow-xl rounded-lg p-1.5 z-50 animate-in fade-in">
                     <div className="px-3 py-2 border-b border-slate-100 mb-1">
                       <p className="text-xs font-bold text-slate-900 truncate">{currentUser.name} {currentUser.surname}</p>
                       <p className="text-[10px] text-slate-400 truncate">{currentUser.email}</p>
@@ -198,42 +198,62 @@ export default function Header({ cartCount = 0, onOpenCart, onOpenAuth }: Header
                       onClick={() => setUserDropdownOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-[#1B84F8] hover:bg-slate-50 rounded"
                     >
-                      <Package className="w-3.5 h-3.5" />
-                      <span>Siparişlerim</span>
+                      <User className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Hesap Özeti</span>
                     </Link>
                     <Link
-                      href="/hesabim"
+                      href="/hesabim/siparisler"
                       onClick={() => setUserDropdownOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-[#1B84F8] hover:bg-slate-50 rounded"
                     >
-                      <User className="w-3.5 h-3.5" />
-                      <span>Hesap Ayarları</span>
+                      <Package className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Siparişlerim</span>
                     </Link>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await fetch('/api/auth/logout', { method: 'POST' });
-                        setCurrentUser(null);
-                        setUserDropdownOpen(false);
-                        window.location.href = '/';
-                      }}
-                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                    <Link
+                      href="/hesabim/adresler"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-[#1B84F8] hover:bg-slate-50 rounded"
                     >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>Çıkış Yap</span>
-                    </button>
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Kayıtlı Adreslerim</span>
+                    </Link>
+                    <Link
+                      href="/hesabim/profil"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-[#1B84F8] hover:bg-slate-50 rounded"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Profil & Şifre</span>
+                    </Link>
+                    <div className="pt-1 mt-1 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await fetch('/api/auth/logout', { method: 'POST' });
+                          setCurrentUser(null);
+                          setUserDropdownOpen(false);
+                          window.location.href = '/';
+                        }}
+                        className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Çıkış Yap</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={onOpenAuth}
-                className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:text-slate-950 transition cursor-pointer"
-              >
-                <User className="w-4 h-4 text-slate-500" />
-                <span className="hidden sm:inline">Giriş Yap / Üye Ol</span>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={onOpenAuth}
+                  className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:text-slate-950 transition cursor-pointer"
+                >
+                  <User className="w-4 h-4 text-slate-500" />
+                  <span className="hidden sm:inline">Giriş Yap / Üye Ol</span>
+                </button>
+              </div>
             )}
 
             <button

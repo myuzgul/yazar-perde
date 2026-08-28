@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { X, Lock, Mail, User, Phone, CheckCircle2, ArrowRight } from 'lucide-react';
@@ -181,9 +181,16 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'LOGIN', onSuc
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-bold text-slate-700">Şifreniz *</label>
-                  <span className="text-[11px] text-[#1B84F8] hover:underline cursor-pointer">
-                    Şifremi Unuttum
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      router.push('/sifremi-unuttum');
+                    }}
+                    className="text-[11px] text-[#1B84F8] hover:underline cursor-pointer"
+                  >
+                    Şifremi Unuttum?
+                  </button>
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />

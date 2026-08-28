@@ -1,30 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { hashPassword, createSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth';
 import { cookies } from 'next/headers';
+import { z } from 'zod';
+
+const registerSchema = z.object({
+  name: z.string().trim().min(2, 'Adınız en az 2 karakter olmalıdır.'),
+  surname: z.string().trim().min(2, 'Soyadınız en az 2 karakter olmalıdır.'),
+  email: z.string().trim().email('Geçerli bir e-posta adresi giriniz.'),
+  phone: z.string().trim().optional().nullable(),
+  password: z.string().min(6, 'Şifreniz en az 6 karakter olmalıdır.'),
+  passwordConfirm: z.string().optional(),
+  agreeTerms: z.boolean().optional(),
+}).refine((data) => {
+  if (data.passwordConfirm && data.password !== data.passwordConfirm) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Girdiğiniz şifreler birbiriyle eşleşmiyor.',
+  path: ['passwordConfirm'],
+});
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, surname, email, phone, password } = body;
+    const result = registerSchema.safeParse(body);
 
-    if (!name || !surname || !email || !password) {
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, message: 'Lütfen ad, soyad, e-posta ve şifre alanlarını doldurunuz.' },
+        { success: false, message: result.error.issues[0]?.message || 'Lütfen form alanlarını kontrol ediniz.' },
         { status: 400 }
       );
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const { name, surname, email, phone, password } = result.data;
+    const cleanEmail = email.toLowerCase();
 
-    // E-posta kontrolü
+    // E-posta mükerrerlik kontrolü
     const existing = await prisma.user.findUnique({
       where: { email: cleanEmail },
     });
 
     if (existing) {
       return NextResponse.json(
-        { success: false, message: 'Bu e-posta adresi ile kayıtlı bir hesap zaten var. Lütfen giriş yapınız.' },
+        { success: false, message: 'Bu e-posta adresiyle kayıtlı bir hesap zaten mevcut. Lütfen giriş yapınız.' },
         { status: 400 }
       );
     }
@@ -33,12 +53,14 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.create({
       data: {
-        name: name.trim(),
-        surname: surname.trim(),
+        name,
+        surname,
         email: cleanEmail,
-        phone: phone ? phone.trim() : null,
+        phone: phone || null,
         passwordHash: hashedPassword,
         role: 'CUSTOMER',
+        isEmailVerified: false,
+        isDeleted: false,
       },
     });
 
@@ -49,7 +71,7 @@ export async function POST(req: NextRequest) {
       name: user.name,
       surname: user.surname,
       role: user.role,
-    });
+    }, '30d');
 
     const cookieStore = await cookies();
     cookieStore.set(CUSTOMER_COOKIE_NAME, token, {
@@ -74,7 +96,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Register error:', error);
     return NextResponse.json(
-      { success: false, message: 'Kayıt olurken bir hata oluştu.' },
+      { success: false, message: 'Kayıt işlemi sırasında bir sunucu hatası oluştu.' },
       { status: 500 }
     );
   }

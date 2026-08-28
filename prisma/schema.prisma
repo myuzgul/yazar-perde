@@ -8,40 +8,60 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  surname       String
-  email         String    @unique
-  phone         String?
-  passwordHash  String
-  role          String    @default("CUSTOMER")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  orders        Order[]
-  addresses     Address[]
+  id                        String                @id @default(cuid())
+  name                      String
+  surname                   String
+  email                     String                @unique
+  phone                     String?
+  passwordHash              String
+  role                      String                @default("CUSTOMER")
+  isEmailVerified           Boolean               @default(false)
+  isDeleted                 Boolean               @default(false)
+  defaultDeliveryAddressId  String?
+  defaultBillingAddressId   String?
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+  orders                    Order[]
+  addresses                 Address[]
+  passwordResetTokens       PasswordResetToken[]
 
   @@map("users")
 }
 
 model Address {
-  id            String      @id @default(cuid())
-  userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title         String
-  addressType   String      @default("INDIVIDUAL")
-  name          String
-  surname       String
-  companyName   String?
-  taxNo         String?
-  taxOffice     String?
-  phone         String
-  city          String
-  district      String
-  fullAddress   String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id                  String      @id @default(cuid())
+  userId              String
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title               String
+  addressType         String      @default("INDIVIDUAL")
+  name                String
+  surname             String
+  companyName         String?
+  taxNo               String?
+  taxOffice           String?
+  phone               String
+  city                String
+  district            String
+  fullAddress         String
+  postalCode          String?
+  isDefaultDelivery   Boolean     @default(false)
+  isDefaultBilling    Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
   @@map("addresses")
+}
+
+model PasswordResetToken {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("password_reset_tokens")
 }
 
 model Category {
