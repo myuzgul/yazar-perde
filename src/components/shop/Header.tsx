@@ -14,7 +14,9 @@ import {
   Package, 
   Ruler, 
   HelpCircle,
-  LogOut
+  LogOut,
+  MapPin,
+  Settings
 } from 'lucide-react';
 
 interface HeaderProps {
