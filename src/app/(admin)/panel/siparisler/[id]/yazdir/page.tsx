@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PrintButton from '@/components/admin/PrintButton';
@@ -10,8 +10,13 @@ interface PrintPageProps {
 export default async function OrderPrintPage({ params }: PrintPageProps) {
   const { id } = await params;
 
-  const order = await prisma.order.findUnique({
+  const order = await prisma.order.update({
     where: { id },
+    data: {
+      isPrinted: true,
+      printedAt: new Date(),
+      printCount: { increment: 1 },
+    },
     include: {
       items: true,
       addresses: true,

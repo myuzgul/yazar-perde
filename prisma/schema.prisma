@@ -205,6 +205,10 @@ model Order {
   vatTotal        Float           @default(0)
   grandTotal      Float
 
+  isPrinted       Boolean         @default(false)
+  printedAt       DateTime?
+  printCount      Int             @default(0)
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   

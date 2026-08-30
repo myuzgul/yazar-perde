@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -116,11 +116,22 @@ export default function AdminOrderDetailPage() {
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl font-black text-slate-900">Sipariş #{order.orderNumber}</h1>
                 <span className="bg-blue-50 text-[#1B84F8] text-[10px] font-extrabold px-2 py-0.5 rounded">
                   {order.status}
                 </span>
+                {order.isPrinted ? (
+                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1">
+                    <Printer className="w-3 h-3 text-emerald-600" />
+                    Yazdırıldı ({order.printCount || 1}x)
+                  </span>
+                ) : (
+                  <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-amber-600" />
+                    Yazdırılmadı
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500">
                 {new Date(order.createdAt).toLocaleDateString('tr-TR', {
@@ -130,6 +141,11 @@ export default function AdminOrderDetailPage() {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
+                {order.printedAt && (
+                  <span className="text-emerald-700 font-semibold ml-2">
+                    • Son Yazdırma: {new Date(order.printedAt).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -140,7 +156,7 @@ export default function AdminOrderDetailPage() {
             className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition"
           >
             <Printer className="w-4 h-4" />
-            <span>İş Kağıdı (Üretim Formu) Yazdır</span>
+            <span>İş Kağıdını Yazdır {order.isPrinted && '(Tekrar)'}</span>
           </Link>
         </div>
 

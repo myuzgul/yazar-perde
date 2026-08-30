@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { triggerOrderNotification } from '@/lib/notification-service';
@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     const status = searchParams.get('status');
+    const printStatus = searchParams.get('printStatus');
     const search = searchParams.get('search');
 
     if (id) {
@@ -35,6 +36,11 @@ export async function GET(req: NextRequest) {
     const where: any = {};
     if (status && status !== 'ALL') {
       where.status = status;
+    }
+    if (printStatus === 'PRINTED') {
+      where.isPrinted = true;
+    } else if (printStatus === 'NOT_PRINTED') {
+      where.isPrinted = false;
     }
     if (search) {
       where.OR = [
