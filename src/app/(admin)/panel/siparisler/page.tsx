@@ -123,7 +123,7 @@ export default function AdminOrdersPage() {
           title={printedAt ? `Son Yazdırma: ${new Date(printedAt).toLocaleString('tr-TR')}` : undefined}
         >
           <Printer className="w-3 h-3 text-emerald-600" />
-          <span>Yazdırıldı ({printCount || 1}x)</span>
+          <span>Yazdırıldı</span>
         </span>
       );
     }

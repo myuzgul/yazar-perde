@@ -124,7 +124,7 @@ export default function AdminOrderDetailPage() {
                 {order.isPrinted ? (
                   <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1">
                     <Printer className="w-3 h-3 text-emerald-600" />
-                    Yazdırıldı ({order.printCount || 1}x)
+                    Yazdırıldı
                   </span>
                 ) : (
                   <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1">
