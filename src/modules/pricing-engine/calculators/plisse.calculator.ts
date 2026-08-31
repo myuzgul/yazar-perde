@@ -30,13 +30,24 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
   ];
 
   let extraCost = 0;
-  // Montaj seçeneği: Vidalı (PVC + Cam Balkon) (0 TL) / Kancalı (Cam Balkon) (+50 TL)
+  // Montaj seçeneği: Vidalı (Standart - 0 TL) / Kancalı (+50 TL) / Yapıştırmalı (+100 TL/m²)
   if (input.mountingType === 'HOOK') {
     extraCost += settings.plisse_hook_extra_price;
     breakdown.push({
       label: 'Kancalı Montaj Aparatı (Cam Balkon)',
       amount: settings.plisse_hook_extra_price,
       unit: 'Sabit',
+      description: 'Delmesiz pratik kancalı montaj aparatı seti',
+    });
+  } else if (input.mountingType === 'ADHESIVE') {
+    const adhesivePricePerSqm = settings.plisse_adhesive_extra_sqm_price ?? 100;
+    const adhesiveTotal = Number((finalSqm * adhesivePricePerSqm).toFixed(2));
+    extraCost += adhesiveTotal;
+    breakdown.push({
+      label: 'Yapıştırmalı Montaj Profili (Vidasız & Delmesiz)',
+      amount: adhesiveTotal,
+      unit: `${finalSqm.toFixed(2)} m² x ${adhesivePricePerSqm} TL`,
+      description: `Metrekare başına +${adhesivePricePerSqm} TL yapıştırmalı alüminyum profil ve güçlü bant sistemi`,
     });
   }
 
@@ -44,6 +55,10 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
   const grandTotal = Number((unitFinalPrice * quantity).toFixed(2));
   const vatAmount = Number(((grandTotal * vatRate) / (100 + vatRate)).toFixed(2));
   const subtotal = Number((grandTotal - vatAmount).toFixed(2));
+
+  let mountingLabel = 'Vidalı (Standart)';
+  if (input.mountingType === 'HOOK') mountingLabel = 'Kancalı Montaj (+50 TL)';
+  else if (input.mountingType === 'ADHESIVE') mountingLabel = 'Yapıştırmalı Montaj (+100 TL/m²)';
 
   return {
     curtainType: 'PLISSE',
@@ -63,7 +78,7 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
     breakdown,
     selectedOptionsSnapshot: {
       mountingType: input.mountingType || 'SCREW',
-      mountingLabel: input.mountingType === 'HOOK' ? 'Kancalı (Cam Balkon)' : 'Vidalı (PVC + Cam Balkon)',
+      mountingLabel,
       rawSqm: Number(rawSqm.toFixed(2)),
       finalSqm,
     },

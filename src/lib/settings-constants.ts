@@ -1,4 +1,4 @@
-﻿export interface SystemSettingsMap {
+export interface SystemSettingsMap {
   // Tül
   tulle_extra_allowance_cm: number;
   tulle_s_pile_extra_price: number;
@@ -16,6 +16,7 @@
   blackout_sqm_price: number;
   // Plise
   plisse_hook_extra_price: number;
+  plisse_adhesive_extra_sqm_price: number;
   // Fon
   renso_piece_price: number;
   // Genel & Kargo & Ödeme
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   blackout_sqm_price: 250,
 
   plisse_hook_extra_price: 50,
+  plisse_adhesive_extra_sqm_price: 100,
   renso_piece_price: 100,
 
   free_shipping_threshold: 1500,

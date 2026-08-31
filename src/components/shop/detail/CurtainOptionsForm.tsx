@@ -29,8 +29,8 @@ interface CurtainOptionsFormProps {
   setWithBeads: (v: boolean) => void;
   rollerType: 'NORMAL_ROLLER' | 'BLACKOUT_ROLLER';
   setRollerType: (v: 'NORMAL_ROLLER' | 'BLACKOUT_ROLLER') => void;
-  mountingType: 'SCREW' | 'HOOK';
-  setMountingType: (v: 'SCREW' | 'HOOK') => void;
+  mountingType: 'SCREW' | 'HOOK' | 'ADHESIVE';
+  setMountingType: (v: 'SCREW' | 'HOOK' | 'ADHESIVE') => void;
   fonWingType: 'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING';
   setFonWingType: (v: 'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING') => void;
   fonMountingType: 'CORNICE' | 'RUSTIC_RING' | 'RUSTIC_ROD_POCKET';
@@ -655,20 +655,27 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
             <label className="block text-xs font-semibold text-slate-700">
               Montaj Şekli
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <OptionThumb
                 title="Vidalı Montaj (Standart)"
-                desc="Cam balkon kanat profiline veya PVC pencere kasasına küçük vidalarla sabitlenir."
+                desc="Cam balkon kanat profiline veya PVC pencere kasasına küçük vidalarla sabitlenir. En sağlam ve uzun ömürlü montaj yöntemidir."
                 selected={mountingType === 'SCREW'}
                 onSelect={() => setMountingType('SCREW')}
                 svgType="plisse-screw"
               />
               <OptionThumb
                 title="Kancalı Montaj (+50 TL)"
-                desc="Cam balkon kanatlarının üzerine kancalarla asılır, camı veya profili delmeden takılır."
+                desc="Cam balkon kanatlarının üzerine kancalarla asılır, camı veya profili delmeden pratik şekilde takılır."
                 selected={mountingType === 'HOOK'}
                 onSelect={() => setMountingType('HOOK')}
                 svgType="plisse-hook"
+              />
+              <OptionThumb
+                title="Yapıştırmalı Montaj (+100 TL/m²)"
+                desc="Özel çift taraflı güçlü yapıştırmalı alüminyum profil sistemi. Cam balkon veya PVC pencerelere vida ve delik açmadan kolayca yapıştırılır."
+                selected={mountingType === 'ADHESIVE'}
+                onSelect={() => setMountingType('ADHESIVE')}
+                svgType="plisse-adhesive"
               />
             </div>
           </div>
@@ -755,6 +762,7 @@ const OPTION_IMAGE_MAP: Record<string, string> = {
   'skirt-beads': '/images/options/etek-boncuklu.jpg',
   'plisse-screw': '/images/options/plise-vidali.jpg',
   'plisse-hook': '/images/options/plise-kancali.jpg',
+  'plisse-adhesive': '/images/options/yapistirmali-plise.jpg',
   'renso': '/images/options/renso.jpg',
   'pleat-loose': '/images/options/pile-seyrek.jpg',
   'pleat-medium': '/images/options/pile-normal.jpg',

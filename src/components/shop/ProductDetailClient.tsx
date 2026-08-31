@@ -59,7 +59,7 @@ export default function ProductDetailClient({ product, similarProducts }: Produc
   const [skirtCut, setSkirtCut] = useState<boolean>(false);
   const [withBeads, setWithBeads] = useState<boolean>(false);
   const [rollerType, setRollerType] = useState<'NORMAL_ROLLER' | 'BLACKOUT_ROLLER'>('NORMAL_ROLLER');
-  const [mountingType, setMountingType] = useState<'SCREW' | 'HOOK'>('SCREW');
+  const [mountingType, setMountingType] = useState<'SCREW' | 'HOOK' | 'ADHESIVE'>('SCREW');
   const [fonWingType, setFonWingType] = useState<'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING'>('DOUBLE_WING');
   const [fonMountingType, setFonMountingType] = useState<'CORNICE' | 'RUSTIC_RING' | 'RUSTIC_ROD_POCKET'>('CORNICE');
   const [withRenso, setWithRenso] = useState<boolean>(false);

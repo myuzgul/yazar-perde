@@ -24,7 +24,7 @@ export type CaseType = 'OPEN' | 'CLOSED';
 export type ChainType = 'PLASTIC' | 'METAL';
 export type BracketType = 'PLASTIC_CORNICE' | 'METAL_CEILING' | 'L_BRACKET_WALL';
 export type RollerType = 'NORMAL_ROLLER' | 'BLACKOUT_ROLLER';
-export type MountingType = 'SCREW' | 'HOOK'; // Plise montajı (Vidalı PVC+Cam Balkon / Kancalı Cam Balkon)
+export type MountingType = 'SCREW' | 'HOOK' | 'ADHESIVE'; // Plise montajı (Vidalı / Kancalı / Yapıştırmalı)
 export type FonWingType = 'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING';
 export type FonMountingType = 'CORNICE' | 'RUSTIC_RING' | 'RUSTIC_ROD_POCKET';
 
@@ -41,6 +41,7 @@ export interface PricingSettings {
   bead_sqm_price: number;
   blackout_sqm_price: number;
   plisse_hook_extra_price: number;
+  plisse_adhesive_extra_sqm_price?: number;
   renso_piece_price: number;
 }
 
