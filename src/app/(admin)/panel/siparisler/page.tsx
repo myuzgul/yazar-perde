@@ -20,7 +20,10 @@ import {
   Square,
   AlertCircle,
   FileCheck2,
-  Layers
+  Layers,
+  FileText,
+  MessageSquare,
+  StickyNote
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
@@ -363,6 +366,28 @@ export default function AdminOrdersPage() {
                             <span>{order.customerPhone}</span>
                             {shippingAddr?.city && <span className="text-slate-400">• {shippingAddr.city}</span>}
                           </div>
+
+                          {/* YÖNETİCİ / ATÖLYE NOTU */}
+                          {order.adminNote && (
+                            <div 
+                              className="mt-1 text-[10px] bg-purple-50 text-purple-900 border border-purple-200 px-2 py-0.5 rounded-md font-semibold flex items-start gap-1 max-w-[220px] shadow-2xs"
+                              title={`Yönetici / Atölye Notu: ${order.adminNote}`}
+                            >
+                              <StickyNote className="w-3 h-3 text-purple-600 shrink-0 mt-0.5" />
+                              <span className="truncate"><strong>Yön. Notu:</strong> {order.adminNote}</span>
+                            </div>
+                          )}
+
+                          {/* MÜŞTERİ SİPARİŞ NOTU */}
+                          {order.customerNote && (
+                            <div 
+                              className="mt-0.5 text-[10px] bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-md font-medium flex items-start gap-1 max-w-[220px]"
+                              title={`Müşteri Notu: ${order.customerNote}`}
+                            >
+                              <MessageSquare className="w-3 h-3 text-amber-600 shrink-0 mt-0.5" />
+                              <span className="truncate"><strong>Müşteri:</strong> {order.customerNote}</span>
+                            </div>
+                          )}
                         </td>
 
                         <td className="py-3 px-4">
