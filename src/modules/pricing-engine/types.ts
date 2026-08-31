@@ -5,6 +5,7 @@ export type CurtainType =
   | 'DOUBLE_ROLLER'
   | 'PLISSE'
   | 'FON'
+  | 'BLACKOUT_FON_SUNSHADE'
   | 'STRING'
   | 'WOODEN_JALOUSIE'
   | 'RUSTIC';

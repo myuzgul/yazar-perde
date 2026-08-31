@@ -304,10 +304,11 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1B84F8]"
               >
                 <option value="TULLE">Tül Perde (En x Pile Katsayısı)</option>
+                <option value="BLACKOUT_FON_SUNSHADE">Karartma Fon ve Güneşlik (En + 20cm x Metre Fiyatı)</option>
                 <option value="ROLLER">Stor Perde (m² hesabı, kasa/aparat/zincir)</option>
                 <option value="ZEBRA">Zebra Perde (m² hesabı, kasa/aparat/zincir)</option>
                 <option value="DOUBLE_ROLLER">Çiftli Sistem Tül+Stor (Blackout + Çift Zincir)</option>
-                <option value="PLISSE">Plise Perde (Kancalı/Vidalı Montaj)</option>
+                <option value="PLISSE">Plise Perde (Kancalı/Vidalı/Yapıştırmalı)</option>
                 <option value="FON">Fon Perde (Sol/Sağ/Çift Kanat + Renso)</option>
                 <option value="STRING">İp Perde (En Ölçüsü)</option>
                 <option value="WOODEN_JALOUSIE">Ahşap Jaluzi (m² hesabı)</option>

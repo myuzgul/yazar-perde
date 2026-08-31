@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -66,6 +66,7 @@ export default function UrunlerPage() {
   const getCurtainTypeName = (type: string) => {
     switch (type) {
       case 'TULLE': return 'Tül Perde';
+      case 'BLACKOUT_FON_SUNSHADE': return 'Karartma Fon ve Güneşlik';
       case 'ROLLER': return 'Stor Perde';
       case 'ZEBRA': return 'Zebra Perde';
       case 'DOUBLE_ROLLER': return 'Çiftli Sistem Tül+Stor';

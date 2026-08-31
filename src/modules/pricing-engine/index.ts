@@ -4,6 +4,7 @@ import { calculateRollerZebraPrice } from './calculators/roller-zebra.calculator
 import { calculateDoubleRollerPrice } from './calculators/double-roller.calculator';
 import { calculatePlissePrice } from './calculators/plisse.calculator';
 import { calculateFonPrice } from './calculators/fon.calculator';
+import { calculateBlackoutSunshadePrice } from './calculators/blackout-sunshade.calculator';
 import { calculateStringRusticPrice } from './calculators/string.calculator';
 import { calculateWoodenJalousiePrice } from './calculators/wooden-jalousie.calculator';
 
@@ -29,6 +30,9 @@ export function calculateCurtainPrice(
 
     case 'FON':
       return calculateFonPrice(input, settings);
+
+    case 'BLACKOUT_FON_SUNSHADE':
+      return calculateBlackoutSunshadePrice(input, settings);
 
     case 'STRING':
     case 'RUSTIC':

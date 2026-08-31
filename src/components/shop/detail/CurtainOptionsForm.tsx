@@ -332,8 +332,8 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
               )}
 
               <span className="text-[10px] text-slate-400 block mt-1">
-                {curtainType === 'TULLE' || curtainType === 'FON'
-                  ? 'Boy standart kumaş enine dahildir'
+                {curtainType === 'TULLE' || curtainType === 'FON' || curtainType === 'BLACKOUT_FON_SUNSHADE'
+                  ? 'Boy standart kumaş boyuna dahildir (atölye kesim ölçüsü için alınır)'
                   : `Min: ${minHeight} cm - Max: ${maxHeight} cm`}
               </span>
             </div>
@@ -346,6 +346,22 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
         <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
           2. DİKİM & MEKANİZMA SEÇENEKLERİ
         </h3>
+
+        {/* Karartma Fon ve Güneşlik Bilgilendirmesi */}
+        {curtainType === 'BLACKOUT_FON_SUNSHADE' && (
+          <div className="bg-slate-50 border border-slate-200 rounded-sm p-3.5 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+              <span className="w-2 h-2 rounded-full bg-[#1B84F8]" />
+              <span>Düz Karartma Fon & Güneşlik Dikimi</span>
+            </div>
+            <p className="text-xs text-slate-600">
+              Girdiğiniz en ölçüsü üst 10&apos;luk sayıya yuvarlanır ve kenar kıvırma payı olarak <strong>+20 cm</strong> eklenerek net kumaş metresi üzerinden hesaplanır. Boy fiyata dahil değildir.
+            </p>
+            <div className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-200 font-medium">
+              ✓ Korniş ruletleri takılı, ütülü ve montaja hazır şekilde kargolanır.
+            </div>
+          </div>
+        )}
 
         {/* Tül ve Fon Pile Seçimi */}
         {(curtainType === 'TULLE' || curtainType === 'FON') && (
