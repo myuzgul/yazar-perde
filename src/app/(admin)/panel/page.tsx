@@ -110,6 +110,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>('today');
+  const [hoveredDayIndex, setHoveredDayIndex] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/stats')
@@ -369,59 +370,138 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Son 7 Günlük Günlük Ciro Trend Grafiği */}
-          <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs flex flex-col justify-between space-y-4">
+          <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs flex flex-col justify-between space-y-5">
             <div>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                 <div>
                   <h2 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
                     <BarChart3 className="w-4 h-4 text-[#1B84F8]" />
                     <span>Son 7 Günlük Satış Trendi</span>
                   </h2>
-                  <p className="text-[11px] text-slate-500">Gün bazında sipariş ve ciro hareketleri</p>
+                  <p className="text-[11px] text-slate-500">Günlük ciro ve sipariş yoğunluğu</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 font-bold block uppercase">7 Gün Toplamı</span>
+                  <span className="text-xs font-black text-[#1B84F8]">
+                    ₺{stats?.periods.thisWeek.revenue.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) || '0,00'}
+                  </span>
                 </div>
               </div>
 
-              {/* Günlük Çubuklar */}
-              <div className="h-44 flex items-end justify-between gap-2 pt-4 pb-2 border-b border-slate-100">
+              {/* Seçili / Üzerine Gelinen Gün Bilgi Paneli */}
+              {(() => {
+                const activeDay = (hoveredDayIndex !== null && stats?.dailyTrend[hoveredDayIndex])
+                  ? stats.dailyTrend[hoveredDayIndex]
+                  : stats?.dailyTrend.find((d) => d.revenue > 0) || stats?.dailyTrend[stats.dailyTrend.length - 1];
+
+                return activeDay ? (
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 px-3 mb-3 flex items-center justify-between transition-all">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#1B84F8] animate-pulse" />
+                      <span className="text-xs font-bold text-slate-800">
+                        {activeDay.dayName} ({activeDay.dayDateStr})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-slate-500 font-medium">
+                        <strong>{activeDay.ordersCount}</strong> Sipariş ({activeDay.meters.toFixed(1)} m²)
+                      </span>
+                      <span className="font-black text-[#1B84F8] bg-blue-50 px-2 py-0.5 rounded-md">
+                        ₺{activeDay.revenue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Günlük Çubuk Grafik Alanı */}
+              <div className="relative h-48 pt-6 pb-2 border-b border-slate-100 flex items-end justify-between gap-2.5">
+                {/* Arka Plan Kılavuz Çizgileri */}
+                <div className="absolute inset-x-0 top-6 border-b border-dashed border-slate-100 pointer-events-none" />
+                <div className="absolute inset-x-0 top-1/2 border-b border-dashed border-slate-100 pointer-events-none" />
+
                 {stats?.dailyTrend && stats.dailyTrend.map((day, idx) => {
                   const barHeight = maxDailyRevenue > 0 ? (day.revenue / maxDailyRevenue) * 100 : 0;
+                  const isHovered = hoveredDayIndex === idx;
+                  const hasRevenue = day.revenue > 0;
+
                   return (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
-                      <span className="text-[9px] font-extrabold text-[#1B84F8] opacity-0 group-hover:opacity-100 transition truncate">
-                        ₺{day.revenue > 0 ? day.revenue.toFixed(0) : 0}
-                      </span>
-                      <div className="w-full flex items-end justify-center h-full">
+                    <div
+                      key={idx}
+                      onMouseEnter={() => setHoveredDayIndex(idx)}
+                      onMouseLeave={() => setHoveredDayIndex(null)}
+                      className="flex-1 flex flex-col items-center h-full justify-end cursor-pointer group relative z-10"
+                    >
+                      {/* Sütun Üstü Fiyat Etiketi (Kalıcı ve Net) */}
+                      {hasRevenue && (
+                        <div className={`mb-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-black transition-all shadow-xs ${
+                          isHovered 
+                            ? 'bg-[#1B84F8] text-white scale-110' 
+                            : 'bg-blue-50 text-[#1B84F8] border border-blue-200/80'
+                        }`}>
+                          ₺{day.revenue >= 1000 ? `${(day.revenue / 1000).toFixed(1)}k` : day.revenue.toFixed(0)}
+                        </div>
+                      )}
+
+                      {/* Çubuk (Bar) */}
+                      <div className="w-full flex items-end justify-center h-full max-h-32">
                         <div
-                          style={{ height: `${Math.max(barHeight, 6)}%` }}
-                          className={`w-4 sm:w-6 rounded-t-lg transition-all ${
-                            day.revenue > 0
+                          style={{ height: `${Math.max(barHeight, hasRevenue ? 14 : 6)}%` }}
+                          className={`w-full max-w-[28px] rounded-t-xl transition-all duration-300 ${
+                            isHovered
+                              ? 'bg-[#156cd1] ring-4 ring-blue-100 scale-x-105'
+                              : hasRevenue
                               ? 'bg-[#1B84F8] hover:bg-[#156cd1]'
                               : 'bg-slate-200 hover:bg-slate-300'
                           }`}
-                          title={`${day.dayName} (${day.dayDateStr}): ₺${day.revenue} - ${day.ordersCount} Sipariş`}
                         />
                       </div>
-                      <span className="text-[10px] font-bold text-slate-600 mt-1">{day.dayName}</span>
-                      <span className="text-[9px] text-slate-400">{day.dayDateStr}</span>
+
+                      {/* Gün ve Tarih Bilgisi */}
+                      <span className={`text-[11px] font-black mt-2 transition ${
+                        isHovered ? 'text-[#1B84F8]' : 'text-slate-800'
+                      }`}>
+                        {day.dayName}
+                      </span>
+                      <span className="text-[9px] font-semibold text-slate-400">
+                        {day.dayDateStr}
+                      </span>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Süreç Dağılım Mini Özeti */}
-            <div className="grid grid-cols-3 gap-2 text-center pt-2">
-              <div className="bg-slate-50 p-2 rounded-xl">
-                <span className="text-[9px] font-bold text-slate-400 block uppercase">Bekleyen</span>
-                <span className="text-xs font-black text-amber-600">{stats?.summary.pendingOrders || 0} Adet</span>
+            {/* Süreç Dağılım Sayaçları (Kompakt ve Şık) */}
+            <div className="grid grid-cols-3 gap-2.5 pt-1">
+              <div className="bg-amber-50/70 border border-amber-200/60 p-2.5 rounded-2xl flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-amber-800 block uppercase">Bekleyen</span>
+                  <span className="text-xs font-black text-amber-900">{stats?.summary.pendingOrders || 0} Adet</span>
+                </div>
               </div>
-              <div className="bg-slate-50 p-2 rounded-xl">
-                <span className="text-[9px] font-bold text-slate-400 block uppercase">Üretimde</span>
-                <span className="text-xs font-black text-blue-600">{stats?.summary.inProductionOrders || 0} Adet</span>
+
+              <div className="bg-blue-50/70 border border-blue-200/60 p-2.5 rounded-2xl flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                  <Scissors className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-blue-800 block uppercase">Üretimde</span>
+                  <span className="text-xs font-black text-blue-900">{stats?.summary.inProductionOrders || 0} Adet</span>
+                </div>
               </div>
-              <div className="bg-slate-50 p-2 rounded-xl">
-                <span className="text-[9px] font-bold text-slate-400 block uppercase">Kargoda</span>
-                <span className="text-xs font-black text-purple-600">{stats?.summary.shippedOrders || 0} Adet</span>
+
+              <div className="bg-purple-50/70 border border-purple-200/60 p-2.5 rounded-2xl flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                  <Truck className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-purple-800 block uppercase">Kargoda</span>
+                  <span className="text-xs font-black text-purple-900">{stats?.summary.shippedOrders || 0} Adet</span>
+                </div>
               </div>
             </div>
           </div>
