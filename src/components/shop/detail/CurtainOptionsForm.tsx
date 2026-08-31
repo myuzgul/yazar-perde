@@ -349,13 +349,16 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
 
         {/* Karartma Fon ve Güneşlik Bilgilendirmesi */}
         {curtainType === 'BLACKOUT_FON_SUNSHADE' && (
-          <div className="bg-slate-50 border border-slate-200 rounded-sm p-3.5 space-y-2">
+          <div className="bg-slate-50 border border-slate-200 rounded-sm p-4 space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
               <span className="w-2 h-2 rounded-full bg-[#1B84F8]" />
-              <span>Düz Karartma Fon & Güneşlik Dikimi</span>
+              <span>Tek Parça Gönderim: Ürünlerimiz tek parça (1 kanat) olarak üretilmektedir.</span>
             </div>
-            <p className="text-xs text-slate-600">
-              Girdiğiniz en ölçüsü üst 10&apos;luk sayıya yuvarlanır ve kenar kıvırma payı olarak <strong>+20 cm</strong> eklenerek net kumaş metresi üzerinden hesaplanır. Boy fiyata dahil değildir.
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Bu ürün kapama ve ışığı tamamen kesme amacıyla düz (pilesiz) olarak üretilmektedir.
+            </p>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Ürünler düz güneşlik formunda dikildiği için paket içeriğinde fon bağı bulunmamaktadır.
             </p>
             <div className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-200 font-medium">
               ✓ Korniş ruletleri takılı, ütülü ve montaja hazır şekilde kargolanır.
