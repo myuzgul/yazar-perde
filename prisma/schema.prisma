@@ -202,6 +202,7 @@ model Order {
   shippingFee     Float           @default(0)
   paymentFee      Float           @default(0)
   discountTotal   Float           @default(0)
+  couponCode      String?
   vatTotal        Float           @default(0)
   grandTotal      Float
 
@@ -331,4 +332,40 @@ model ProductReview {
   updatedAt     DateTime    @updatedAt
 
   @@map("product_reviews")
+}
+
+model Coupon {
+  id                    String        @id @default(cuid())
+  code                  String        @unique
+  title                 String?
+  description           String?
+  discountType          String        @default("PERCENTAGE") // PERCENTAGE | FIXED_AMOUNT | FREE_SHIPPING
+  discountValue         Float         // e.g. 10 (%10) or 150 (150 TL)
+  minOrderAmount        Float?        // Minimum cart total to apply coupon
+  maxDiscountAmount     Float?        // Cap for percentage discounts (e.g. max 500 TL)
+  usageLimit            Int?          // Total allowed usages across all users
+  usageCount            Int           @default(0)
+  perUserLimit          Int?          @default(1) // Max usages per customer email
+  startDate             DateTime?
+  endDate               DateTime?
+  isActive              Boolean       @default(true)
+  firstOrderOnly        Boolean       @default(false)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  usages                CouponUsage[]
+
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id          String    @id @default(cuid())
+  couponId    String
+  coupon      Coupon    @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  orderId     String?
+  userEmail   String
+  discount    Float
+  createdAt   DateTime  @default(now())
+
+  @@map("coupon_usages")
 }

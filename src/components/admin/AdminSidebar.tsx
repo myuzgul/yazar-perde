@@ -15,9 +15,9 @@ import {
   FolderTree, 
   Award, 
   Tag, 
-  Sparkles,
   FileText,
-  MessageSquare
+  MessageSquare,
+  Ticket
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -33,6 +33,7 @@ export default function AdminSidebar() {
   const menuItems = [
     { label: 'Dashboard & Raporlar', href: '/panel', icon: TrendingUp },
     { label: 'Sipariş Yönetimi', href: '/panel/siparisler', icon: ShoppingBag },
+    { label: 'Kuponlar & İndirim', href: '/panel/kuponlar', icon: Ticket },
     { label: 'Ürün Yönetimi', href: '/panel/urunler', icon: Layers },
     { label: 'Toplu Fiyat Güncelle', href: '/panel/urunler/toplu-guncelle', icon: Sparkles },
     { label: 'Kategoriler', href: '/panel/kategoriler', icon: FolderTree },

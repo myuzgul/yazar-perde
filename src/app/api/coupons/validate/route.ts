@@ -3,9 +3,14 @@ import prisma from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
   try {
-    const { code, subtotal, shippingFee = 0, userEmail } = await req.json();
+    const body = await req.json();
+    const { code, subtotal, shippingFee = 0, userEmail } = body;
+
     if (!code || typeof code !== 'string') {
-      return NextResponse.json({ success: false, error: 'Lütfen bir kupon kodu giriniz.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'Lütfen bir kupon kodu giriniz.' },
+        { status: 400 }
+      );
     }
 
     const cleanCode = code.trim().toUpperCase().replace(/\s+/g, '');
@@ -22,7 +27,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Tarih kontrolleri
+    // 1. Tarih Kontrolleri
     if (coupon.startDate && now < new Date(coupon.startDate)) {
       const startStr = new Date(coupon.startDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
       return NextResponse.json(
@@ -33,12 +38,12 @@ export async function POST(req: NextRequest) {
 
     if (coupon.endDate && now > new Date(coupon.endDate)) {
       return NextResponse.json(
-        { success: false, error: 'Bu kuponun son geçerlilik tarihi dolmuştur.' },
+        { success: false, error: 'Bu kuponun kullanım süresi (son geçerlilik tarihi) dolmuştur.' },
         { status: 400 }
       );
     }
 
-    // Toplam Kullanım Kotası
+    // 2. Toplam Kullanım Limiti Kontrolü
     if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
       return NextResponse.json(
         { success: false, error: 'Bu kuponun maksimum kullanım kotası dolmuştur.' },
@@ -46,19 +51,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Minimum Sepet Tutarı
+    // 3. Minimum Sepet Tutarı Kontrolü
     const cartSubtotal = Number(subtotal) || 0;
     if (coupon.minOrderAmount && cartSubtotal < coupon.minOrderAmount) {
       return NextResponse.json(
         {
           success: false,
-          error: `Bu kuponun geçerli olması için minimum sepet tutarı ₺${coupon.minOrderAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} olmalıdır.`,
+          error: `Bu kuponun geçerli olması için minimum sepet tutarı ₺${coupon.minOrderAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} olmalıdır. (Mevcut: ₺${cartSubtotal.toFixed(2)})`,
         },
         { status: 400 }
       );
     }
 
-    // Sadece İlk Sipariş Kontrolü
+    // 4. Sadece İlk Sipariş Kuralı Kontrolü
     if (coupon.firstOrderOnly && userEmail) {
       const existingOrderCount = await prisma.order.count({
         where: {
@@ -78,7 +83,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Kişi Başı Kullanım Limiti
+    // 5. Kullanıcı Başına Kullanım Limiti Kontrolü
     if (userEmail && coupon.perUserLimit) {
       const userUsageCount = await prisma.couponUsage.count({
         where: {
@@ -91,14 +96,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: `Bu kuponu daha önce kullandınız (Kişi başı limit: ${coupon.perUserLimit} adet).`,
+            error: `Bu kuponu daha önce kullandınız (Kişi başı kullanım hakkı: ${coupon.perUserLimit} adet).`,
           },
           { status: 400 }
         );
       }
     }
 
-    // İndirim Tutarı
+    // 6. İndirim Tutarının Hesaplanması
     let discountAmount = 0;
     let descriptionText = '';
 
@@ -106,7 +111,7 @@ export async function POST(req: NextRequest) {
       let calc = (cartSubtotal * coupon.discountValue) / 100;
       if (coupon.maxDiscountAmount && calc > coupon.maxDiscountAmount) {
         calc = coupon.maxDiscountAmount;
-        descriptionText = `%${coupon.discountValue} İndirim (Maks ₺${coupon.maxDiscountAmount})`;
+        descriptionText = `%${coupon.discountValue} İndirim (Maksimum ₺${coupon.maxDiscountAmount} ile sınırlandırıldı)`;
       } else {
         descriptionText = `%${coupon.discountValue} İndirim`;
       }
@@ -116,20 +121,26 @@ export async function POST(req: NextRequest) {
       descriptionText = `₺${coupon.discountValue} Sabit İndirim`;
     } else if (coupon.discountType === 'FREE_SHIPPING') {
       discountAmount = Number(shippingFee || 0);
-      descriptionText = 'Ücretsiz Kargo';
+      descriptionText = 'Ücretsiz Kargo Avantajı';
     }
 
     return NextResponse.json({
       success: true,
       data: {
+        couponId: coupon.id,
         code: coupon.code,
+        title: coupon.title,
         discountType: coupon.discountType,
-        value: coupon.discountValue,
+        discountValue: coupon.discountValue,
         discountAmount,
-        description: descriptionText,
+        descriptionText,
+        minOrderAmount: coupon.minOrderAmount,
+        maxDiscountAmount: coupon.maxDiscountAmount,
       },
+      message: `Tebrikler! '${coupon.code}' kuponu başarıyla uygulandı ve ₺${discountAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} indirim kazandınız.`,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || 'Kupon doğrulanamadı' }, { status: 500 });
+    console.error('Validate coupon error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

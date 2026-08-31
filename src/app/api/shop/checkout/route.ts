@@ -118,7 +118,40 @@ export async function POST(req: NextRequest) {
     const freeShippingThreshold = settings.free_shipping_threshold || 1500;
     const shippingFee = subtotal >= freeShippingThreshold ? 0 : 75;
     const paymentFee = paymentMethod === 'CASH_ON_DELIVERY' ? 35 : 0;
-    const grandTotal = Number((subtotal + shippingFee + paymentFee).toFixed(2));
+
+    // Kupon İndirimi Hesaplama
+    let discountTotal = 0;
+    let appliedCoupon: any = null;
+
+    if (body.couponCode && typeof body.couponCode === 'string') {
+      const cleanCoupon = body.couponCode.trim().toUpperCase().replace(/\s+/g, '');
+      const coupon = await prisma.coupon.findUnique({ where: { code: cleanCoupon } });
+      const now = new Date();
+
+      if (
+        coupon &&
+        coupon.isActive &&
+        (!coupon.startDate || now >= new Date(coupon.startDate)) &&
+        (!coupon.endDate || now <= new Date(coupon.endDate)) &&
+        (!coupon.usageLimit || coupon.usageCount < coupon.usageLimit) &&
+        (!coupon.minOrderAmount || subtotal >= coupon.minOrderAmount)
+      ) {
+        if (coupon.discountType === 'PERCENTAGE') {
+          let calc = (subtotal * coupon.discountValue) / 100;
+          if (coupon.maxDiscountAmount && calc > coupon.maxDiscountAmount) {
+            calc = coupon.maxDiscountAmount;
+          }
+          discountTotal = Number(calc.toFixed(2));
+        } else if (coupon.discountType === 'FIXED_AMOUNT') {
+          discountTotal = Number(Math.min(coupon.discountValue, subtotal).toFixed(2));
+        } else if (coupon.discountType === 'FREE_SHIPPING') {
+          discountTotal = shippingFee;
+        }
+        appliedCoupon = coupon;
+      }
+    }
+
+    const grandTotal = Math.max(0, Number((subtotal + shippingFee + paymentFee - discountTotal).toFixed(2)));
 
     const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
@@ -136,7 +169,8 @@ export async function POST(req: NextRequest) {
         subtotal,
         shippingFee,
         paymentFee,
-        discountTotal: 0,
+        discountTotal,
+        couponCode: appliedCoupon ? appliedCoupon.code : null,
         grandTotal,
         status: 'PENDING',
         paymentMethod: paymentMethod === 'CREDIT_CARD' ? 'PAYTR_CC' : paymentMethod,
@@ -180,6 +214,23 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // Kupon Kullanım Kaydı ve Sayacı Artırma
+    if (appliedCoupon) {
+      prisma.coupon.update({
+        where: { id: appliedCoupon.id },
+        data: { usageCount: { increment: 1 } },
+      }).catch(console.error);
+
+      prisma.couponUsage.create({
+        data: {
+          couponId: appliedCoupon.id,
+          orderId: order.id,
+          userEmail: cleanEmail,
+          discount: discountTotal,
+        },
+      }).catch(console.error);
+    }
 
     // Asenkron Bildirim Tetikleme (SMS & E-posta)
     triggerOrderNotification({

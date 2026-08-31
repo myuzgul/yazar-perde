@@ -14,7 +14,8 @@ import {
   ArrowLeft, 
   ChevronRight,
   UserPlus,
-  CheckCircle2
+  CheckCircle2,
+  Tag
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -61,6 +62,12 @@ export default function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Kupon State'leri
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState<{ code: string; amount: number; desc: string } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
   useEffect(() => {
     fetch('/api/auth/me')
       .then((res) => res.json())
@@ -76,10 +83,44 @@ export default function CheckoutPage() {
       .catch(() => {});
   }, []);
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsApplyingCoupon(true);
+    setCouponError('');
+
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode,
+          subtotal,
+          userEmail: email || currentUser?.email,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCouponDiscount({
+          code: data.data.code,
+          amount: data.data.discountAmount,
+          desc: data.data.descriptionText,
+        });
+        setCouponCode('');
+      } else {
+        setCouponError(data.error || 'Geçersiz kupon kodu');
+      }
+    } catch {
+      setCouponError('Kupon uygulanırken hata oluştu');
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
   const freeShippingThreshold = 1500;
   const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 75;
   const codFee = paymentMethod === 'CASH_ON_DELIVERY' ? 35 : 0;
-  const grandTotal = subtotal + shippingFee + codFee;
+  const discountAmount = couponDiscount ? couponDiscount.amount : 0;
+  const grandTotal = Math.max(0, subtotal - discountAmount + shippingFee + codFee);
 
   // Sipariş başarıyla oluşturulduğunda veya gönderilirken yönlendirme ekranı göster (Sepetiniz Boş çıkmasını engeller)
   if (isSubmitting || isSuccess) {
@@ -148,6 +189,7 @@ export default function CheckoutPage() {
           items,
           createAccount,
           accountPassword,
+          couponCode: couponDiscount?.code || null,
         }),
       });
 
@@ -517,12 +559,66 @@ export default function CheckoutPage() {
               ))}
             </div>
 
+            {/* Kupon Kodu Alanı */}
+            <div className="pt-3 border-t border-slate-200">
+              {couponDiscount ? (
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-sm flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <div>
+                      <span className="font-mono font-bold text-xs text-emerald-900 block">{couponDiscount.code}</span>
+                      <span className="text-[10px] text-emerald-700">{couponDiscount.desc}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCouponDiscount(null)}
+                    className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
+                  >
+                    Kaldır
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder="İndirim Kupon Kodu"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase().replace(/\s+/g, ''))}
+                        className="w-full bg-white border border-slate-300 rounded-sm pl-7 pr-2 py-1.5 text-xs uppercase font-mono placeholder:normal-case focus:outline-hidden focus:border-[#1B84F8]"
+                      />
+                      <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isApplyingCoupon || !couponCode.trim()}
+                      onClick={handleApplyCoupon}
+                      className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white px-3 py-1.5 rounded-sm text-xs font-bold transition cursor-pointer"
+                    >
+                      {isApplyingCoupon ? '...' : 'Uygula'}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="text-[11px] font-semibold text-red-600 animate-in fade-in">{couponError}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Fiyat Kırılımı */}
             <div className="pt-3 border-t border-slate-200 space-y-2 text-xs text-slate-600">
               <div className="flex justify-between">
                 <span>Ara Toplam:</span>
                 <span className="font-bold text-slate-900">₺{subtotal.toFixed(2)}</span>
               </div>
+              {couponDiscount && (
+                <div className="flex justify-between text-emerald-600 font-bold">
+                  <span>Kupon İndirimi ({couponDiscount.code}):</span>
+                  <span>-₺{couponDiscount.amount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Kargo Bedeli:</span>
                 {shippingFee === 0 ? (
