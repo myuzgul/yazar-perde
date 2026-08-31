@@ -86,15 +86,16 @@ export async function PUT(req: NextRequest) {
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
     if (adminNote !== undefined) updateData.adminNote = adminNote;
 
-    const timelineCreate = status
-      ? {
-          create: {
-            status,
-            title: timelineTitle || `Sipariş Durumu: ${status}`,
-            description: timelineDesc || `Yönetici (${admin.email}) tarafından güncellendi.`,
-          },
-        }
-      : undefined;
+    let timelineCreate = undefined;
+    if (timelineTitle || status) {
+      timelineCreate = {
+        create: {
+          status: status || 'UPDATED',
+          title: timelineTitle || `Sipariş Durumu: ${status}`,
+          description: timelineDesc || `Yönetici (${admin.email}) tarafından güncellendi.`,
+        },
+      };
+    }
 
     const updated = await prisma.order.update({
       where: { id },

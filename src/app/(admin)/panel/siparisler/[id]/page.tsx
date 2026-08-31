@@ -51,6 +51,40 @@ export default function AdminOrderDetailPage() {
     fetchOrder();
   }, [id]);
 
+  const handleApproveBankTransfer = async () => {
+    setIsUpdating(true);
+    setSaveSuccess(false);
+
+    try {
+      const newOrderStatus = status === 'PENDING' ? 'CONFIRMED' : status;
+      const res = await fetch('/api/admin/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          status: newOrderStatus,
+          paymentStatus: 'PAID',
+          adminNote,
+          timelineTitle: 'Havale / EFT Ödemesi Onaylandı',
+          timelineDesc: 'Banka hesabına transfer tutarının geçtiği yönetici tarafından teyit edildi.',
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setOrder(data.data);
+        setPaymentStatus('PAID');
+        if (newOrderStatus !== status) setStatus(newOrderStatus);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      }
+    } catch {
+      alert('Ödeme onaylama sırasında hata oluştu');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleUpdate = async () => {
     setIsUpdating(true);
     setSaveSuccess(false);
@@ -132,11 +166,13 @@ export default function AdminOrderDetailPage() {
                     {order.paymentMethod === 'BANK_TRANSFER' && 'Havale / EFT'}
                     {order.paymentMethod === 'CASH_ON_DELIVERY' && 'Kapıda Ödeme'}
                   </span>
-                  <span className={`ml-1 text-[9px] px-1 py-0.2 rounded font-black ${
-                    order.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {order.paymentStatus === 'PAID' ? 'ÖDENDİ' : 'BEKLİYOR'}
-                  </span>
+                  {order.paymentMethod === 'BANK_TRANSFER' && (
+                    <span className={`ml-1 text-[9px] px-1.5 py-0.2 rounded font-black ${
+                      order.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {order.paymentStatus === 'PAID' ? 'ÖDENDİ' : 'ÖDEME BEKLİYOR'}
+                    </span>
+                  )}
                 </span>
 
                 {order.isPrinted ? (
@@ -294,13 +330,15 @@ export default function AdminOrderDetailPage() {
                       </span>
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-black border ${
-                    order.paymentStatus === 'PAID'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}>
-                    {order.paymentStatus === 'PAID' ? '✓ Ödeme Alındı' : '⏳ Ödeme Bekliyor'}
-                  </span>
+                  {order.paymentMethod === 'BANK_TRANSFER' && (
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-black border ${
+                      order.paymentStatus === 'PAID'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {order.paymentStatus === 'PAID' ? '✓ Ödeme Alındı' : '⏳ Ödeme Bekliyor'}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -346,6 +384,24 @@ export default function AdminOrderDetailPage() {
                 Sipariş Yönetim Durumu
               </h3>
 
+              {/* Havale Siparişi Hızlı Onay Butonu */}
+              {order.paymentMethod === 'BANK_TRANSFER' && paymentStatus !== 'PAID' && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
+                  <span className="text-[11px] font-black text-amber-900 block">
+                    ⚠️ Havale / EFT Ödemesi Bekleniyor
+                  </span>
+                  <button
+                    type="button"
+                    disabled={isUpdating}
+                    onClick={handleApproveBankTransfer}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white py-2.5 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Ödeme Alındı (Havale Onayla)</span>
+                  </button>
+                </div>
+              )}
+
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Sipariş Durumu</label>
                 <select
@@ -362,19 +418,28 @@ export default function AdminOrderDetailPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Ödeme Durumu</label>
-                <select
-                  value={paymentStatus}
-                  onChange={(e) => setPaymentStatus(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-900"
-                >
-                  <option value="PENDING">Ödeme Bekliyor</option>
-                  <option value="PAID">Ödendi (Tahsil Edildi)</option>
-                  <option value="FAILED">Başarısız / İptal</option>
-                  <option value="REFUNDED">İade Edildi</option>
-                </select>
-              </div>
+              {/* ÖDEME DURUMU: YALNIZCA HAVALE/EFT SİPARİŞLERİNDE GÖSTERİLİR */}
+              {order.paymentMethod === 'BANK_TRANSFER' && (
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Havale Ödeme Durumu
+                  </label>
+                  <select
+                    value={paymentStatus}
+                    onChange={(e) => setPaymentStatus(e.target.value)}
+                    className={`w-full border rounded-xl px-3 py-2 font-bold ${
+                      paymentStatus === 'PAID'
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                        : 'bg-amber-50 border-amber-300 text-amber-900'
+                    }`}
+                  >
+                    <option value="PENDING">⏳ Ödeme Bekliyor</option>
+                    <option value="PAID">✓ Ödendi (Tahsil Edildi)</option>
+                    <option value="FAILED">✗ Başarısız / İptal</option>
+                    <option value="REFUNDED">↩ İade Edildi</option>
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Atölye / Yönetici Notu</label>

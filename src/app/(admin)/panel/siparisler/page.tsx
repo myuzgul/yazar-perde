@@ -136,17 +136,43 @@ export default function AdminOrdersPage() {
   };
 
   const getPaymentBadge = (method: string, pStatus: string) => {
-    const isPaid = pStatus === 'PAID';
+    if (method === 'BANK_TRANSFER') {
+      const isPaid = pStatus === 'PAID';
+      return (
+        <div className="flex flex-col text-[10px]">
+          <span className="font-bold text-slate-800">Havale / EFT</span>
+          {isPaid ? (
+            <span className="text-emerald-600 font-extrabold flex items-center gap-0.5">
+              ● Ödendi
+            </span>
+          ) : (
+            <span className="text-amber-700 font-extrabold bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[9px] w-fit mt-0.5">
+              ○ Ödeme Bekliyor
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    if (method === 'PAYTR_CC') {
+      return (
+        <div className="flex flex-col text-[10px]">
+          <span className="font-bold text-slate-800">Kredi Kartı (PayTR)</span>
+        </div>
+      );
+    }
+
+    if (method === 'CASH_ON_DELIVERY') {
+      return (
+        <div className="flex flex-col text-[10px]">
+          <span className="font-bold text-slate-800">Kapıda Ödeme</span>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col text-[10px]">
-        <span className="font-bold text-slate-800">
-          {method === 'PAYTR_CC' && 'Kredi Kartı (PayTR)'}
-          {method === 'BANK_TRANSFER' && 'Havale / EFT'}
-          {method === 'CASH_ON_DELIVERY' && 'Kapıda Ödeme'}
-        </span>
-        <span className={isPaid ? 'text-emerald-600 font-extrabold' : 'text-amber-600 font-extrabold'}>
-          {isPaid ? '● Ödendi' : '○ Ödeme Bekliyor'}
-        </span>
+        <span className="font-bold text-slate-800">{method}</span>
       </div>
     );
   };
