@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import Link from 'next/link';
 import { 
@@ -16,10 +16,13 @@ import {
   Save,
   MessageSquare,
   CreditCard,
-  Banknote
+  Banknote,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function AdminOrderDetailPage() {
+  const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
 
@@ -30,6 +33,8 @@ export default function AdminOrderDetailPage() {
   const [adminNote, setAdminNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchOrder = () => {
     if (!id) return;
@@ -116,6 +121,25 @@ export default function AdminOrderDetailPage() {
     }
   };
 
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/orders?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        router.push('/panel/siparisler');
+      } else {
+        alert(data.error || 'Silme işlemi başarısız');
+        setIsDeleting(false);
+      }
+    } catch {
+      alert('Silme sırasında hata oluştu');
+      setIsDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col lg:flex-row bg-slate-100 font-sans">
@@ -142,7 +166,7 @@ export default function AdminOrderDetailPage() {
       <AdminSidebar />
 
       <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl">
-        {/* Üst Bar: Geri Dön, Başlık & İş Kağıdı Yazdır Butonu */}
+        {/* Üst Bar: Geri Dön, Başlık & İş Kağıdı Yazdır / Sil Butonları */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <Link
@@ -204,15 +228,69 @@ export default function AdminOrderDetailPage() {
             </div>
           </div>
 
-          <Link
-            href={`/panel/siparisler/${order.id}/yazdir`}
-            target="_blank"
-            className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition"
-          >
-            <Printer className="w-4 h-4" />
-            <span>İş Kağıdını Yazdır {order.isPrinted && '(Tekrar)'}</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer"
+              title="Siparişi Sil"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Siparişi Sil</span>
+            </button>
+
+            <Link
+              href={`/panel/siparisler/${order.id}/yazdir`}
+              target="_blank"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition"
+            >
+              <Printer className="w-4 h-4" />
+              <span>İş Kağıdını Yazdır {order.isPrinted && '(Tekrar)'}</span>
+            </Link>
+          </div>
         </div>
+
+        {/* SİPARİŞ SİLME ONAY MODALI */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95">
+              <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+
+              <div className="text-center space-y-2">
+                <h3 className="text-base font-black text-slate-900">
+                  Siparişi Silmek İstediğinize Emin Misiniz?
+                </h3>
+                <p className="text-xs text-slate-500">
+                  <strong className="font-mono text-slate-900">#{order.orderNumber}</strong> numaralı sipariş ve içerisindeki tüm perde kalemleri, müşteri teslimat ve geçmiş hareket kayıtlarıyla birlikte kalıcı olarak silinecektir.
+                </p>
+                <div className="p-2.5 bg-red-50 text-red-800 rounded-xl text-[11px] font-bold">
+                  ⚠️ Bu işlem geri alınamaz!
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setShowDeleteModal(false)}
+                  className="w-full py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-lg shadow-red-600/30 transition cursor-pointer disabled:opacity-50"
+                >
+                  {isDeleting ? 'Siliniyor...' : 'Evet, Siparişi Sil'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {saveSuccess && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2.5 rounded-2xl text-xs font-bold mb-6 animate-in fade-in">

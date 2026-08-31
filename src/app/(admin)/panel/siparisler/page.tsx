@@ -23,7 +23,10 @@ import {
   Layers,
   FileText,
   MessageSquare,
-  StickyNote
+  StickyNote,
+  Trash2,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
@@ -35,6 +38,11 @@ export default function AdminOrdersPage() {
   const [selectedPrintFilter, setSelectedPrintFilter] = useState<'ALL' | 'NOT_PRINTED' | 'PRINTED'>('ALL');
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // Silme Onay Modal State'leri
+  const [orderToDelete, setOrderToDelete] = useState<{ id: string; orderNumber: string } | null>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isDeletingLoading, setIsDeletingLoading] = useState(false);
 
   const fetchOrders = () => {
     setLoading(true);
@@ -96,6 +104,56 @@ export default function AdminOrdersPage() {
       }
     } catch (e) {
       alert('İşlem sırasında hata oluştu.');
+    }
+  };
+
+  const handleConfirmDeleteSingle = async () => {
+    if (!orderToDelete) return;
+    setIsDeletingLoading(true);
+    try {
+      const res = await fetch(`/api/admin/orders?id=${orderToDelete.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionSuccess(`Sipariş #${orderToDelete.orderNumber} başarıyla silindi.`);
+        setTimeout(() => setActionSuccess(null), 3500);
+        setOrderToDelete(null);
+        setSelectedOrderIds((prev) => prev.filter((id) => id !== orderToDelete.id));
+        fetchOrders();
+      } else {
+        alert(data.error || 'Silme işlemi başarısız');
+      }
+    } catch {
+      alert('Silme sırasında bir hata oluştu');
+    } finally {
+      setIsDeletingLoading(false);
+    }
+  };
+
+  const handleConfirmDeleteBulk = async () => {
+    if (selectedOrderIds.length === 0) return;
+    setIsDeletingLoading(true);
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: selectedOrderIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionSuccess(`${selectedOrderIds.length} adet sipariş başarıyla silindi.`);
+        setTimeout(() => setActionSuccess(null), 3500);
+        setIsBulkDeleting(false);
+        setSelectedOrderIds([]);
+        fetchOrders();
+      } else {
+        alert(data.error || 'Toplu silme işlemi başarısız');
+      }
+    } catch {
+      alert('Silme sırasında bir hata oluştu');
+    } finally {
+      setIsDeletingLoading(false);
     }
   };
 
@@ -446,6 +504,14 @@ export default function AdminOrdersPage() {
                             >
                               <Printer className="w-3.5 h-3.5" />
                             </Link>
+                            <button
+                              type="button"
+                              onClick={() => setOrderToDelete({ id: order.id, orderNumber: order.orderNumber })}
+                              className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition cursor-pointer"
+                              title="Siparişi Sil"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -487,11 +553,104 @@ export default function AdminOrdersPage() {
 
             <button
               type="button"
+              onClick={() => setIsBulkDeleting(true)}
+              className="bg-red-600 hover:bg-red-500 text-white px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-red-600/30"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Seçilenleri Sil ({selectedOrderIds.length})</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setSelectedOrderIds([])}
               className="text-slate-400 hover:text-white text-xs font-semibold px-2 py-1 transition cursor-pointer"
             >
               Seçimi Kaldır
             </button>
+          </div>
+        )}
+
+        {/* TEKİL SİPARİŞ SİLME ONAY MODALI */}
+        {orderToDelete && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95">
+              <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+
+              <div className="text-center space-y-2">
+                <h3 className="text-base font-black text-slate-900">
+                  Siparişi Silmek İstediğinize Emin Misiniz?
+                </h3>
+                <p className="text-xs text-slate-500">
+                  <strong className="font-mono text-slate-900">#{orderToDelete.orderNumber}</strong> numaralı sipariş ve içerisindeki tüm perde kalemleri, adres ve geçmiş bilgileriyle birlikte kalıcı olarak silinecektir.
+                </p>
+                <div className="p-2.5 bg-red-50 text-red-800 rounded-xl text-[11px] font-bold">
+                  ⚠️ Bu işlem geri alınamaz!
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingLoading}
+                  onClick={() => setOrderToDelete(null)}
+                  className="w-full py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingLoading}
+                  onClick={handleConfirmDeleteSingle}
+                  className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-lg shadow-red-600/30 transition cursor-pointer disabled:opacity-50"
+                >
+                  {isDeletingLoading ? 'Siliniyor...' : 'Evet, Siparişi Sil'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ÇOKLU / TOPLU SİPARİŞ SİLME ONAY MODALI */}
+        {isBulkDeleting && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95">
+              <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+
+              <div className="text-center space-y-2">
+                <h3 className="text-base font-black text-slate-900">
+                  {selectedOrderIds.length} Siparişi Toplu Sil
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Seçtiğiniz <strong className="text-slate-900">{selectedOrderIds.length} adet</strong> sipariş ve bu siparişlere ait tüm kalemler kalıcı olarak sistemden silinecektir.
+                </p>
+                <div className="p-2.5 bg-red-50 text-red-800 rounded-xl text-[11px] font-bold">
+                  ⚠️ Bu işlem geri alınamaz!
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingLoading}
+                  onClick={() => setIsBulkDeleting(false)}
+                  className="w-full py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingLoading}
+                  onClick={handleConfirmDeleteBulk}
+                  className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-lg shadow-red-600/30 transition cursor-pointer disabled:opacity-50"
+                >
+                  {isDeletingLoading ? 'Siliniyor...' : `Evet, ${selectedOrderIds.length} Siparişi Sil`}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>

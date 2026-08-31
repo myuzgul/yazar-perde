@@ -136,3 +136,50 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const admin = await getAdminSession();
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Yetkisiz erişim' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    let orderIds: string[] = [];
+
+    if (id) {
+      orderIds = [id];
+    } else {
+      try {
+        const body = await req.json();
+        if (Array.isArray(body.orderIds)) {
+          orderIds = body.orderIds;
+        } else if (body.orderId || body.id) {
+          orderIds = [body.orderId || body.id];
+        }
+      } catch {}
+    }
+
+    if (orderIds.length === 0) {
+      return NextResponse.json({ success: false, error: 'Silinecek sipariş ID belirtilmedi' }, { status: 400 });
+    }
+
+    // Cascade onDelete sayesinde bağlı item, address ve timeline otomatik silinir
+    const result = await prisma.order.deleteMany({
+      where: {
+        id: { in: orderIds },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `${result.count} adet sipariş başarıyla silindi.`,
+      deletedCount: result.count,
+    });
+  } catch (error: any) {
+    console.error('Delete order error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
