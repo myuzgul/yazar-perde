@@ -14,7 +14,9 @@ import {
   Building2, 
   FileText, 
   Save,
-  MessageSquare
+  MessageSquare,
+  CreditCard,
+  Banknote
 } from 'lucide-react';
 
 export default function AdminOrderDetailPage() {
@@ -121,6 +123,22 @@ export default function AdminOrderDetailPage() {
                 <span className="bg-blue-50 text-[#1B84F8] text-[10px] font-extrabold px-2 py-0.5 rounded">
                   {order.status}
                 </span>
+
+                {/* Ödeme Yöntemi & Durum Rozeti */}
+                <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[10px] font-extrabold px-2.5 py-0.5 rounded flex items-center gap-1.5">
+                  <CreditCard className="w-3 h-3 text-[#1B84F8]" />
+                  <span>
+                    {order.paymentMethod === 'PAYTR_CC' && 'Kredi Kartı (PayTR)'}
+                    {order.paymentMethod === 'BANK_TRANSFER' && 'Havale / EFT'}
+                    {order.paymentMethod === 'CASH_ON_DELIVERY' && 'Kapıda Ödeme'}
+                  </span>
+                  <span className={`ml-1 text-[9px] px-1 py-0.2 rounded font-black ${
+                    order.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {order.paymentStatus === 'PAID' ? 'ÖDENDİ' : 'BEKLİYOR'}
+                  </span>
+                </span>
+
                 {order.isPrinted ? (
                   <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1">
                     <Printer className="w-3 h-3 text-emerald-600" />
@@ -261,6 +279,28 @@ export default function AdminOrderDetailPage() {
                 <div className="flex justify-between pt-2 border-t border-slate-200 text-sm font-black text-slate-900">
                   <span>Genel Toplam:</span>
                   <span className="text-[#1B84F8]">₺{order.grandTotal.toFixed(2)}</span>
+                </div>
+
+                {/* Ödeme Yöntemi Kartı */}
+                <div className="mt-3 p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-[#1B84F8]" />
+                    <div>
+                      <span className="text-[10px] text-slate-500 font-bold block uppercase">Ödeme Yöntemi</span>
+                      <span className="text-xs font-black text-slate-900">
+                        {order.paymentMethod === 'PAYTR_CC' && 'Kredi Kartı (PayTR Güvenli Ödeme)'}
+                        {order.paymentMethod === 'BANK_TRANSFER' && 'Banka Havalesi / EFT'}
+                        {order.paymentMethod === 'CASH_ON_DELIVERY' && 'Kapıda Nakit / Kredi Kartı'}
+                      </span>
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-black border ${
+                    order.paymentStatus === 'PAID'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {order.paymentStatus === 'PAID' ? '✓ Ödeme Alındı' : '⏳ Ödeme Bekliyor'}
+                  </span>
                 </div>
               </div>
             </div>

@@ -295,6 +295,7 @@ export default function AdminOrdersPage() {
                     <th className="py-3 px-4">Müşteri</th>
                     <th className="py-3 px-4">Kalemler</th>
                     <th className="py-3 px-4">Tutar</th>
+                    <th className="py-3 px-4">Ödeme Yöntemi</th>
                     <th className="py-3 px-4">Yazdırma Durumu</th>
                     <th className="py-3 px-4">Sipariş Durumu</th>
                     <th className="py-3 px-4">Tarih</th>
@@ -347,6 +348,11 @@ export default function AdminOrdersPage() {
 
                         <td className="py-3 px-4 font-black text-slate-900">
                           ₺{order.grandTotal.toFixed(2)}
+                        </td>
+
+                        {/* ÖDEME YÖNTEMİ & DURUMU */}
+                        <td className="py-3 px-4">
+                          {getPaymentBadge(order.paymentMethod, order.paymentStatus)}
                         </td>
 
                         {/* YAZDIRMA DURUMU */}
