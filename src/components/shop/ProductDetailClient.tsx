@@ -36,6 +36,8 @@ interface ProductData {
   brand: { id: string; name: string; logoUrl: string | null } | null;
   tag: { id: string; name: string; badgeColor: string } | null;
   images: ProductImage[];
+  mountingVideoUrl?: string | null;
+  mountingGuideHtml?: string | null;
 }
 
 interface ProductDetailClientProps {
