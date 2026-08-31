@@ -23,22 +23,27 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   };
 }
 
+import { getSystemSettings } from '@/lib/settings';
+
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
 
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: {
-      category: true,
-      brand: true,
-      tag: true,
-      images: { orderBy: { sortOrder: 'asc' } },
-      reviews: {
-        where: { isApproved: true },
-        orderBy: { createdAt: 'desc' },
+  const [product, settings] = await Promise.all([
+    prisma.product.findUnique({
+      where: { slug },
+      include: {
+        category: true,
+        brand: true,
+        tag: true,
+        images: { orderBy: { sortOrder: 'asc' } },
+        reviews: {
+          where: { isApproved: true },
+          orderBy: { createdAt: 'desc' },
+        },
       },
-    },
-  });
+    }),
+    getSystemSettings(),
+  ]);
 
   if (!product || !product.isActive) {
     notFound();
@@ -59,6 +64,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     <ProductDetailClient
       product={product as any}
       similarProducts={similarProducts}
+      initialSettings={settings}
     />
   );
 }

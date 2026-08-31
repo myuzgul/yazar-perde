@@ -43,10 +43,21 @@ interface ProductData {
 interface ProductDetailClientProps {
   product: ProductData;
   similarProducts: any[];
+  initialSettings?: any;
 }
 
-export default function ProductDetailClient({ product, similarProducts }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, similarProducts, initialSettings }: ProductDetailClientProps) {
   const { addItem } = useCart();
+  const [settings, setSettings] = useState<any>(initialSettings || DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data) setSettings(d.data);
+      })
+      .catch(() => {});
+  }, []);
 
   const [width, setWidth] = useState<number>(product.minWidth > 100 ? product.minWidth : 120);
   const [height, setHeight] = useState<number>(product.minHeight > 100 ? product.minHeight : 220);
@@ -92,7 +103,7 @@ export default function ProductDetailClient({ product, similarProducts }: Produc
           withRenso,
           vatRate: product.vatRate,
         },
-        DEFAULT_SETTINGS
+        settings
       );
       setCalcResult(result);
     } catch (err) {
@@ -101,7 +112,7 @@ export default function ProductDetailClient({ product, similarProducts }: Produc
   }, [
     product, width, height, quantity, tullePleatType, mechanismDirection,
     caseType, chainType, bracketType, skirtCut, withBeads, rollerType,
-    mountingType, fonWingType, fonMountingType, withRenso
+    mountingType, fonWingType, fonMountingType, withRenso, settings
   ]);
 
   const handleAddToCart = () => {
@@ -220,6 +231,7 @@ export default function ProductDetailClient({ product, similarProducts }: Produc
             setFonMountingType={setFonMountingType}
             withRenso={withRenso}
             setWithRenso={setWithRenso}
+            settings={settings}
           />
 
           {/* Dinamik Fiyat ve Sepete Ekle Kutusu */}

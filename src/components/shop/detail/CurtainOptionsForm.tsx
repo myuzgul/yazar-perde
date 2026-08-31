@@ -37,6 +37,7 @@ interface CurtainOptionsFormProps {
   setFonMountingType: (v: 'CORNICE' | 'RUSTIC_RING' | 'RUSTIC_ROD_POCKET') => void;
   withRenso: boolean;
   setWithRenso: (v: boolean) => void;
+  settings?: any;
 }
 
 interface PreviewModalData {
@@ -58,7 +59,25 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     withBeads, setWithBeads, rollerType, setRollerType,
     mountingType, setMountingType, fonWingType, setFonWingType,
     fonMountingType, setFonMountingType, withRenso, setWithRenso,
+    settings,
   } = props;
+
+  // Dinamik Katsayı ve Fiyat Değerleri
+  const s_pile_price = settings?.tulle_s_pile_extra_price ?? 60;
+  const american_pile_price = settings?.tulle_american_pile_extra_price ?? 60;
+  const kruvaze_price = settings?.tulle_kruvaze_mechanism_price ?? 100;
+  const closed_case_price = settings?.closed_case_sqm_price ?? 30;
+  const metal_chain_price = settings?.metal_chain_extra_price ?? 100;
+  const metal_ceiling_price = settings?.metal_ceiling_bracket_step_price ?? 5;
+  const metal_ceiling_cm = settings?.metal_ceiling_bracket_step_cm ?? 50;
+  const l_bracket_price = settings?.l_bracket_wall_step_price ?? 10;
+  const l_bracket_cm = settings?.l_bracket_wall_step_cm ?? 50;
+  const skirt_cut_price = settings?.skirt_cut_sqm_price ?? 30;
+  const bead_price = settings?.bead_sqm_price ?? 40;
+  const blackout_price = settings?.blackout_sqm_price ?? 250;
+  const plisse_hook_price = settings?.plisse_hook_extra_price ?? 50;
+  const plisse_adhesive_price = settings?.plisse_adhesive_extra_sqm_price ?? 100;
+  const renso_price = settings?.renso_piece_price ?? 100;
 
   // Akıllı Input String State
   const [widthInput, setWidthInput] = useState<string>(String(width || 120));
@@ -341,12 +360,12 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
               <option value="PLEAT_1X3">1x3 Sık Pile</option>
               {curtainType === 'TULLE' && (
                 <>
-                  <option value="KRUVAZE_MECHANISM">Kruvaze (Mekanizmalı)</option>
+                  <option value="KRUVAZE_MECHANISM">Kruvaze (Mekanizmalı) (+{kruvaze_price} TL)</option>
                   <option value="KRUVAZE_ROPE">Kruvaze (İple Toplamalı)</option>
                 </>
               )}
-              <option value="S_PLEAT">S Pile</option>
-              <option value="AMERICAN_PLEAT">Amerikan Pile</option>
+              <option value="S_PLEAT">S Pile (+{s_pile_price} TL/m)</option>
+              <option value="AMERICAN_PLEAT">Amerikan Pile (+{american_pile_price} TL/m)</option>
             </select>
 
             {/* Görsel Önizleme Küçük Kartları */}
@@ -446,7 +465,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                   onChange={(e) => setWithRenso(e.target.checked)}
                   className="w-3.5 h-3.5 rounded-sm border-slate-300 text-[#1B84F8]"
                 />
-                <span>Renso (Fon Kol Bağı Demiri) İstiyorum (+{fonWingType === 'DOUBLE_WING' ? '200 TL / 2 Adet' : '100 TL / 1 Adet'})</span>
+                <span>Renso (Fon Kol Bağı Demiri) İstiyorum (+{fonWingType === 'DOUBLE_WING' ? `${renso_price * 2} TL / 2 Adet` : `${renso_price} TL / 1 Adet`})</span>
               </label>
               <button
                 type="button"
@@ -480,7 +499,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                   className="w-full border border-slate-300 rounded-sm py-2 px-3 text-xs font-semibold text-slate-900 bg-white"
                 >
                   <option value="NORMAL_ROLLER">Normal Stor Perde (Tül Rengine Uygun)</option>
-                  <option value="BLACKOUT_ROLLER">Blackout Karartma Stor (+250 TL/m²)</option>
+                  <option value="BLACKOUT_ROLLER">Blackout Karartma Stor (+{blackout_price} TL/m²)</option>
                 </select>
               </div>
             )}
@@ -506,7 +525,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                   className="w-full border border-slate-300 rounded-sm py-2 px-3 text-xs font-semibold text-slate-900 bg-white"
                 >
                   <option value="OPEN">Açık Kasa (Standart)</option>
-                  <option value="CLOSED">Kapalı Alüminyum Kasa (+30 TL/m²)</option>
+                  <option value="CLOSED">Kapalı Alüminyum Kasa (+{closed_case_price} TL/m²)</option>
                 </select>
               </div>
             </div>
@@ -539,7 +558,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
               >
                 <option value="PLASTIC">Plastik Zincir (Standart)</option>
                 <option value="METAL">
-                  Metal Zincir (+{curtainType === 'DOUBLE_ROLLER' ? '200 TL / Çift' : '100 TL'})
+                  Metal Zincir (+{curtainType === 'DOUBLE_ROLLER' ? `${metal_chain_price * 2} TL / Çift` : `${metal_chain_price} TL`})
                 </option>
               </select>
 
@@ -571,8 +590,8 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                 className="w-full border border-slate-300 rounded-sm py-2 px-3 text-xs font-semibold text-slate-900 bg-white"
               >
                 <option value="PLASTIC_CORNICE">Plastik Korniş Aparatı (Ücretsiz)</option>
-                <option value="METAL_CEILING">Metal Tavan Montaj Aparatı (50cm adımlı)</option>
-                <option value="L_BRACKET_WALL">L Ayak Duvara Montaj Aparatı (50cm adımlı)</option>
+                <option value="METAL_CEILING">Metal Tavan Montaj Aparatı (+{metal_ceiling_price} TL / {metal_ceiling_cm}cm)</option>
+                <option value="L_BRACKET_WALL">L Ayak Duvara Montaj Aparatı (+{l_bracket_price} TL / {l_bracket_cm}cm)</option>
               </select>
 
               <div className="grid grid-cols-3 gap-2">
@@ -612,7 +631,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                   }}
                   className="w-3.5 h-3.5 rounded-sm border-slate-300 text-[#1B84F8]"
                 />
-                <span>Dilimli Etek Kesimi İstiyorum (+30 TL/m²)</span>
+                <span>Dilimli Etek Kesimi İstiyorum (+{skirt_cut_price} TL/m²)</span>
               </label>
 
               {skirtCut && (
@@ -624,7 +643,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                       onChange={(e) => setWithBeads(e.target.checked)}
                       className="w-3.5 h-3.5 rounded-sm border-slate-300 text-[#1B84F8]"
                     />
-                    <span>Perdeye Uygun Kristal Boncuk İstiyorum (+40 TL/m²)</span>
+                    <span>Perdeye Uygun Kristal Boncuk İstiyorum (+{bead_price} TL/m²)</span>
                   </label>
 
                   <div className="grid grid-cols-2 gap-2 pt-1">
@@ -664,14 +683,14 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                 svgType="plisse-screw"
               />
               <OptionThumb
-                title="Kancalı Montaj (+50 TL)"
+                title={`Kancalı Montaj (${plisse_hook_price > 0 ? `+${plisse_hook_price} TL` : 'Ücretsiz'})`}
                 desc="Cam balkon kanatlarının üzerine kancalarla asılır, camı veya profili delmeden pratik şekilde takılır."
                 selected={mountingType === 'HOOK'}
                 onSelect={() => setMountingType('HOOK')}
                 svgType="plisse-hook"
               />
               <OptionThumb
-                title="Yapıştırmalı Montaj (+100 TL/m²)"
+                title={`Yapıştırmalı Montaj (+${plisse_adhesive_price} TL/m²)`}
                 desc="Özel çift taraflı güçlü yapıştırmalı alüminyum profil sistemi. Cam balkon veya PVC pencerelere vida ve delik açmadan kolayca yapıştırılır."
                 selected={mountingType === 'ADHESIVE'}
                 onSelect={() => setMountingType('ADHESIVE')}
