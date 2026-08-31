@@ -17,7 +17,8 @@ import {
   Tag, 
   FileText,
   MessageSquare,
-  Ticket
+  Ticket,
+  Sparkles
 } from 'lucide-react';
 
 export default function AdminSidebar() {
