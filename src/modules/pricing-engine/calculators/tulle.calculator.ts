@@ -42,9 +42,9 @@ export function calculateTullePrice(input: CalculationInput, settings: PricingSe
       pleatLabel = 'Kruvaze (İple Toplamalı)';
       break;
     case 'S_PLEAT':
-      multiplier = 3.0;
+      multiplier = 4.0;
       extraMeterCost += settings.tulle_s_pile_extra_price;
-      pleatLabel = 'S Pile';
+      pleatLabel = '1x4 S Pile';
       break;
     case 'AMERICAN_PLEAT':
       multiplier = 3.0;

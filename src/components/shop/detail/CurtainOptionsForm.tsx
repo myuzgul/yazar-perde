@@ -368,7 +368,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                   <option value="KRUVAZE_ROPE">Kruvaze (İple Toplamalı)</option>
                 </>
               )}
-              <option value="S_PLEAT">S Pile (+{s_pile_price} TL/m)</option>
+              <option value="S_PLEAT">1x4 S Pile (+{s_pile_price} TL/m)</option>
               <option value="AMERICAN_PLEAT">Amerikan Pile (+{american_pile_price} TL/m)</option>
             </select>
 
@@ -396,9 +396,9 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                 svgType="pleat-tight"
               />
               <OptionThumb
-                title="S Pile / Amerikan"
-                desc="Modern ray sistemlerine uyumlu, şık dalgalı boru pile görünümü sağlar."
-                selected={tullePleatType === 'S_PLEAT' || tullePleatType === 'AMERICAN_PLEAT'}
+                title="1x4 S Pile"
+                desc="1 metre için 4 metre kumaş harcanır. Modern ray sistemlerine uyumlu, şık dalgalı boru pile görünümü sağlar."
+                selected={tullePleatType === 'S_PLEAT'}
                 onSelect={() => setTullePleatType('S_PLEAT')}
                 svgType="pleat-s"
               />

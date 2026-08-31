@@ -16,7 +16,7 @@ export type TullePleatType =
   | 'PLEAT_1X3'               // 1x3 Sık Pile (*3 + 20cm)
   | 'KRUVAZE_MECHANISM'       // Kruvaze (Mekanizmalı) (*4 + 20cm + Mekanizma Fiyatı)
   | 'KRUVAZE_ROPE'            // Kruvaze (İple Toplamalı) (*4 + 20cm)
-  | 'S_PLEAT'                 // S Pile (*3 + 20cm, Metre Fiyatına +60TL)
+  | 'S_PLEAT'                 // 1x4 S Pile (*4 + 20cm, Metre Fiyatına +60TL)
   | 'AMERICAN_PLEAT';         // Amerikan Pile (*3 + 20cm, Metre Fiyatına +60TL)
 
 export type MechanismDirection = 'LEFT' | 'RIGHT';
