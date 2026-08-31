@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { useCart } from '@/lib/cart-context';
@@ -169,6 +169,7 @@ export default function CartPage() {
                           {snap.chainType && <span>• Zincir: <strong>{snap.chainType === 'METAL' ? 'Metal' : 'Plastik'}</strong></span>}
                           {snap.mechanismDirection && <span>• Yön: <strong>{snap.mechanismDirection === 'RIGHT' ? 'Sağ' : 'Sol'}</strong></span>}
                           {snap.skirtCut && <span>• Etek: <strong>Dilimli {snap.withBeads ? '+ Boncuk' : ''}</strong></span>}
+                          {snap.plisseColorLabel && <span>• Profil Rengi: <strong>{snap.plisseColorLabel}</strong></span>}
                           {snap.mountingLabel && <span>• Montaj: <strong>{snap.mountingLabel}</strong></span>}
                         </div>
                         {item.note && (

@@ -60,6 +60,18 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
   if (input.mountingType === 'HOOK') mountingLabel = 'Kancalı Montaj (+50 TL)';
   else if (input.mountingType === 'ADHESIVE') mountingLabel = 'Yapıştırmalı Montaj (+100 TL/m²)';
 
+  const PLISSE_COLOR_MAP: Record<string, string> = {
+    WHITE: 'Beyaz Kasa',
+    CREAM: 'Krem Kasa',
+    GRAY: 'Gri Kasa',
+    ANTHRACITE: 'Antrasit Kasa',
+    BROWN: 'Kahve Kasa',
+    BRONZE: 'Bronz Kasa',
+  };
+
+  const plisseColorKey = input.plisseProfileColor || 'WHITE';
+  const plisseColorLabel = PLISSE_COLOR_MAP[plisseColorKey] || 'Beyaz Kasa';
+
   return {
     curtainType: 'PLISSE',
     inputWidth: input.width,
@@ -79,6 +91,8 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
     selectedOptionsSnapshot: {
       mountingType: input.mountingType || 'SCREW',
       mountingLabel,
+      plisseProfileColor: plisseColorKey,
+      plisseColorLabel,
       rawSqm: Number(rawSqm.toFixed(2)),
       finalSqm,
     },

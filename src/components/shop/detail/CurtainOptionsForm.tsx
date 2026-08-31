@@ -31,6 +31,8 @@ interface CurtainOptionsFormProps {
   setRollerType: (v: 'NORMAL_ROLLER' | 'BLACKOUT_ROLLER') => void;
   mountingType: 'SCREW' | 'HOOK' | 'ADHESIVE';
   setMountingType: (v: 'SCREW' | 'HOOK' | 'ADHESIVE') => void;
+  plisseProfileColor?: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE';
+  setPlisseProfileColor?: (v: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE') => void;
   fonWingType: 'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING';
   setFonWingType: (v: 'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING') => void;
   fonMountingType: 'CORNICE' | 'RUSTIC_RING' | 'RUSTIC_ROD_POCKET';
@@ -57,7 +59,9 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     caseType, setCaseType, chainType, setChainType,
     bracketType, setBracketType, skirtCut, setSkirtCut,
     withBeads, setWithBeads, rollerType, setRollerType,
-    mountingType, setMountingType, fonWingType, setFonWingType,
+    mountingType, setMountingType,
+    plisseProfileColor, setPlisseProfileColor,
+    fonWingType, setFonWingType,
     fonMountingType, setFonMountingType, withRenso, setWithRenso,
     settings,
   } = props;
@@ -670,32 +674,126 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
 
         {/* Plise Perde */}
         {curtainType === 'PLISSE' && (
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700">
-              Montaj Şekli
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <OptionThumb
-                title="Vidalı Montaj (Standart)"
-                desc="Cam balkon kanat profiline veya PVC pencere kasasına küçük vidalarla sabitlenir. En sağlam ve uzun ömürlü montaj yöntemidir."
-                selected={mountingType === 'SCREW'}
-                onSelect={() => setMountingType('SCREW')}
-                svgType="plisse-screw"
-              />
-              <OptionThumb
-                title={`Kancalı Montaj (${plisse_hook_price > 0 ? `+${plisse_hook_price} TL` : 'Ücretsiz'})`}
-                desc="Cam balkon kanatlarının üzerine kancalarla asılır, camı veya profili delmeden pratik şekilde takılır."
-                selected={mountingType === 'HOOK'}
-                onSelect={() => setMountingType('HOOK')}
-                svgType="plisse-hook"
-              />
-              <OptionThumb
-                title={`Yapıştırmalı Montaj (+${plisse_adhesive_price} TL/m²)`}
-                desc="Özel çift taraflı güçlü yapıştırmalı alüminyum profil sistemi. Cam balkon veya PVC pencerelere vida ve delik açmadan kolayca yapıştırılır."
-                selected={mountingType === 'ADHESIVE'}
-                onSelect={() => setMountingType('ADHESIVE')}
-                svgType="plisse-adhesive"
-              />
+          <div className="space-y-4">
+            {/* 1. Kasa / Profil Rengi Seçimi */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Kasa / Alüminyum Profil Rengi
+                </label>
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Ücretsiz Renk Seçimi
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                {[
+                  {
+                    id: 'WHITE' as const,
+                    name: 'Beyaz',
+                    swatch: '#FFFFFF',
+                    textColor: '#FFFFFF',
+                    border: 'border-slate-300',
+                  },
+                  {
+                    id: 'CREAM' as const,
+                    name: 'Krem',
+                    swatch: '#FDF5E6',
+                    textColor: '#FDE047',
+                    border: 'border-amber-300',
+                  },
+                  {
+                    id: 'GRAY' as const,
+                    name: 'Gri',
+                    swatch: '#9CA3AF',
+                    textColor: '#CBD5E1',
+                    border: 'border-slate-400',
+                  },
+                  {
+                    id: 'ANTHRACITE' as const,
+                    name: 'Antrasit',
+                    swatch: '#1F2937',
+                    textColor: '#94A3B8',
+                    border: 'border-slate-700',
+                  },
+                  {
+                    id: 'BROWN' as const,
+                    name: 'Kahve',
+                    swatch: '#6B3E11',
+                    textColor: '#FDBA74',
+                    border: 'border-amber-800',
+                  },
+                  {
+                    id: 'BRONZE' as const,
+                    name: 'Bronz',
+                    swatch: '#A05A2C',
+                    textColor: '#FBBF24',
+                    border: 'border-amber-600',
+                  },
+                ].map((color) => {
+                  const isSelected = (plisseProfileColor || 'WHITE') === color.id;
+                  return (
+                    <button
+                      key={color.id}
+                      type="button"
+                      onClick={() => setPlisseProfileColor && setPlisseProfileColor(color.id)}
+                      className={`relative flex items-center justify-center gap-2 p-2.5 rounded-xl transition-all cursor-pointer bg-slate-900 border ${
+                        isSelected
+                          ? 'border-[#1B84F8] ring-2 ring-[#1B84F8]/50 shadow-md scale-[1.02]'
+                          : 'border-slate-800 hover:border-slate-700 hover:bg-slate-850 opacity-90 hover:opacity-100'
+                      }`}
+                    >
+                      {/* Renk Yuvarlağı */}
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full shrink-0 shadow-xs border ${color.border}`}
+                        style={{ backgroundColor: color.swatch }}
+                      />
+                      {/* Seçilen Renge Özel Yazı Rengi */}
+                      <span
+                        className="text-xs font-black tracking-wide"
+                        style={{ color: color.textColor }}
+                      >
+                        {color.name}
+                      </span>
+                      {isSelected && (
+                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#1B84F8] text-white flex items-center justify-center text-[9px] shadow-xs">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. Montaj Şekli */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-700">
+                Montaj Şekli
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <OptionThumb
+                  title="Vidalı Montaj (Standart)"
+                  desc="Cam balkon kanat profiline veya PVC pencere kasasına küçük vidalarla sabitlenir. En sağlam ve uzun ömürlü montaj yöntemidir."
+                  selected={mountingType === 'SCREW'}
+                  onSelect={() => setMountingType('SCREW')}
+                  svgType="plisse-screw"
+                />
+                <OptionThumb
+                  title={`Kancalı Montaj (${plisse_hook_price > 0 ? `+${plisse_hook_price} TL` : 'Ücretsiz'})`}
+                  desc="Cam balkon kanatlarının üzerine kancalarla asılır, camı veya profili delmeden pratik şekilde takılır."
+                  selected={mountingType === 'HOOK'}
+                  onSelect={() => setMountingType('HOOK')}
+                  svgType="plisse-hook"
+                />
+                <OptionThumb
+                  title={`Yapıştırmalı Montaj (+${plisse_adhesive_price} TL/m²)`}
+                  desc="Özel çift taraflı güçlü yapıştırmalı alüminyum profil sistemi. Cam balkon veya PVC pencerelere vida ve delik açmadan kolayca yapıştırılır."
+                  selected={mountingType === 'ADHESIVE'}
+                  onSelect={() => setMountingType('ADHESIVE')}
+                  svgType="plisse-adhesive"
+                />
+              </div>
             </div>
           </div>
         )}

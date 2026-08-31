@@ -73,6 +73,7 @@ export default function ProductDetailClient({ product, similarProducts, initialS
   const [withBeads, setWithBeads] = useState<boolean>(false);
   const [rollerType, setRollerType] = useState<'NORMAL_ROLLER' | 'BLACKOUT_ROLLER'>('NORMAL_ROLLER');
   const [mountingType, setMountingType] = useState<'SCREW' | 'HOOK' | 'ADHESIVE'>('SCREW');
+  const [plisseProfileColor, setPlisseProfileColor] = useState<'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE'>('WHITE');
   const [fonWingType, setFonWingType] = useState<'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING'>('DOUBLE_WING');
   const [fonMountingType, setFonMountingType] = useState<'CORNICE' | 'RUSTIC_RING' | 'RUSTIC_ROD_POCKET'>('CORNICE');
   const [withRenso, setWithRenso] = useState<boolean>(false);
@@ -98,6 +99,7 @@ export default function ProductDetailClient({ product, similarProducts, initialS
           withBeads,
           rollerType,
           mountingType,
+          plisseProfileColor,
           fonWingType,
           fonMountingType,
           withRenso,
@@ -112,7 +114,7 @@ export default function ProductDetailClient({ product, similarProducts, initialS
   }, [
     product, width, height, quantity, tullePleatType, mechanismDirection,
     caseType, chainType, bracketType, skirtCut, withBeads, rollerType,
-    mountingType, fonWingType, fonMountingType, withRenso, settings
+    mountingType, plisseProfileColor, fonWingType, fonMountingType, withRenso, settings
   ]);
 
   const handleAddToCart = () => {
@@ -225,6 +227,8 @@ export default function ProductDetailClient({ product, similarProducts, initialS
             setRollerType={setRollerType}
             mountingType={mountingType}
             setMountingType={setMountingType}
+            plisseProfileColor={plisseProfileColor}
+            setPlisseProfileColor={setPlisseProfileColor}
             fonWingType={fonWingType}
             setFonWingType={setFonWingType}
             fonMountingType={fonMountingType}

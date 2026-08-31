@@ -61,7 +61,8 @@ export interface CalculationInput {
   skirtCut?: boolean;          // Etek dilimi istiyor mu?
   withBeads?: boolean;         // Boncuk istiyor mu? (etek dilimi varsa)
   rollerType?: RollerType;     // Çiftli sistem için
-  mountingType?: MountingType; // Plise için (SCREW / HOOK)
+  mountingType?: MountingType; // Plise için (SCREW / HOOK / ADHESIVE)
+  plisseProfileColor?: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE'; // Plise Kasa Rengi
   fonWingType?: FonWingType;   // Fon için (LEFT / RIGHT / DOUBLE)
   fonMountingType?: FonMountingType;
   withRenso?: boolean;         // Fon için Renso istiyor mu?

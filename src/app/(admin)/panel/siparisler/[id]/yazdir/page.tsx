@@ -199,6 +199,11 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
                             Montaj: <strong>{snap.mountingLabel}</strong>
                           </div>
                         )}
+                        {snap.plisseColorLabel && (
+                          <div className="bg-slate-100 px-1 py-0.5 rounded">
+                            Kasa Rengi: <strong>{snap.plisseColorLabel}</strong>
+                          </div>
+                        )}
                         {snap.skirtCut && (
                           <div className="bg-slate-100 px-1 py-0.5 rounded">
                             Etek: <strong>DİLİMLİ {snap.withBeads ? '+ BONCUK' : ''}</strong>
