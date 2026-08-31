@@ -10,12 +10,32 @@ interface PrintPageProps {
 export default async function OrderPrintPage({ params }: PrintPageProps) {
   const { id } = await params;
 
+  const existing = await prisma.order.findUnique({ where: { id } });
+  if (!existing) {
+    notFound();
+  }
+
+  const newStatus = ['SHIPPED', 'DELIVERED', 'CANCELLED'].includes(existing.status)
+    ? existing.status
+    : 'IN_PRODUCTION';
+
   const order = await prisma.order.update({
     where: { id },
     data: {
       isPrinted: true,
       printedAt: new Date(),
       printCount: { increment: 1 },
+      status: newStatus,
+      timeline:
+        newStatus === 'IN_PRODUCTION' && existing.status !== 'IN_PRODUCTION'
+          ? {
+              create: {
+                status: 'IN_PRODUCTION',
+                title: 'Sipariş Durumu: Atölyede Üretimde',
+                description: 'Atölye iş fişi yazdırıldı, imalat ve dikim sürecine alındı.',
+              },
+            }
+          : undefined,
     },
     include: {
       items: true,
