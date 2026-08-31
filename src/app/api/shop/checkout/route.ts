@@ -115,9 +115,12 @@ export async function POST(req: NextRequest) {
       paytrBasket.push([item.name, item.unitPrice.toFixed(2), item.quantity]);
     }
 
-    const freeShippingThreshold = settings.free_shipping_threshold || 1500;
-    const shippingFee = subtotal >= freeShippingThreshold ? 0 : 75;
-    const paymentFee = paymentMethod === 'CASH_ON_DELIVERY' ? 35 : 0;
+    const freeShippingThreshold = Number(settings.free_shipping_threshold) || 1500;
+    const standardShippingFee = Number(settings.shipping_fee) || 99.90;
+    const standardCodFee = Number(settings.cash_on_delivery_fee) || 100;
+
+    const shippingFee = subtotal >= freeShippingThreshold ? 0 : standardShippingFee;
+    const paymentFee = paymentMethod === 'CASH_ON_DELIVERY' ? standardCodFee : 0;
 
     // Kupon İndirimi Hesaplama
     let discountTotal = 0;

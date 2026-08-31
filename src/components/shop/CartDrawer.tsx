@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { useCart } from '@/lib/cart-context';
@@ -9,13 +9,25 @@ interface CartDrawerProps {
   freeShippingThreshold?: number;
 }
 
-export default function CartDrawer({ freeShippingThreshold = 1500 }: CartDrawerProps) {
+export default function CartDrawer({ freeShippingThreshold: initialThreshold = 1500 }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, subtotal, isDrawerOpen, closeDrawer } = useCart();
+  const [threshold, setThreshold] = React.useState<number>(initialThreshold);
+
+  React.useEffect(() => {
+    fetch('/api/settings/public')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data?.free_shipping_threshold) {
+          setThreshold(Number(d.data.free_shipping_threshold));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   if (!isDrawerOpen) return null;
 
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
-  const freeShippingProgress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
+  const remainingForFreeShipping = Math.max(0, threshold - subtotal);
+  const freeShippingProgress = Math.min(100, (subtotal / threshold) * 100);
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">

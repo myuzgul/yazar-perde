@@ -21,8 +21,21 @@ export default function CartPage() {
   const [couponError, setCouponError] = useState('');
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
-  const freeShippingThreshold = 1500;
-  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 75;
+  // Dinamik Sistem Ayarları (Kargo baremleri)
+  const [settings, setSettings] = useState<any>(null);
+
+  React.useEffect(() => {
+    fetch('/api/settings/public')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) setSettings(data.data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const freeShippingThreshold = settings?.free_shipping_threshold ?? 1500;
+  const standardShippingFee = settings?.shipping_fee ?? 99.90;
+  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
   const discountAmount = couponDiscount ? couponDiscount.amount : 0;
   const grandTotal = Math.max(0, subtotal - discountAmount + shippingFee);
 
@@ -35,17 +48,17 @@ export default function CartPage() {
     setCouponError('');
 
     try {
-      const res = await fetch('/api/shop/coupon', {
+      const res = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode, subtotal }),
+        body: JSON.stringify({ code: couponCode, subtotal, shippingFee }),
       });
       const data = await res.json();
       if (data.success) {
         setCouponDiscount({
           code: data.data.code,
           amount: data.data.discountAmount,
-          desc: data.data.description,
+          desc: data.data.descriptionText,
         });
         setCouponCode('');
       } else {
@@ -117,7 +130,7 @@ export default function CartPage() {
         ) : (
           <div className="flex items-center gap-2 text-xs font-bold text-emerald-700">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Tebrikler! 1.500 TL üzeri siparişiniz için KARGO ÜCRETSİZ!</span>
+            <span>Tebrikler! ₺{freeShippingThreshold.toLocaleString('tr-TR')} üzeri siparişiniz için KARGO ÜCRETSİZ!</span>
           </div>
         )}
       </div>

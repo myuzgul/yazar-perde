@@ -68,6 +68,9 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState('');
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
+  // Dinamik Sistem Ayarları (Kargo & Kapıda Ödeme)
+  const [settings, setSettings] = useState<any>(null);
+
   useEffect(() => {
     fetch('/api/auth/me')
       .then((res) => res.json())
@@ -78,6 +81,15 @@ export default function CheckoutPage() {
           if (data.user.name) setFirstName(data.user.name);
           if (data.user.surname) setLastName(data.user.surname);
           if (data.user.phone) setPhone(data.user.phone);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/settings/public')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setSettings(data.data);
         }
       })
       .catch(() => {});
@@ -116,9 +128,12 @@ export default function CheckoutPage() {
     }
   };
 
-  const freeShippingThreshold = 1500;
-  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 75;
-  const codFee = paymentMethod === 'CASH_ON_DELIVERY' ? 35 : 0;
+  const freeShippingThreshold = settings?.free_shipping_threshold ?? 1500;
+  const standardShippingFee = settings?.shipping_fee ?? 99.90;
+  const standardCodFee = settings?.cash_on_delivery_fee ?? 100;
+
+  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
+  const codFee = paymentMethod === 'CASH_ON_DELIVERY' ? standardCodFee : 0;
   const discountAmount = couponDiscount ? couponDiscount.amount : 0;
   const grandTotal = Math.max(0, subtotal - discountAmount + shippingFee + codFee);
 
@@ -520,7 +535,9 @@ export default function CheckoutPage() {
                     className="text-[#1B84F8]"
                   />
                   <div>
-                    <span className="font-bold text-slate-900 block">Kapıda Nakit Ödeme (+35 TL Hizmet Bedeli)</span>
+                    <span className="font-bold text-slate-900 block">
+                      Kapıda Nakit Ödeme {standardCodFee > 0 ? `(+${standardCodFee.toFixed(2)} TL Hizmet Bedeli)` : '(Ücretsiz)'}
+                    </span>
                     <span className="text-[10px] text-slate-500">Kargo teslimatı sırasında nakit ödeme</span>
                   </div>
                 </div>
