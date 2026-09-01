@@ -199,6 +199,11 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
                             Montaj: <strong>{snap.mountingLabel}</strong>
                           </div>
                         )}
+                        {snap.plisseMeasurementLabel && (
+                          <div className="bg-blue-50 text-blue-900 border border-blue-100 px-1 py-0.5 rounded">
+                            Ölçü Şekli: <strong>{snap.plisseMeasurementLabel}</strong>
+                          </div>
+                        )}
                         {snap.plisseColorLabel && (
                           <div className="bg-slate-100 px-1 py-0.5 rounded">
                             Kasa Rengi: <strong>{snap.plisseColorLabel}</strong>

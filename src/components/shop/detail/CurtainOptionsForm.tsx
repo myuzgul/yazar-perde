@@ -33,6 +33,8 @@ interface CurtainOptionsFormProps {
   setMountingType: (v: 'SCREW' | 'HOOK' | 'ADHESIVE') => void;
   plisseProfileColor?: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE';
   setPlisseProfileColor?: (v: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE') => void;
+  plisseMeasurementType?: 'PROFILE_INCLUDED' | 'INNER_GLASS';
+  setPlisseMeasurementType?: (v: 'PROFILE_INCLUDED' | 'INNER_GLASS') => void;
   fonWingType: 'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING';
   setFonWingType: (v: 'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING') => void;
   fonMountingType: 'CORNICE' | 'RUSTIC_RING' | 'RUSTIC_ROD_POCKET';
@@ -61,6 +63,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     withBeads, setWithBeads, rollerType, setRollerType,
     mountingType, setMountingType,
     plisseProfileColor, setPlisseProfileColor,
+    plisseMeasurementType, setPlisseMeasurementType,
     fonWingType, setFonWingType,
     fonMountingType, setFonMountingType, withRenso, setWithRenso,
     settings,
@@ -687,7 +690,67 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
         {/* Plise Perde */}
         {curtainType === 'PLISSE' && (
           <div className="space-y-4">
-            {/* 1. Kasa / Profil Rengi Seçimi */}
+            {/* 1. Ölçü Alma Şekli Seçimi */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-700">
+                Ölçüyü Nasıl Aldınız?
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setPlisseMeasurementType && setPlisseMeasurementType('PROFILE_INCLUDED')}
+                  className={`p-3 rounded-sm border text-left transition cursor-pointer flex items-start gap-3 ${
+                    (plisseMeasurementType || 'PROFILE_INCLUDED') === 'PROFILE_INCLUDED'
+                      ? 'border-[#1B84F8] bg-blue-50/50 ring-1 ring-[#1B84F8]'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
+                    (plisseMeasurementType || 'PROFILE_INCLUDED') === 'PROFILE_INCLUDED'
+                      ? 'border-[#1B84F8] bg-[#1B84F8]'
+                      : 'border-slate-300 bg-white'
+                  }`}>
+                    {(plisseMeasurementType || 'PROFILE_INCLUDED') === 'PROFILE_INCLUDED' && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block">Profil Dahil Ölçü Aldım</span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5">
+                      Cam kanadının etrafındaki alüminyum/PVC profil dahil dıştan dışa net ölçü girdim.
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPlisseMeasurementType && setPlisseMeasurementType('INNER_GLASS')}
+                  className={`p-3 rounded-sm border text-left transition cursor-pointer flex items-start gap-3 ${
+                    plisseMeasurementType === 'INNER_GLASS'
+                      ? 'border-[#1B84F8] bg-blue-50/50 ring-1 ring-[#1B84F8]'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
+                    plisseMeasurementType === 'INNER_GLASS'
+                      ? 'border-[#1B84F8] bg-[#1B84F8]'
+                      : 'border-slate-300 bg-white'
+                  }`}>
+                    {plisseMeasurementType === 'INNER_GLASS' && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block">İç Cam Ölçüsü Aldım</span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5">
+                      Sadece cam fitilleri arasındaki net iç cam alanının ölçüsünü girdim.
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Kasa / Profil Rengi Seçimi */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-semibold text-slate-700">

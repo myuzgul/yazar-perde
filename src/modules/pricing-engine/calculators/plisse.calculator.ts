@@ -72,6 +72,9 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
   const plisseColorKey = input.plisseProfileColor || 'WHITE';
   const plisseColorLabel = PLISSE_COLOR_MAP[plisseColorKey] || 'Beyaz Kasa';
 
+  const measurementKey = input.plisseMeasurementType || 'PROFILE_INCLUDED';
+  const measurementLabel = measurementKey === 'INNER_GLASS' ? 'İç Cam Ölçüsü Aldım' : 'Profil Dahil Ölçü Aldım';
+
   return {
     curtainType: 'PLISSE',
     inputWidth: input.width,
@@ -93,6 +96,8 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
       mountingLabel,
       plisseProfileColor: plisseColorKey,
       plisseColorLabel,
+      plisseMeasurementType: measurementKey,
+      plisseMeasurementLabel: measurementLabel,
       rawSqm: Number(rawSqm.toFixed(2)),
       finalSqm,
     },
