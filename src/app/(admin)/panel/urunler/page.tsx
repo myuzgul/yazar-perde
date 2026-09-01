@@ -9,6 +9,8 @@ import {
   Search, 
   Edit2, 
   Trash2, 
+  Copy,
+  Loader2,
   Sparkles, 
   CheckCircle2, 
   XCircle, 
@@ -35,6 +37,7 @@ export default function UrunlerPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const fetchProducts = async () => {
     try {
@@ -51,6 +54,28 @@ export default function UrunlerPage() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const handleDuplicate = async (product: Product) => {
+    if (!confirm(`"${product.name}" ürününü kopyalayıp yeni bir ürün olarak çoğaltmak istiyor musunuz?`)) return;
+    setDuplicatingId(product.id);
+    try {
+      const res = await fetch('/api/admin/products/duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchProducts();
+      } else {
+        alert(data.message || 'Ürün kopyalanamadı');
+      }
+    } catch {
+      alert('Kopyalama sırasında hata oluştu');
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Bu perde ürününü silmek istediğinize emin misiniz?')) return;
@@ -215,17 +240,32 @@ export default function UrunlerPage() {
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-right space-x-2">
+                        <td className="py-3 px-4 text-right space-x-1 sm:space-x-2 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleDuplicate(product)}
+                            disabled={duplicatingId === product.id}
+                            title="Ürünü Çoğalt / Kopyala"
+                            className="inline-flex items-center justify-center p-1.5 hover:bg-emerald-50 text-emerald-600 rounded-lg transition cursor-pointer disabled:opacity-50"
+                          >
+                            {duplicatingId === product.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
                           <Link
                             href={`/panel/urunler/${product.id}/duzenle`}
-                            className="inline-block p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition"
+                            title="Düzenle"
+                            className="inline-flex items-center justify-center p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition"
                           >
                             <Edit2 className="w-4 h-4" />
                           </Link>
                           <button
                             type="button"
                             onClick={() => handleDelete(product.id)}
-                            className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition cursor-pointer"
+                            title="Sil"
+                            className="inline-flex items-center justify-center p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
