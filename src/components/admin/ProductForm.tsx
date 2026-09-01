@@ -125,38 +125,56 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    if (formData.images.length >= 10) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const availableSlots = 10 - formData.images.length;
+    if (availableSlots <= 0) {
       alert('Maksimum 10 adet fotoğraf yükleyebilirsiniz.');
+      e.target.value = '';
       return;
     }
 
-    setUploading(true);
-    const file = e.target.files[0];
-    const uploadBody = new FormData();
-    uploadBody.append('file', file);
+    const filesToUpload = Array.from(files).slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      alert(`Maksimum 10 fotoğraf sınırından dolayı seçilen ilk ${availableSlots} adet fotoğraf yüklenecektir.`);
+    }
 
+    setUploading(true);
     try {
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        body: uploadBody,
-      });
-      const data = await res.json();
-      if (data.success) {
-        const newImages = [
-          ...formData.images,
-          {
+      const uploadedImages: Array<{ imageUrl: string; sortOrder: number; isCover: boolean }> = [];
+      let nextIndex = formData.images.length;
+
+      for (const file of filesToUpload) {
+        const uploadBody = new FormData();
+        uploadBody.append('file', file);
+
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: uploadBody,
+        });
+        const data = await res.json();
+        if (data.success && data.url) {
+          uploadedImages.push({
             imageUrl: data.url,
-            sortOrder: formData.images.length,
-            isCover: formData.images.length === 0,
-          },
-        ];
-        setFormData((prev) => ({ ...prev, images: newImages }));
+            sortOrder: nextIndex,
+            isCover: nextIndex === 0,
+          });
+          nextIndex++;
+        }
+      }
+
+      if (uploadedImages.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, ...uploadedImages],
+        }));
       }
     } catch {
-      alert('Fotoğraf yüklenemedi');
+      alert('Fotoğraflar yüklenirken hata oluştu');
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -504,6 +522,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleFileUpload}
                   disabled={uploading || formData.images.length >= 10}
                   className="hidden"
