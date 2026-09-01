@@ -220,24 +220,39 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* 1. ÖLÇÜ ALANLARI */}
-      <div className="border-t border-slate-200 pt-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-            1. ÖLÇÜ SEÇİMİ
-          </h3>
-          <div className="flex items-center text-[11px] gap-2">
-            <button
-              type="button"
-              onClick={() => setInputMode('SELECT')}
-              className={`px-2 py-0.5 rounded transition cursor-pointer font-bold ${
-                inputMode === 'SELECT'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              Açılır Liste
-            </button>
+      {curtainType === 'FIXED_PRICE' ? (
+        <div className="border border-emerald-200 bg-emerald-50/60 rounded-sm p-4 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            <span>Hazır Standart Ölçü & Sabit Fiyatlı Ürün</span>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Bu ürün hazır standart ölçüde olup herhangi bir ek ölçü veya mekanizma hesaplaması yapılmadan doğrudan belirtilen fiyat üzerinden sepete eklenir.
+          </p>
+          <div className="text-[11px] text-emerald-800 bg-white/80 p-2.5 rounded border border-emerald-200/80 font-medium">
+            ✓ Paketi açıp hemen kullanmaya hazır, tüm montaj ve bağlantı aparatları kutu içeriğine dahildir.
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* 1. ÖLÇÜ ALANLARI */}
+          <div className="border-t border-slate-200 pt-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
+                1. ÖLÇÜ SEÇİMİ
+              </h3>
+              <div className="flex items-center text-[11px] gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInputMode('SELECT')}
+                  className={`px-2 py-0.5 rounded transition cursor-pointer font-bold ${
+                    inputMode === 'SELECT'
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  Açılır Liste
+                </button>
             <span className="text-slate-300">|</span>
             <button
               type="button"
@@ -873,6 +888,8 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* BÜYÜK GÖRSEL VE AÇIKLAMA MODALI (POPUP - GENİŞLETİLMİŞ) */}
       {modalData && (

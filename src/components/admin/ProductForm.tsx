@@ -322,6 +322,7 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1B84F8]"
               >
                 <option value="TULLE">Tül Perde (En x Pile Katsayısı)</option>
+                <option value="FIXED_PRICE">Hesaplamasız (Sabit / Hazır Ölçü - Doğrudan Fiyat)</option>
                 <option value="BLACKOUT_FON_SUNSHADE">Karartma Fon ve Güneşlik (En + 20cm x Metre Fiyatı)</option>
                 <option value="ROLLER">Stor Perde (m² hesabı, kasa/aparat/zincir)</option>
                 <option value="ZEBRA">Zebra Perde (m² hesabı, kasa/aparat/zincir)</option>

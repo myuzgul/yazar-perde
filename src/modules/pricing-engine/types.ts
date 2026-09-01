@@ -6,6 +6,7 @@ export type CurtainType =
   | 'PLISSE'
   | 'FON'
   | 'BLACKOUT_FON_SUNSHADE'
+  | 'FIXED_PRICE'
   | 'STRING'
   | 'WOODEN_JALOUSIE'
   | 'RUSTIC';

@@ -91,6 +91,7 @@ export default function UrunlerPage() {
   const getCurtainTypeName = (type: string) => {
     switch (type) {
       case 'TULLE': return 'Tül Perde';
+      case 'FIXED_PRICE': return 'Hesaplamasız (Sabit Fiyat)';
       case 'BLACKOUT_FON_SUNSHADE': return 'Karartma Fon ve Güneşlik';
       case 'ROLLER': return 'Stor Perde';
       case 'ZEBRA': return 'Zebra Perde';

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { ShoppingBag, ShieldCheck } from 'lucide-react';
@@ -36,9 +36,11 @@ export default function PriceSummaryBox({
         </div>
         <div className="text-right text-xs">
           <span className="font-bold text-slate-900 block font-mono">
-            {calcResult.calculatedArea} {calcResult.areaUnit === 'SQM' ? 'm²' : 'Metre'}
+            {calcResult.curtainType === 'FIXED_PRICE' ? `${quantity} Adet` : `${calcResult.calculatedArea} ${calcResult.areaUnit === 'SQM' ? 'm²' : 'Metre'}`}
           </span>
-          <span className="text-[10px] text-slate-500">Net Kesim Ölçüsü</span>
+          <span className="text-[10px] text-slate-500">
+            {calcResult.curtainType === 'FIXED_PRICE' ? 'Hazır Standart Ölçü' : 'Net Kesim Ölçüsü'}
+          </span>
         </div>
       </div>
 

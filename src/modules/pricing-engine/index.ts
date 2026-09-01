@@ -5,6 +5,7 @@ import { calculateDoubleRollerPrice } from './calculators/double-roller.calculat
 import { calculatePlissePrice } from './calculators/plisse.calculator';
 import { calculateFonPrice } from './calculators/fon.calculator';
 import { calculateBlackoutSunshadePrice } from './calculators/blackout-sunshade.calculator';
+import { calculateFixedPrice } from './calculators/fixed-price.calculator';
 import { calculateStringRusticPrice } from './calculators/string.calculator';
 import { calculateWoodenJalousiePrice } from './calculators/wooden-jalousie.calculator';
 
@@ -33,6 +34,9 @@ export function calculateCurtainPrice(
 
     case 'BLACKOUT_FON_SUNSHADE':
       return calculateBlackoutSunshadePrice(input, settings);
+
+    case 'FIXED_PRICE':
+      return calculateFixedPrice(input, settings);
 
     case 'STRING':
     case 'RUSTIC':
