@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -84,10 +84,10 @@ export default async function DynamicStaticPage({ params }: StaticPageProps) {
               Ölçü alma veya kumaş seçimi konusunda uzman perde danışmanlarımızla hemen iletişime geçebilirsiniz.
             </p>
             <a
-              href="tel:+902125102255"
+              href="tel:+905414945173"
               className="inline-block font-bold text-slate-900 text-xs mt-1 hover:underline"
             >
-              📞 +90 212 510 22 55
+              📞 0541 494 51 73
             </a>
           </div>
         </aside>

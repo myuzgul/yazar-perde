@@ -36,6 +36,7 @@ export default function AdminSidebar() {
     { label: 'Sipariş Yönetimi', href: '/panel/siparisler', icon: ShoppingBag },
     { label: 'Kuponlar & İndirim', href: '/panel/kuponlar', icon: Ticket },
     { label: 'Ürün Yönetimi', href: '/panel/urunler', icon: Layers },
+    { label: 'Ana Sayfa Vitrin & Sıra', href: '/panel/vitrin', icon: Sparkles },
     { label: 'Toplu Fiyat Güncelle', href: '/panel/urunler/toplu-guncelle', icon: Sparkles },
     { label: 'Kategoriler', href: '/panel/kategoriler', icon: FolderTree },
     { label: 'Markalar', href: '/panel/markalar', icon: Award },

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -20,20 +20,20 @@ export default function Footer() {
           <p className="text-[11px] leading-relaxed text-slate-400 mb-4">
             Türkiye'nin özel ölçülü perde dikim atölyesi. Evinize, ofisinize ve cam balkonunuza tam uyan milimetrik dikim ve 24 ay mekanizma garantisi.
           </p>
-          <div className="space-y-2 text-[11px]">
-            <div className="flex items-center gap-2 text-slate-300">
-              <Phone className="w-3.5 h-3.5 text-[#1B84F8]" />
-              <a href="tel:+902125102255" className="hover:text-white transition">+90 212 510 22 55</a>
+            <div className="space-y-2 text-[11px]">
+              <div className="flex items-center gap-2 text-slate-300">
+                <Phone className="w-3.5 h-3.5 text-[#1B84F8]" />
+                <a href="tel:+905414945173" className="hover:text-white transition font-medium">0541 494 51 73</a>
+              </div>
+              <div className="flex items-center gap-2 text-slate-300">
+                <Mail className="w-3.5 h-3.5 text-[#1B84F8]" />
+                <a href="mailto:info@yazarperde.com" className="hover:text-white transition font-medium">info@yazarperde.com</a>
+              </div>
+              <div className="flex items-start gap-2 text-slate-300">
+                <MapPin className="w-3.5 h-3.5 text-[#1B84F8] shrink-0 mt-0.5" />
+                <span className="leading-snug">Anadolu Mah. Atıcılar Cd. No: 1/A, 16270 Yıldırım/Bursa</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-slate-300">
-              <Mail className="w-3.5 h-3.5 text-[#1B84F8]" />
-              <a href="mailto:destek@yazarperde.com" className="hover:text-white transition">destek@yazarperde.com</a>
-            </div>
-            <div className="flex items-center gap-2 text-slate-300">
-              <MapPin className="w-3.5 h-3.5 text-[#1B84F8]" />
-              <span>İstanbul / Türkiye</span>
-            </div>
-          </div>
         </div>
 
         {/* Kolon 2: Popüler Kategoriler */}

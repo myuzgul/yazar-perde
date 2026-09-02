@@ -92,6 +92,8 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
       stockTracking: false,
       stockQuantity: 100,
       isActive: true,
+      isFeatured: true,
+      sortOrder: 0,
       minWidth: 30,
       maxWidth: 500,
       minHeight: 50,
@@ -383,16 +385,40 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
               </select>
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
-              <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="w-4 h-4 text-[#1B84F8] rounded border-slate-300"
+                  />
+                  <span>Ürün Mağazada Aktif Olarak Yayınlansın</span>
+                </label>
+
+                <label className="flex items-center gap-2 text-xs font-bold text-emerald-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isFeatured}
+                    onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 rounded border-slate-300"
+                  />
+                  <span>Ana Sayfada (Vitrinde) Öne Çıkar</span>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Vitrin Sıralaması (Küçük olan önce çıkar)
+                </label>
                 <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="w-4 h-4 text-[#1B84F8] rounded border-slate-300"
+                  type="number"
+                  value={formData.sortOrder}
+                  onChange={(e) => setFormData({ ...formData, sortOrder: Number(e.target.value) })}
+                  className="w-full sm:w-32 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#1B84F8]"
                 />
-                <span>Ürün Mağazada Aktif Olarak Yayınlansın</span>
-              </label>
+              </div>
             </div>
           </div>
         )}

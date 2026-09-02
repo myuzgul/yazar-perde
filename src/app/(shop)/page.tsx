@@ -1,17 +1,21 @@
 import React from 'react';
 import StoryBar from '@/components/shop/StoryBar';
-import ProductCard from '@/components/shop/ProductCard';
 import SmallBanners from '@/components/shop/SmallBanners';
+import HomepageShowcase from '@/components/shop/HomepageShowcase';
 import prisma from '@/lib/prisma';
-import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
 
 export const revalidate = 60;
 
 export default async function HomePage() {
   const products = await prisma.product.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: 'asc' },
+    where: { 
+      isActive: true,
+      isFeatured: true,
+    },
+    orderBy: [
+      { sortOrder: 'asc' },
+      { createdAt: 'desc' },
+    ],
     include: {
       category: true,
       brand: true,
@@ -71,58 +75,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 3. Ürün Listeleme Alanı */}
-      <section className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-end justify-between border-b border-slate-200 pb-3 mb-6">
-          <div>
-            <span className="text-[11px] font-bold text-[#1B84F8] uppercase tracking-wider block">
-              ÖZEL DİKİM KOLEKSİYONU
-            </span>
-            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">
-              En Çok Tercih Edilen Perde Modelleri
-            </h2>
-          </div>
-
-          <Link
-            href="/kategori/tul-perdeler"
-            className="text-xs font-semibold text-slate-700 hover:text-[#1B84F8] flex items-center gap-1 transition"
-          >
-            <span>Tüm Modeller</span>
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {/* Ürün Izgarası (Mobilde 2'li, Desktopta 4'lü) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-          {products.map((product) => {
-            const coverImg = product.images.find((i) => i.isCover) || product.images[0];
-            const approvedRevs = (product as any).reviews || [];
-            const revCount = approvedRevs.length;
-            const avgRating = revCount > 0 
-              ? Math.round(approvedRevs.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / revCount) 
-              : 5;
-
-            return (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                slug={product.slug}
-                sku={product.sku}
-                curtainType={product.curtainType}
-                basePrice={product.basePrice}
-                discountPrice={product.discountPrice}
-                categoryName={product.category?.name}
-                brandName={product.brand?.name}
-                tag={product.tag}
-                imageUrl={coverImg?.imageUrl}
-                reviewCount={revCount}
-                rating={avgRating}
-              />
-            );
-          })}
-        </div>
-      </section>
+      {/* 3. Ana Sayfa Vitrin ve Kategori Filtreli Ürün Listesi */}
+      <HomepageShowcase products={products as any} />
 
       {/* 4. Küçük Kampanya Bannerları & Avantajlar */}
       <div className="max-w-7xl mx-auto px-4">

@@ -132,6 +132,7 @@ model Product {
   stockTracking Boolean       @default(false)
   stockQuantity Int           @default(0)
   isActive      Boolean       @default(true)
+  isFeatured    Boolean       @default(true)
   sortOrder     Int           @default(0)
 
   minWidth      Float         @default(30)
