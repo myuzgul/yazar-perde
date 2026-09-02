@@ -363,31 +363,15 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'LOGIN', onSuc
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
 
-              <div className="pt-2 text-center space-y-2 text-xs text-slate-500">
-                <div>
-                  Hesabınız yok mu?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setTab('REGISTER')}
-                    className="font-bold text-[#1B84F8] hover:underline cursor-pointer"
-                  >
-                    Hemen Üye Olun
-                  </button>
-                </div>
-
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTab('LEGACY_SETUP');
-                      setError(null);
-                    }}
-                    className="text-[11px] text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg font-bold transition inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Sparkles className="w-3 h-3 text-amber-600" />
-                    <span>Eski Sitemizden Aktarılan Üyeyim (İlk Şifremi Belirle)</span>
-                  </button>
-                </div>
+              <div className="pt-2 text-center text-xs text-slate-500">
+                Hesabınız yok mu?{' '}
+                <button
+                  type="button"
+                  onClick={() => setTab('REGISTER')}
+                  className="font-bold text-[#1B84F8] hover:underline cursor-pointer"
+                >
+                  Hemen Üye Olun
+                </button>
               </div>
             </form>
           ) : (
