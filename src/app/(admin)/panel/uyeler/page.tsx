@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -159,9 +159,15 @@ export default function UyelerPage() {
                           {user.orders.length} Sipariş
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-[#1B84F8] border border-blue-100 inline-flex items-center gap-1">
-                            <UserCheck className="w-3 h-3" /> Kayıtlı Üye
-                          </span>
+                          {(user as any).mustSetPassword ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1">
+                              <span>🕒 Eski Sistem Üyesi</span>
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-[#1B84F8] border border-blue-100 inline-flex items-center gap-1">
+                              <UserCheck className="w-3 h-3" /> Aktif Üye
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))

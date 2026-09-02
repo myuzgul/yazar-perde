@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { hashPassword, createSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth';
 import { cookies } from 'next/headers';
@@ -43,6 +43,51 @@ export async function POST(req: NextRequest) {
     });
 
     if (existing) {
+      // Eğer eski sistemden aktarılan üye ise ve ilk kez şifre belirliyorsa kaydı aktifleştir
+      if (existing.mustSetPassword || existing.isLegacyMigrated) {
+        const hashedPassword = await hashPassword(password);
+        const updatedUser = await prisma.user.update({
+          where: { email: cleanEmail },
+          data: {
+            name: name || existing.name,
+            surname: surname || existing.surname,
+            phone: phone || existing.phone,
+            passwordHash: hashedPassword,
+            mustSetPassword: false,
+            isLegacyMigrated: false,
+          },
+        });
+
+        const token = await createSessionToken({
+          userId: updatedUser.id,
+          email: updatedUser.email,
+          name: updatedUser.name,
+          surname: updatedUser.surname,
+          role: updatedUser.role,
+        }, '30d');
+
+        const cookieStore = await cookies();
+        cookieStore.set(CUSTOMER_COOKIE_NAME, token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 30,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: 'Eski sitemizdeki üyeliğiniz başarıyla aktifleştirildi! Hoş geldiniz.',
+          data: {
+            id: updatedUser.id,
+            name: updatedUser.name,
+            surname: updatedUser.surname,
+            email: updatedUser.email,
+            phone: updatedUser.phone,
+          },
+        });
+      }
+
       return NextResponse.json(
         { success: false, message: 'Bu e-posta adresiyle kayıtlı bir hesap zaten mevcut. Lütfen giriş yapınız.' },
         { status: 400 }

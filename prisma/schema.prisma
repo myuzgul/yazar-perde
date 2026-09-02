@@ -16,6 +16,8 @@ model User {
   passwordHash              String
   role                      String                @default("CUSTOMER")
   isEmailVerified           Boolean               @default(false)
+  mustSetPassword           Boolean               @default(false)
+  isLegacyMigrated          Boolean               @default(false)
   isDeleted                 Boolean               @default(false)
   defaultDeliveryAddressId  String?
   defaultBillingAddressId   String?

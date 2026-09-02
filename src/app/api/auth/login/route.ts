@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPassword, createSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth';
 import { cookies } from 'next/headers';
@@ -41,6 +41,18 @@ export async function POST(req: NextRequest) {
         { success: false, message: 'Bu hesap kapatılmıştır. Lütfen destek ile iletişime geçiniz.' },
         { status: 403 }
       );
+    }
+
+    // Eski sistemden aktarılan kullanıcı ilk kez giriş yapıyorsa
+    if (user.mustSetPassword || user.isLegacyMigrated) {
+      return NextResponse.json({
+        success: false,
+        requirePasswordSetup: true,
+        email: user.email,
+        name: user.name,
+        surname: user.surname,
+        message: 'Hoş geldiniz! Yazar Perde yeni sistemimize üyeliğiniz güvenle aktarılmıştır. Lütfen hesabınız için yeni bir şifre belirleyiniz.',
+      }, { status: 200 });
     }
 
     const isPasswordValid = await verifyPassword(password, user.passwordHash);
