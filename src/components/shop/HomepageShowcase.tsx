@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import ProductCard from '@/components/shop/ProductCard';
@@ -53,27 +53,37 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
   });
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-6">
-      {/* Başlık & Kategori Sekmeleri */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-200 pb-4 mb-6 gap-4">
-        <div>
-          <span className="text-[11px] font-bold text-[#1B84F8] uppercase tracking-wider block">
-            ÖZEL DİKİM KOLEKSİYONU
-          </span>
-          <h2 className="text-lg sm:text-2xl font-black text-slate-900 mt-0.5">
+    <section className="max-w-7xl mx-auto px-4 py-8">
+      {/* 1. Başlık Alanı */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
             Öne Çıkan Perde Modelleri
           </h2>
+          <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200">
+            {products.length} Model
+          </span>
         </div>
 
-        {/* Kategori Filtre Butonları */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none">
+        <Link
+          href="/kategori/tul-perdeler"
+          className="text-xs font-bold text-[#1B84F8] hover:text-[#156cd1] flex items-center gap-1 transition"
+        >
+          <span>Tüm Modeller</span>
+          <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
+
+      {/* 2. Kategori Filtre Butonları (Mobilde Yatay Kaydırılabilir, Desktopta Ferah Butonlar) */}
+      <div className="mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap scrollbar-none snap-x">
           <button
             type="button"
             onClick={() => setActiveCategory('ALL')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 snap-start cursor-pointer ${
               activeCategory === 'ALL'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-900'
+                : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
             Tümü ({products.length})
@@ -83,10 +93,10 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
               key={cat.id}
               type="button"
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 snap-start cursor-pointer ${
                 activeCategory === cat.id
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                  ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-900'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
               {cat.name} ({cat.count})
