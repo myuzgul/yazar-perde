@@ -1,7 +1,8 @@
-﻿import React from 'react';
+import React from 'react';
 import PreHeader from '@/components/shop/PreHeader';
 import Navbar from '@/components/shop/Navbar';
 import Footer from '@/components/shop/Footer';
+import FloatingWhatsApp from '@/components/shop/FloatingWhatsApp';
 import ShopClientWrapper from '@/components/shop/ShopClientWrapper';
 import { getSystemSettings } from '@/lib/settings';
 
@@ -25,6 +26,7 @@ export default async function ShopLayout({
           {children}
         </div>
       </ShopClientWrapper>
+      <FloatingWhatsApp phone={settings.site_phone || '0541 494 51 73'} />
       <Footer />
     </div>
   );
