@@ -196,8 +196,21 @@ export default function GirisPage() {
             </div>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
-                {error}
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-semibold">
+                <div>{error}</div>
+                {(error.includes('aktarılmıştır') || error.includes('şifre') || error.includes('Hoş')) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsLegacySetup(true);
+                      setError(null);
+                    }}
+                    className="mt-2.5 w-full py-2 bg-[#1B84F8] hover:bg-[#156cd1] text-white text-xs font-bold rounded-lg transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Hemen Yeni Şifrenizi Belirleyin</span>
+                  </button>
+                )}
               </div>
             )}
 
@@ -266,11 +279,27 @@ export default function GirisPage() {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-500">
-              Henüz üye değil misiniz?{' '}
-              <Link href="/kayit" className="text-[#1B84F8] font-bold hover:underline">
-                Hemen Üye Olun
-              </Link>
+            <div className="mt-6 pt-6 border-t border-slate-100 text-center space-y-2 text-xs">
+              <div className="text-slate-500">
+                Henüz üye değil misiniz?{' '}
+                <Link href="/kayit" className="text-[#1B84F8] font-bold hover:underline">
+                  Hemen Üye Olun
+                </Link>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLegacySetup(true);
+                    setError(null);
+                  }}
+                  className="text-[11px] text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg font-bold transition inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-600" />
+                  <span>Eski Sitemizden Aktarılan Üyeyim (İlk Şifremi Belirle)</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
