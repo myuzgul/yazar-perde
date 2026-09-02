@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import StoryBar from '@/components/shop/StoryBar';
 import SmallBanners from '@/components/shop/SmallBanners';
 import HomepageShowcase from '@/components/shop/HomepageShowcase';
