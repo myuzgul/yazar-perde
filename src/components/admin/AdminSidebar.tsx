@@ -40,6 +40,7 @@ export default function AdminSidebar() {
     { label: 'Toplu Fiyat Güncelle', href: '/panel/urunler/toplu-guncelle', icon: Sparkles },
     { label: 'Kategoriler', href: '/panel/kategoriler', icon: FolderTree },
     { label: 'Markalar', href: '/panel/markalar', icon: Award },
+    { label: 'Ürün Rozetleri', href: '/panel/etiketler', icon: Tag },
     { label: 'Müşteri Yorumları', href: '/panel/yorumlar', icon: MessageSquare },
     { label: 'Perde Katsayıları', href: '/panel/katsayilar', icon: Sliders },
     { label: 'Müşteriler & Üyeler', href: '/panel/uyeler', icon: Users },
