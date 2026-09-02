@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import ProductCard from '@/components/shop/ProductCard';
 import Link from 'next/link';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronRight, Filter, ChevronDown } from 'lucide-react';
 
 interface ShowcaseProduct {
   id: string;
@@ -52,6 +52,13 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
     return p.category?.id === activeCategory;
   });
 
+  const currentCategoryName =
+    activeCategory === 'ALL'
+      ? `Tümü (${products.length} Model)`
+      : `${categories.find((c) => c.id === activeCategory)?.name} (${
+          categories.find((c) => c.id === activeCategory)?.count || 0
+        })`;
+
   return (
     <section className="max-w-7xl mx-auto px-4 py-8">
       {/* 1. Başlık Alanı */}
@@ -74,35 +81,61 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
         </Link>
       </div>
 
-      {/* 2. Kategori Filtre Butonları (Mobilde Yatay Kaydırılabilir, Desktopta Ferah Butonlar) */}
-      <div className="mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap scrollbar-none snap-x">
+      {/* 2. MOBİL: Şık ve Pratik Açılır Kategori Seçici (Taşma / Kesilme Olmaz) */}
+      <div className="block sm:hidden mb-6">
+        <div className="relative">
+          <div className="flex items-center justify-between bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 shadow-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <Filter className="w-4 h-4 text-[#1B84F8] shrink-0" />
+              <span className="text-xs font-medium text-slate-500 shrink-0">Kategori:</span>
+              <span className="text-xs font-extrabold text-slate-900 truncate">
+                {currentCategoryName}
+              </span>
+            </div>
+            <ChevronDown className="w-4 h-4 text-slate-500 shrink-0 ml-2" />
+          </div>
+          <select
+            value={activeCategory}
+            onChange={(e) => setActiveCategory(e.target.value)}
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer text-xs"
+          >
+            <option value="ALL">Tüm Modeller ({products.length} Ürün)</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name} ({cat.count} Ürün)
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* 2. MASAÜSTÜ: Ferah Hap Butonlar */}
+      <div className="hidden sm:flex flex-wrap items-center gap-2 mb-8">
+        <button
+          type="button"
+          onClick={() => setActiveCategory('ALL')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeCategory === 'ALL'
+              ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-900'
+              : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          Tümü ({products.length})
+        </button>
+        {categories.map((cat) => (
           <button
+            key={cat.id}
             type="button"
-            onClick={() => setActiveCategory('ALL')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 snap-start cursor-pointer ${
-              activeCategory === 'ALL'
+            onClick={() => setActiveCategory(cat.id)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeCategory === cat.id
                 ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-900'
                 : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
-            Tümü ({products.length})
+            {cat.name} ({cat.count})
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 snap-start cursor-pointer ${
-                activeCategory === cat.id
-                  ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-900'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-              }`}
-            >
-              {cat.name} ({cat.count})
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
 
       {/* Ürün Izgarası (Mobilde 2'li, Desktopta 4'lü) */}
