@@ -14,7 +14,10 @@ import {
   DollarSign, 
   FileText, 
   Search,
-  Sparkles
+  Sparkles,
+  GripVertical,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -76,6 +79,8 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<ProductFormData>(
     initialData || {
@@ -180,20 +185,40 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
     }
   };
 
-  const handleSetCover = (index: number) => {
-    const updated = formData.images.map((img, idx) => ({
+  const reorderImages = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    const updated = [...formData.images];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+
+    // Her zaman 1. sıradaki görsel kapak (isCover: true) olur
+    const reIndexed = updated.map((img, idx) => ({
       ...img,
-      isCover: idx === index,
+      isCover: idx === 0,
+      sortOrder: idx,
     }));
-    setFormData((prev) => ({ ...prev, images: updated }));
+    setFormData((prev) => ({ ...prev, images: reIndexed }));
+  };
+
+  const handleMoveImage = (fromIndex: number, direction: 'left' | 'right') => {
+    const toIndex = direction === 'left' ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= formData.images.length) return;
+    reorderImages(fromIndex, toIndex);
+  };
+
+  const handleSetCover = (index: number) => {
+    // Fotoğrafı en başa (1. sıraya) taşır
+    reorderImages(index, 0);
   };
 
   const handleDeleteImage = (index: number) => {
     const filtered = formData.images.filter((_, idx) => idx !== index);
-    if (filtered.length > 0 && !filtered.some((i) => i.isCover)) {
-      filtered[0].isCover = true;
-    }
-    setFormData((prev) => ({ ...prev, images: filtered }));
+    const reIndexed = filtered.map((img, idx) => ({
+      ...img,
+      isCover: idx === 0,
+      sortOrder: idx,
+    }));
+    setFormData((prev) => ({ ...prev, images: reIndexed }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -535,15 +560,17 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
         {/* SEKME 3: FOTOĞRAFLAR */}
         {activeTab === 'IMAGES' && (
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
                 <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                   Ürün Fotoğraf Galerisi (Maksimum 10 Adet)
                 </h3>
-                <p className="text-[11px] text-slate-500">İlk sıradaki görsel vitrin kapak fotoğrafı olarak kullanılır.</p>
+                <p className="text-[11px] text-slate-500">
+                  Görselleri <strong>sürükleyip bırakarak</strong> veya okları kullanarak sıralayabilirsiniz. <strong>1. sıradaki görsel otomatik olarak kapak fotoğrafı olur.</strong>
+                </p>
               </div>
 
-              <label className="px-4 py-2 rounded-xl bg-[#1B84F8] hover:bg-[#156cd1] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition">
+              <label className="px-4 py-2 rounded-xl bg-[#1B84F8] hover:bg-[#156cd1] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shrink-0 shadow-sm shadow-[#1B84F8]/20">
                 <Upload className="w-3.5 h-3.5" />
                 <span>{uploading ? 'Yükleniyor...' : 'Fotoğraf Ekle'}</span>
                 <input
@@ -557,46 +584,139 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
               </label>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+            {formData.images.length > 0 && (
+              <div className="mb-4 p-2.5 bg-blue-50/70 border border-blue-200 text-blue-900 rounded-xl text-xs flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#1B84F8] shrink-0" />
+                <span>
+                  <strong>İpucu:</strong> İstediğiniz fotoğrafı tutup sürükleyerek veya &quot;Kapak Yap&quot; butonuna basarak 1. sıraya getirebilirsiniz.
+                </span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {formData.images.map((img, idx) => (
                 <div
                   key={idx}
-                  className={`relative group bg-slate-50 rounded-xl border p-2 flex flex-col items-center justify-between ${
-                    img.isCover ? 'border-[#1B84F8] ring-2 ring-[#1B84F8]/20' : 'border-slate-200'
+                  draggable={true}
+                  onDragStart={(e) => {
+                    setDraggedIndex(idx);
+                    e.dataTransfer.setData('text/plain', idx.toString());
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverIndex(idx);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverIndex === idx) setDragOverIndex(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedIndex !== null && draggedIndex !== idx) {
+                      reorderImages(draggedIndex, idx);
+                    }
+                    setDraggedIndex(null);
+                    setDragOverIndex(null);
+                  }}
+                  onDragEnd={() => {
+                    setDraggedIndex(null);
+                    setDragOverIndex(null);
+                  }}
+                  className={`relative group bg-white rounded-2xl border p-2.5 flex flex-col items-center justify-between transition-all duration-200 cursor-grab active:cursor-grabbing select-none ${
+                    idx === 0
+                      ? 'border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/40 shadow-sm'
+                      : 'border-slate-200 hover:border-slate-300 hover:shadow-xs'
+                  } ${dragOverIndex === idx ? 'ring-2 ring-[#1B84F8] scale-105 z-10' : ''} ${
+                    draggedIndex === idx ? 'opacity-40' : ''
                   }`}
                 >
-                  <img
-                    src={img.imageUrl}
-                    alt={`Ürün Görseli ${idx + 1}`}
-                    className="w-full h-32 object-cover rounded-lg mb-2"
-                  />
+                  {/* Üst Sıra Bilgisi ve Drag Handle */}
+                  <div className="w-full flex items-center justify-between mb-1.5 px-0.5">
+                    {idx === 0 ? (
+                      <span className="text-[10px] font-extrabold text-white bg-amber-500 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                        <Star className="w-3 h-3 fill-current" /> 1. Sıra (Kapak)
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                        {idx + 1}. Sıra
+                      </span>
+                    )}
 
-                  {img.isCover ? (
-                    <span className="text-[10px] font-bold text-white bg-[#1B84F8] px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-current" /> Kapak
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSetCover(idx)}
-                      className="text-[10px] font-semibold text-slate-600 hover:text-[#1B84F8] transition"
-                    >
-                      Kapak Yap
-                    </button>
-                  )}
+                    <div className="text-slate-400 group-hover:text-slate-700 transition" title="Sürükle">
+                      <GripVertical className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteImage(idx)}
-                    className="absolute top-3 right-3 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition shadow-md"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Görsel */}
+                  <div className="w-full h-32 relative rounded-xl overflow-hidden bg-slate-100 mb-2 border border-slate-100">
+                    <img
+                      src={img.imageUrl}
+                      alt={`Ürün Görseli ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Sıralama Okları & Butonlar */}
+                  <div className="w-full space-y-1.5">
+                    <div className="flex items-center justify-between gap-1 w-full">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveImage(idx, 'left');
+                          }}
+                          className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-25 disabled:cursor-not-allowed text-slate-700 transition"
+                          title="Sola / Öne Taşı"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === formData.images.length - 1}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveImage(idx, 'right');
+                          }}
+                          className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-25 disabled:cursor-not-allowed text-slate-700 transition"
+                          title="Sağa / Arkaya Taşı"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteImage(idx);
+                        }}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition"
+                        title="Fotoğrafı Sil"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {idx !== 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSetCover(idx);
+                        }}
+                        className="w-full py-1 text-[11px] font-bold text-[#1B84F8] bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
+                      >
+                        <Star className="w-3 h-3" />
+                        <span>Kapak Yap (1. Sıraya Al)</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
 
               {formData.images.length === 0 && (
-                <div className="col-span-full py-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                <div className="col-span-full py-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
                   <ImageIcon className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                   <p className="text-xs">Henüz fotoğraf yüklenmedi.</p>
                 </div>

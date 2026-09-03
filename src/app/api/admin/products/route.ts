@@ -83,8 +83,8 @@ export async function POST(req: NextRequest) {
         images: {
           create: (body.images || []).map((img: { imageUrl: string; sortOrder?: number; isCover?: boolean }, idx: number) => ({
             imageUrl: img.imageUrl,
-            sortOrder: img.sortOrder ?? idx,
-            isCover: idx === 0 || !!img.isCover,
+            sortOrder: idx,
+            isCover: idx === 0,
           })),
         },
       },
@@ -140,8 +140,8 @@ export async function PUT(req: NextRequest) {
         images: {
           create: (body.images || []).map((img: { imageUrl: string; sortOrder?: number; isCover?: boolean }, idx: number) => ({
             imageUrl: img.imageUrl,
-            sortOrder: img.sortOrder ?? idx,
-            isCover: idx === 0 || !!img.isCover,
+            sortOrder: idx,
+            isCover: idx === 0,
           })),
         },
       },
