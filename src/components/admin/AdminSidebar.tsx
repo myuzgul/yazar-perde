@@ -18,7 +18,8 @@ import {
   FileText,
   MessageSquare,
   Ticket,
-  Sparkles
+  Sparkles,
+  CreditCard
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -47,7 +48,8 @@ export default function AdminSidebar() {
     { label: 'SMS & E-Posta Şablonları', href: '/panel/bildirimler', icon: Bell },
     { label: 'Hikaye (Story) Vitrini', href: '/panel/hikayeler', icon: Sparkles },
     { label: 'Kurumsal Sayfalar', href: '/panel/sayfalar', icon: FileText },
-    { label: 'Genel & Kargo Ayarları', href: '/panel/ayarlar', icon: Settings },
+    { label: 'Kargo ve Ödeme Ayarları', href: '/panel/kargo-odeme', icon: CreditCard },
+    { label: 'Site & Genel Ayarlar', href: '/panel/ayarlar', icon: Settings },
   ];
 
   return (

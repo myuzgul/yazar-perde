@@ -19,19 +19,32 @@ export interface SystemSettingsMap {
   plisse_adhesive_extra_sqm_price: number;
   // Fon
   renso_piece_price: number;
-  // Genel & Kargo & Ödeme
-  free_shipping_threshold: number;
-  shipping_fee: number;
-  cash_on_delivery_fee: number;
+  // Genel Ayarlar
   default_vat_rate: number;
   site_title: string;
   site_phone: string;
+  site_address: string;
+  site_email: string;
   site_slogan: string;
   site_discount_bar_text: string;
-  // PayTR
-  paytr_merchant_id?: string;
-  paytr_merchant_key?: string;
-  paytr_merchant_salt?: string;
+  // Kargo & Teslimat
+  shipping_company_name: string;
+  shipping_delivery_time: string;
+  free_shipping_threshold: number;
+  shipping_fee: number;
+  // Ödeme: Kredi Kartı / PayTR
+  payment_paytr_active: number;
+  paytr_merchant_id: string;
+  paytr_merchant_key: string;
+  paytr_merchant_salt: string;
+  paytr_test_mode: number;
+  // Ödeme: Banka Havalesi / EFT
+  payment_bank_transfer_active: number;
+  bank_transfer_discount_rate: number;
+  bank_transfer_accounts: string;
+  // Ödeme: Kapıda Nakit Ödeme
+  payment_cod_active: number;
+  cash_on_delivery_fee: number;
 }
 
 export const DEFAULT_SETTINGS: SystemSettingsMap = {
@@ -54,17 +67,33 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   plisse_adhesive_extra_sqm_price: 100,
   renso_piece_price: 100,
 
-  free_shipping_threshold: 1500,
-  shipping_fee: 99.90,
-  cash_on_delivery_fee: 100,
   default_vat_rate: 10,
   site_title: "Yazar Perde - Özel Ölçülü Perde Sistemleri",
   site_phone: "0541 494 51 73",
-  site_address: "Anadolu Mah. Atıcılar Cd. No: 1/A, 16270 Yıldırım/Bursa",
-  site_email: "info@yazarperde.com",
+  site_address: "Anadolu Mah. Atıcılar Cd. No: 1/A1, 16270 Yıldırım/Bursa",
+  site_email: "yazarperde@hotmail.com",
   site_slogan: "Evinize Özel Ölçü, Kusursuz Dikiş",
   site_discount_bar_text: "%40 İNDİRİM KAMPANYASI",
-  paytr_merchant_id: "test_merchant_id",
-  paytr_merchant_key: "test_merchant_key",
-  paytr_merchant_salt: "test_merchant_salt",
+
+  // Kargo
+  shipping_company_name: "DHL Kargo (MNG Kargo)",
+  shipping_delivery_time: "2-7 İş Günü",
+  free_shipping_threshold: 1500,
+  shipping_fee: 99.90,
+
+  // PayTR
+  payment_paytr_active: 1,
+  paytr_merchant_id: "",
+  paytr_merchant_key: "",
+  paytr_merchant_salt: "",
+  paytr_test_mode: 1,
+
+  // Havale / EFT
+  payment_bank_transfer_active: 1,
+  bank_transfer_discount_rate: 5,
+  bank_transfer_accounts: "Banka: QNB Finansbank\nAlıcı Ünvanı: Yazar Perde Tekstil Gıda İnş.Otomotiv Mobilya Turizm Dış Tic.San.ve Tic.LTD.ŞTİ.\nIBAN: TR00 0000 0000 0000 0000 0000 00\nŞube: Bursa Yıldırım Şubesi",
+
+  // Kapıda Nakit Ödeme
+  payment_cod_active: 1,
+  cash_on_delivery_fee: 100,
 };

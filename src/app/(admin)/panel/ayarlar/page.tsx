@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -57,7 +57,7 @@ export default function AyarlarPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setMessage('Genel ve Kargo ayarları başarıyla kaydedildi!');
+        setMessage('Site genel ayarları başarıyla kaydedildi!');
       }
     } catch {
       alert('Kaydedilemedi');
@@ -66,7 +66,7 @@ export default function AyarlarPage() {
     }
   };
 
-  const generalItems = settings.filter((s) => s.group === 'GENERAL' || s.group === 'SHIPPING' || s.group === 'PAYMENT');
+  const generalItems = settings.filter((s) => s.group === 'GENERAL' || (!s.group && !['SHIPPING', 'PAYMENT'].includes(s.group || '')));
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-100 font-sans">
@@ -79,9 +79,9 @@ export default function AyarlarPage() {
               <Settings className="w-4 h-4" />
               <span>SİSTEM YAPILANDIRMASI</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Genel & Kargo Ayarları</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Site & Genel Ayarlar</h1>
             <p className="text-sm text-slate-500">
-              Site başlığı, pre-header duyuruları, müşteri iletişim telefonları ve kargo baremleri
+              Site başlığı, üst duyuru çubuğu, iletişim telefonları ve firma bilgileri (Kargo ve Ödeme ayarları sol menüdeki özel sekmeden yönetilmektedir)
             </p>
           </div>
 

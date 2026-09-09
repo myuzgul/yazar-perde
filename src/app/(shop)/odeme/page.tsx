@@ -15,7 +15,9 @@ import {
   ChevronRight,
   UserPlus,
   CheckCircle2,
-  Tag
+  Tag,
+  Sparkles,
+  Percent
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -90,6 +92,14 @@ export default function CheckoutPage() {
       .then((data) => {
         if (data.success && data.data) {
           setSettings(data.data);
+          // Aktif ödeme yöntemlerine göre varsayılanı güncelle
+          if (data.data.payment_paytr_active === 0) {
+            if (data.data.payment_bank_transfer_active !== 0) {
+              setPaymentMethod('BANK_TRANSFER');
+            } else if (data.data.payment_cod_active !== 0) {
+              setPaymentMethod('CASH_ON_DELIVERY');
+            }
+          }
         }
       })
       .catch(() => {});
@@ -128,14 +138,28 @@ export default function CheckoutPage() {
     }
   };
 
+  const paytrActive = settings?.payment_paytr_active !== 0;
+  const bankActive = settings?.payment_bank_transfer_active !== 0;
+  const codActive = settings?.payment_cod_active !== 0;
+  const bankDiscountRate = Number(settings?.bank_transfer_discount_rate ?? 5);
+
   const freeShippingThreshold = settings?.free_shipping_threshold ?? 1500;
   const standardShippingFee = settings?.shipping_fee ?? 99.90;
   const standardCodFee = settings?.cash_on_delivery_fee ?? 100;
 
   const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
   const codFee = paymentMethod === 'CASH_ON_DELIVERY' ? standardCodFee : 0;
-  const discountAmount = couponDiscount ? couponDiscount.amount : 0;
-  const grandTotal = Math.max(0, subtotal - discountAmount + shippingFee + codFee);
+  
+  const couponDiscountAmount = couponDiscount ? couponDiscount.amount : 0;
+  const subtotalAfterCoupon = Math.max(0, subtotal - couponDiscountAmount);
+  
+  // Havale İndirimi Hesaplama (Müşteri Havale seçtiğinde anında aktif olur)
+  const bankDiscountAmount = (paymentMethod === 'BANK_TRANSFER' && bankDiscountRate > 0)
+    ? Number(((subtotalAfterCoupon * bankDiscountRate) / 100).toFixed(2))
+    : 0;
+
+  const totalDiscount = couponDiscountAmount + bankDiscountAmount;
+  const grandTotal = Math.max(0, Number((subtotal - totalDiscount + shippingFee + codFee).toFixed(2)));
 
   // Sipariş başarıyla oluşturulduğunda veya gönderilirken yönlendirme ekranı göster (Sepetiniz Boş çıkmasını engeller)
   if (isSubmitting || isSuccess) {
@@ -464,85 +488,128 @@ export default function CheckoutPage() {
           </div>
 
           {/* 4. Ödeme Yöntemi Seçimi */}
-          <div className="border border-slate-200 rounded-sm p-5 space-y-3 bg-white">
-            <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-2.5 flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-[#1B84F8]" />
-              <span>4. Ödeme Yöntemi</span>
-            </h2>
-
-            <div className="space-y-2 text-xs">
-              <label
-                className={`flex items-center justify-between p-3 rounded-sm border cursor-pointer transition ${
-                  paymentMethod === 'CREDIT_CARD'
-                    ? 'border-slate-900 bg-slate-50'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="payment_method"
-                    checked={paymentMethod === 'CREDIT_CARD'}
-                    onChange={() => setPaymentMethod('CREDIT_CARD')}
-                    className="text-[#1B84F8]"
-                  />
-                  <div>
-                    <span className="font-bold text-slate-900 block">Kredi Kartı / Banka Kartı (PayTR 3D Secure)</span>
-                    <span className="text-[10px] text-slate-500">Tüm bankaların kartlarıyla 12 aya varan taksit imkanı</span>
-                  </div>
-                </div>
-                <Lock className="w-4 h-4 text-slate-400" />
-              </label>
-
-              <label
-                className={`flex items-center justify-between p-3 rounded-sm border cursor-pointer transition ${
-                  paymentMethod === 'BANK_TRANSFER'
-                    ? 'border-slate-900 bg-slate-50'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="payment_method"
-                    checked={paymentMethod === 'BANK_TRANSFER'}
-                    onChange={() => setPaymentMethod('BANK_TRANSFER')}
-                    className="text-[#1B84F8]"
-                  />
-                  <div>
-                    <span className="font-bold text-slate-900 block">Banka Havalesi / EFT</span>
-                    <span className="text-[10px] text-slate-500">Hesaplarımıza doğrudan transfer</span>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded-sm">
-                  IBAN
+          <div className="border border-slate-200 rounded-sm p-5 space-y-4 bg-white">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+              <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-[#1B84F8]" />
+                <span>4. Ödeme Yöntemi</span>
+              </h2>
+              {paymentMethod === 'BANK_TRANSFER' && bankDiscountRate > 0 && (
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in">
+                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                  <span>%{bankDiscountRate} Havale Kazancı</span>
                 </span>
-              </label>
+              )}
+            </div>
 
-              <label
-                className={`flex items-center justify-between p-3 rounded-sm border cursor-pointer transition ${
-                  paymentMethod === 'CASH_ON_DELIVERY'
-                    ? 'border-slate-900 bg-slate-50'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="payment_method"
-                    checked={paymentMethod === 'CASH_ON_DELIVERY'}
-                    onChange={() => setPaymentMethod('CASH_ON_DELIVERY')}
-                    className="text-[#1B84F8]"
-                  />
-                  <div>
-                    <span className="font-bold text-slate-900 block">
-                      Kapıda Nakit Ödeme {standardCodFee > 0 ? `(+${standardCodFee.toFixed(2)} TL Hizmet Bedeli)` : '(Ücretsiz)'}
-                    </span>
-                    <span className="text-[10px] text-slate-500">Kargo teslimatı sırasında nakit ödeme</span>
+            <div className="space-y-3 text-xs">
+              {/* Kredi Kartı / PayTR */}
+              {paytrActive && (
+                <label
+                  className={`flex items-center justify-between p-3.5 rounded-sm border cursor-pointer transition ${
+                    paymentMethod === 'CREDIT_CARD'
+                      ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900'
+                      : 'border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      checked={paymentMethod === 'CREDIT_CARD'}
+                      onChange={() => setPaymentMethod('CREDIT_CARD')}
+                      className="text-[#1B84F8]"
+                    />
+                    <div>
+                      <span className="font-bold text-slate-900 block">Kredi Kartı / Banka Kartı (PayTR 3D Secure)</span>
+                      <span className="text-[10px] text-slate-500">Tüm bankaların kartlarıyla 12 aya varan taksit imkanı • 256-Bit SSL</span>
+                    </div>
                   </div>
+                  <Lock className="w-4 h-4 text-slate-400" />
+                </label>
+              )}
+
+              {/* Banka Havalesi / EFT */}
+              {bankActive && (
+                <div className="space-y-2">
+                  <label
+                    className={`flex items-center justify-between p-3.5 rounded-sm border cursor-pointer transition ${
+                      paymentMethod === 'BANK_TRANSFER'
+                        ? 'border-emerald-600 bg-emerald-50/40 ring-1 ring-emerald-600'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        checked={paymentMethod === 'BANK_TRANSFER'}
+                        onChange={() => setPaymentMethod('BANK_TRANSFER')}
+                        className="text-emerald-600"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 block">Banka Havalesi / EFT</span>
+                          {bankDiscountRate > 0 && (
+                            <span className="text-[10px] font-black text-white bg-emerald-600 px-1.5 py-0.5 rounded">
+                              %{bankDiscountRate} İNDİRİM
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-500">Resmi şirket banka hesaplarımıza doğrudan transfer</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded-sm">
+                      IBAN
+                    </span>
+                  </label>
+
+                  {/* Havale Seçildiğinde Açılan Canlı Kâr & Bilgi Kutusu */}
+                  {paymentMethod === 'BANK_TRANSFER' && (
+                    <div className="p-3.5 bg-emerald-50/90 border border-emerald-300 rounded-sm space-y-2 animate-in fade-in">
+                      <div className="flex items-start gap-2 text-emerald-950">
+                        <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-black text-emerald-900">
+                            🎉 Havale ile ödeme seçtiğiniz için %{bankDiscountRate} indirimle ₺{bankDiscountAmount.toFixed(2)} kâr ettiniz!
+                          </p>
+                          <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                            Bu indirim ödenecek toplam tutarınıza anında yansıtılmıştır. Siparişinizi onayladıktan sonra verilecek sipariş numarası ile ödemenizi yapabilirsiniz.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <Truck className="w-4 h-4 text-slate-400" />
-              </label>
+              )}
+
+              {/* Kapıda Nakit Ödeme */}
+              {codActive && (
+                <label
+                  className={`flex items-center justify-between p-3.5 rounded-sm border cursor-pointer transition ${
+                    paymentMethod === 'CASH_ON_DELIVERY'
+                      ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900'
+                      : 'border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      checked={paymentMethod === 'CASH_ON_DELIVERY'}
+                      onChange={() => setPaymentMethod('CASH_ON_DELIVERY')}
+                      className="text-[#1B84F8]"
+                    />
+                    <div>
+                      <span className="font-bold text-slate-900 block">
+                        Kapıda Nakit Ödeme {standardCodFee > 0 ? `(+₺${standardCodFee.toFixed(2)} Hizmet Bedeli)` : '(Ücretsiz)'}
+                      </span>
+                      <span className="text-[10px] text-slate-500">Kargo teslimatı sırasında kuryeye nakit ödeme</span>
+                    </div>
+                  </div>
+                  <Truck className="w-4 h-4 text-slate-400" />
+                </label>
+              )}
             </div>
           </div>
         </div>
@@ -634,6 +701,15 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-emerald-600 font-bold">
                   <span>Kupon İndirimi ({couponDiscount.code}):</span>
                   <span>-₺{couponDiscount.amount.toFixed(2)}</span>
+                </div>
+              )}
+              {paymentMethod === 'BANK_TRANSFER' && bankDiscountAmount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-bold bg-emerald-50/80 px-2 py-1 rounded border border-emerald-200">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Havale İndirimi (%{bankDiscountRate}):</span>
+                  </span>
+                  <span>-₺{bankDiscountAmount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between">

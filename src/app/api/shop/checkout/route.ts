@@ -154,6 +154,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Havale / EFT İndirimi Hesaplama
+    let bankTransferDiscount = 0;
+    const bankDiscountRate = Number(settings.bank_transfer_discount_rate) || 0;
+
+    if (paymentMethod === 'BANK_TRANSFER' && bankDiscountRate > 0) {
+      const remainingSubtotal = Math.max(0, subtotal - discountTotal);
+      bankTransferDiscount = Number(((remainingSubtotal * bankDiscountRate) / 100).toFixed(2));
+      discountTotal = Number((discountTotal + bankTransferDiscount).toFixed(2));
+    }
+
     const grandTotal = Math.max(0, Number((subtotal + shippingFee + paymentFee - discountTotal).toFixed(2)));
 
     const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
@@ -212,7 +222,9 @@ export async function POST(req: NextRequest) {
           create: {
             status: 'PENDING',
             title: 'Sipariş Oluşturuldu',
-            description: `Siparişiniz ${orderNumber} kodu ile başarıyla sisteme alındı.`,
+            description: paymentMethod === 'BANK_TRANSFER' && bankTransferDiscount > 0
+              ? `Siparişiniz ${orderNumber} kodu ile başarıyla sisteme alındı (%${bankDiscountRate} havale indirimi uygulandı).`
+              : `Siparişiniz ${orderNumber} kodu ile başarıyla sisteme alındı.`,
           },
         },
       },

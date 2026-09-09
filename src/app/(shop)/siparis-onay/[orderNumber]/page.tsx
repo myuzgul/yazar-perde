@@ -1,5 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import prisma from '@/lib/prisma';
+import { getSystemSettings } from '@/lib/settings';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { 
@@ -18,6 +19,7 @@ interface OrderConfirmationPageProps {
 export default async function OrderConfirmationPage({ params, searchParams }: OrderConfirmationPageProps) {
   const { orderNumber } = await params;
   const { status } = await searchParams;
+  const settings = await getSystemSettings();
 
   const order = await prisma.order.findUnique({
     where: { orderNumber },
@@ -76,33 +78,19 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
 
       {/* HAVALE / EFT SEÇİLDİYSE BANKA HESAPLARI KUTUSU */}
       {order.paymentMethod === 'BANK_TRANSFER' && (
-        <div className="bg-blue-50/70 p-6 rounded-3xl border border-blue-200 text-xs mb-8 space-y-4">
+        <div className="bg-blue-50/80 p-6 rounded-3xl border border-blue-200 text-xs mb-8 space-y-4 shadow-xs">
           <div className="flex items-center gap-2 text-slate-900 font-extrabold text-sm">
             <Building2 className="w-5 h-5 text-[#1B84F8]" />
-            <span>Havale / EFT İçin Banka Hesap Bilgilerimiz</span>
+            <span>Havale / EFT İçin Resmi Şirket Banka Hesap Bilgilerimiz</span>
           </div>
-          <p className="text-slate-600 text-[11px] leading-relaxed">
-            Lütfen transfer yaparken <strong>açıklama alanına yalnızca sipariş numaranızı ({order.orderNumber})</strong> yazınız. Ödemeniz muhasebemizce 15 dakika içinde onaylanacaktır.
+          <p className="text-slate-700 text-xs leading-relaxed">
+            Lütfen bankanızdan transfer yaparken <strong>açıklama alanına yalnızca sipariş numaranızı ({order.orderNumber})</strong> yazınız. Ödemeniz muhasebemizce 15 dakika içinde teyit edilecektir.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div className="bg-white p-4 rounded-2xl border border-blue-100 space-y-1">
-              <div className="flex justify-between font-bold text-slate-900">
-                <span>Ziraat Bankası</span>
-                <span className="text-[10px] text-[#1B84F8]">TR Lirası</span>
-              </div>
-              <p className="text-[10px] text-slate-500">Alıcı: Yazar Perde San. Tic. Ltd. Şti.</p>
-              <p className="font-mono text-xs font-bold text-slate-800 select-all">TR12 0001 0090 1234 5678 5001</p>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-blue-100 space-y-1">
-              <div className="flex justify-between font-bold text-slate-900">
-                <span>Garanti BBVA</span>
-                <span className="text-[10px] text-[#1B84F8]">TR Lirası</span>
-              </div>
-              <p className="text-[10px] text-slate-500">Alıcı: Yazar Perde San. Tic. Ltd. Şti.</p>
-              <p className="font-mono text-xs font-bold text-slate-800 select-all">TR62 0006 2000 0001 2345 6789 01</p>
-            </div>
+          <div className="bg-white p-5 rounded-2xl border border-blue-100 shadow-xs">
+            <pre className="font-mono text-xs text-slate-800 whitespace-pre-wrap leading-relaxed select-all">
+              {settings.bank_transfer_accounts || `Banka: QNB Finansbank\nAlıcı Ünvanı: Yazar Perde Tekstil Gıda İnş.Otomotiv Mobilya Turizm Dış Tic.San.ve Tic.LTD.ŞTİ.\nIBAN: TR00 0000 0000 0000 0000 0000 00\nŞube: Bursa Yıldırım Şubesi`}
+            </pre>
           </div>
         </div>
       )}
