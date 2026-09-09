@@ -53,6 +53,11 @@ export default function KargoOdemeAyarlariPage() {
   const [codActive, setCodActive] = useState('1');
   const [codFee, setCodFee] = useState('100');
 
+  // Dopigo & Sovos E-Fatura State
+  const [dopigoActive, setDopigoActive] = useState('1');
+  const [dopigoApiToken, setDopigoApiToken] = useState('');
+  const [dopigoInvoicePrefix, setDopigoInvoicePrefix] = useState('YZR');
+
   const fetchSettings = async () => {
     setLoading(true);
     try {
@@ -81,6 +86,10 @@ export default function KargoOdemeAyarlariPage() {
 
         if (map.payment_cod_active !== undefined) setCodActive(map.payment_cod_active);
         if (map.cash_on_delivery_fee !== undefined) setCodFee(map.cash_on_delivery_fee);
+
+        if (map.dopigo_active !== undefined) setDopigoActive(map.dopigo_active);
+        if (map.dopigo_api_token !== undefined) setDopigoApiToken(map.dopigo_api_token);
+        if (map.dopigo_invoice_prefix !== undefined) setDopigoInvoicePrefix(map.dopigo_invoice_prefix);
       }
     } catch {
       setMessage('Ayarlar yüklenirken hata oluştu.');
@@ -116,6 +125,10 @@ export default function KargoOdemeAyarlariPage() {
 
       { key: 'payment_cod_active', value: codActive, label: 'Kapıda Nakit Ödeme Aktif/Pasif', group: 'PAYMENT' },
       { key: 'cash_on_delivery_fee', value: codFee, label: 'Kapıda Nakit Ödeme Hizmet Bedeli (TL)', group: 'PAYMENT' },
+
+      { key: 'dopigo_active', value: dopigoActive, label: 'Dopigo / Sovos E-Fatura Aktif/Pasif', group: 'INVOICE' },
+      { key: 'dopigo_api_token', value: dopigoApiToken, label: 'Dopigo REST API Token', group: 'INVOICE' },
+      { key: 'dopigo_invoice_prefix', value: dopigoInvoicePrefix, label: 'E-Fatura Seri Ön Eki', group: 'INVOICE' },
     ];
 
     try {
@@ -486,6 +499,75 @@ export default function KargoOdemeAyarlariPage() {
                 <p className="text-[11px] leading-relaxed text-amber-800">
                   Müşteri kapıda ödeme seçtiğinde, kargo teslimatı sırasında kargo görevlisine nakit olarak ödeme yapar. Bu bedel doğrudan sipariş toplamına eklenir.
                 </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 5. KART: E-FATURA & DOPİGO (SOVOS) ENTEGRASYONU */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1B84F8] flex items-center justify-center font-bold">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">5. E-Fatura Entegrasyonu (Dopigo & Sovos)</h2>
+                  <p className="text-xs text-slate-500">Sipariş detayından tek tıkla GİB onaylı E-Arşiv / E-Fatura kesme altyapısı</p>
+                </div>
+              </div>
+
+              {/* Aktif/Pasif Toggle */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-xs font-bold text-slate-700">
+                  {dopigoActive === '1' ? 'Aktif' : 'Pasif'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={dopigoActive === '1'}
+                  onChange={(e) => setDopigoActive(e.target.checked ? '1' : '0')}
+                  className="w-4 h-4 text-[#1B84F8] rounded border-slate-300 cursor-pointer"
+                />
+              </label>
+            </div>
+
+            <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-4 text-xs text-blue-900 space-y-1">
+              <div className="flex items-center gap-2 font-bold">
+                <ShieldCheck className="w-4 h-4 text-[#1B84F8]" />
+                <span>Dopigo & Sovos Entegrasyon Bilgisi:</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-blue-800">
+                Dopigo panelinizden (<strong>panel.dopigo.com</strong> &gt; Ayarlar &gt; API Bilgileri) aldığınız <strong>API Token</strong>'ı aşağıya yapıştırınız. Token girildiğinde sipariş yönetim detayından tek tıkla Sovos aracılığıyla GİB onaylı fatura oluşturulup resmi PDF linki üretilecektir.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Dopigo REST API Token *
+                </label>
+                <input
+                  type="password"
+                  value={dopigoApiToken}
+                  onChange={(e) => setDopigoApiToken(e.target.value.trim())}
+                  placeholder="Örn: 9a8b7c6d5e4f3g2h1..."
+                  className="w-full bg-slate-50/60 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-mono font-semibold text-slate-900 focus:outline-hidden focus:border-[#1B84F8] focus:bg-white transition"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">Dopigo REST API yetkilendirme anahtarı</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Fatura Seri Ön Eki (Opsiyonel)
+                </label>
+                <input
+                  type="text"
+                  maxLength={3}
+                  value={dopigoInvoicePrefix}
+                  onChange={(e) => setDopigoInvoicePrefix(e.target.value.toUpperCase().trim())}
+                  placeholder="Örn: YZR"
+                  className="w-full bg-slate-50/60 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 uppercase focus:outline-hidden focus:border-[#1B84F8] focus:bg-white transition"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">GİB fatura serisi için 3 haneli harf kodu (Örn: YZR)</p>
               </div>
             </div>
           </section>

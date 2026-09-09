@@ -18,7 +18,11 @@ import {
   CreditCard,
   Banknote,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Receipt,
+  Download,
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function AdminOrderDetailPage() {
@@ -35,6 +39,34 @@ export default function AdminOrderDetailPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // E-Fatura State'leri
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
+  const [invoiceMessage, setInvoiceMessage] = useState<string | null>(null);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+
+  const handleCreateInvoice = async () => {
+    setIsCreatingInvoice(true);
+    setInvoiceMessage(null);
+    setInvoiceError(null);
+
+    try {
+      const res = await fetch(`/api/admin/orders/${id}/invoice`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOrder(data.data);
+        setInvoiceMessage(`E-Fatura başarıyla oluşturuldu! (Fatura No: ${data.invoice?.invoiceNumber})`);
+      } else {
+        setInvoiceError(data.error || 'Fatura oluşturulamadı');
+      }
+    } catch {
+      setInvoiceError('Dopigo / Sovos sunucusuna bağlanırken hata oluştu');
+    } finally {
+      setIsCreatingInvoice(false);
+    }
+  };
 
   const fetchOrder = () => {
     if (!id) return;
@@ -456,6 +488,100 @@ export default function AdminOrderDetailPage() {
 
           {/* SAĞ: Durum Güncelleme, Yönetici Notu & Timeline */}
           <div className="lg:col-span-4 space-y-6">
+            {/* E-FATURA & MALİ ENTEGRASYON KARTI (DOPİGO / SOVOS) */}
+            <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4 text-xs">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 className="font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-[#1B84F8]" />
+                  <span>E-Fatura (Dopigo & Sovos)</span>
+                </h3>
+                {order.invoiceStatus === 'INVOICED' ? (
+                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>KESİLDİ</span>
+                  </span>
+                ) : (
+                  <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">
+                    KESİLMEDİ
+                  </span>
+                )}
+              </div>
+
+              {invoiceMessage && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-[11px] font-bold animate-in fade-in">
+                  ✓ {invoiceMessage}
+                </div>
+              )}
+
+              {invoiceError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-[11px] font-bold animate-in fade-in">
+                  ⚠️ {invoiceError}
+                </div>
+              )}
+
+              {order.invoiceStatus === 'INVOICED' ? (
+                <div className="space-y-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase">Fatura Numarası:</span>
+                    <span className="font-mono text-xs font-black text-slate-900">{order.invoiceNumber}</span>
+                  </div>
+
+                  {order.invoicedAt && (
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500">Kesim Tarihi:</span>
+                      <span className="font-semibold text-slate-700">
+                        {new Date(order.invoicedAt).toLocaleDateString('tr-TR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-slate-200/70 flex flex-col sm:flex-row gap-2">
+                    {order.invoicePdfUrl && (
+                      <a
+                        href={order.invoicePdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 bg-slate-900 hover:bg-slate-800 text-white py-2.5 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm transition text-center"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Fatura PDF İndir</span>
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      disabled={isCreatingInvoice}
+                      onClick={handleCreateInvoice}
+                      className="px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold transition text-center cursor-pointer"
+                      title="Faturayı Tekrar Gönder / Yenile"
+                    >
+                      <span>Yeniden Gönder</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Sipariş tutarı, KDV matrahı ve müşteri bilgileri Dopigo API üzerinden <strong>Sovos E-Fatura</strong> sistemine iletilerek anında resmi fatura üretilir.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={isCreatingInvoice}
+                    onClick={handleCreateInvoice}
+                    className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white py-3 px-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition cursor-pointer uppercase tracking-wide text-xs"
+                  >
+                    <Receipt className="w-4 h-4" />
+                    <span>{isCreatingInvoice ? 'Fatura Kesiliyor...' : 'Dopigo / Sovos ile E-Fatura Kes'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Durum & Ödeme Güncelleme Paneli */}
             <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4 text-xs">
               <h3 className="font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">

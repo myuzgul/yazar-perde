@@ -213,6 +213,13 @@ model Order {
   printedAt       DateTime?
   printCount      Int             @default(0)
 
+  // E-Fatura (Dopigo & Sovos Entegrasyonu)
+  invoiceNumber   String?
+  invoicePdfUrl   String?
+  invoiceUuid     String?
+  invoiceStatus   String?         @default("UNINVOICED")
+  invoicedAt      DateTime?
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   

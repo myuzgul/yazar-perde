@@ -45,6 +45,11 @@ export interface SystemSettingsMap {
   // Ödeme: Kapıda Nakit Ödeme
   payment_cod_active: number;
   cash_on_delivery_fee: number;
+  // E-Fatura: Dopigo & Sovos Entegrasyonu
+  dopigo_active: number;
+  dopigo_api_token: string;
+  dopigo_invoice_prefix: string;
+  dopigo_auto_invoice: number;
 }
 
 export const DEFAULT_SETTINGS: SystemSettingsMap = {
@@ -96,4 +101,10 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   // Kapıda Nakit Ödeme
   payment_cod_active: 1,
   cash_on_delivery_fee: 100,
+
+  // E-Fatura: Dopigo & Sovos
+  dopigo_active: 1,
+  dopigo_api_token: "",
+  dopigo_invoice_prefix: "YZR",
+  dopigo_auto_invoice: 0,
 };
