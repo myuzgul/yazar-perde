@@ -11,8 +11,8 @@ import {
   CheckCircle2, 
   Percent, 
   ShieldCheck, 
-  Info,
-  DollarSign
+  DollarSign,
+  QrCode
 } from 'lucide-react';
 
 interface SettingItem {
@@ -29,11 +29,19 @@ export default function KargoOdemeAyarlariPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Kargo State
+  // Kargo Genel State
   const [shippingCompany, setShippingCompany] = useState('DHL Kargo (MNG Kargo)');
   const [shippingDeliveryTime, setShippingDeliveryTime] = useState('2-7 İş Günü');
   const [freeShippingThreshold, setFreeShippingThreshold] = useState('1500');
   const [shippingFee, setShippingFee] = useState('99.90');
+
+  // DHL / MNG Kargo API State
+  const [mngActive, setMngActive] = useState('1');
+  const [mngCustomerNumber, setMngCustomerNumber] = useState('');
+  const [mngPassword, setMngPassword] = useState('');
+  const [mngUsername, setMngUsername] = useState('');
+  const [mngBranchName, setMngBranchName] = useState('Bursa Yıldırım Şubesi');
+  const [mngBarcodePrefix, setMngBarcodePrefix] = useState('YP');
 
   // PayTR State
   const [paytrActive, setPaytrActive] = useState('1');
@@ -74,6 +82,13 @@ export default function KargoOdemeAyarlariPage() {
         if (map.free_shipping_threshold !== undefined) setFreeShippingThreshold(map.free_shipping_threshold);
         if (map.shipping_fee !== undefined) setShippingFee(map.shipping_fee);
 
+        if (map.mng_kargo_active !== undefined) setMngActive(map.mng_kargo_active);
+        if (map.mng_customer_number !== undefined) setMngCustomerNumber(map.mng_customer_number);
+        if (map.mng_password !== undefined) setMngPassword(map.mng_password);
+        if (map.mng_username !== undefined) setMngUsername(map.mng_username);
+        if (map.mng_branch_name !== undefined) setMngBranchName(map.mng_branch_name);
+        if (map.mng_barcode_prefix !== undefined) setMngBarcodePrefix(map.mng_barcode_prefix);
+
         if (map.payment_paytr_active !== undefined) setPaytrActive(map.payment_paytr_active);
         if (map.paytr_merchant_id !== undefined) setPaytrMerchantId(map.paytr_merchant_id);
         if (map.paytr_merchant_key !== undefined) setPaytrMerchantKey(map.paytr_merchant_key);
@@ -112,6 +127,13 @@ export default function KargoOdemeAyarlariPage() {
       { key: 'shipping_delivery_time', value: shippingDeliveryTime, label: 'Tahmini Teslimat Süresi', group: 'SHIPPING' },
       { key: 'free_shipping_threshold', value: freeShippingThreshold, label: 'Ücretsiz Kargo Alt Limiti (TL)', group: 'SHIPPING' },
       { key: 'shipping_fee', value: shippingFee, label: 'Sabit Kargo Ücreti (TL)', group: 'SHIPPING' },
+
+      { key: 'mng_kargo_active', value: mngActive, label: 'DHL / MNG Kargo Entegrasyonu Aktif/Pasif', group: 'SHIPPING' },
+      { key: 'mng_customer_number', value: mngCustomerNumber, label: 'MNG Kargo Müşteri No / Abone No', group: 'SHIPPING' },
+      { key: 'mng_password', value: mngPassword, label: 'MNG Kargo API Şifresi', group: 'SHIPPING' },
+      { key: 'mng_username', value: mngUsername, label: 'MNG Kargo API Kullanıcı Adı', group: 'SHIPPING' },
+      { key: 'mng_branch_name', value: mngBranchName, label: 'MNG Kargo Bağlı Şube', group: 'SHIPPING' },
+      { key: 'mng_barcode_prefix', value: mngBarcodePrefix, label: 'MNG Kargo Barkod Ön Eki', group: 'SHIPPING' },
 
       { key: 'payment_paytr_active', value: paytrActive, label: 'PayTR Kredi Kartı Aktif/Pasif', group: 'PAYMENT' },
       { key: 'paytr_merchant_id', value: paytrMerchantId, label: 'PayTR Mağaza No (Merchant ID)', group: 'PAYMENT' },
@@ -165,7 +187,7 @@ export default function KargoOdemeAyarlariPage() {
             </div>
             <h1 className="text-2xl font-black text-slate-900">Kargo ve Ödeme Ayarları</h1>
             <p className="text-sm text-slate-500">
-              Kargo baremleri, PayTR sanal POS API bilgileri, havale indirimi ve kapıda ödeme ücretleri
+              DHL/MNG Kargo API bilgileri, PayTR sanal POS, havale indirimi ve kapıda ödeme ücretleri
             </p>
           </div>
 
@@ -188,7 +210,7 @@ export default function KargoOdemeAyarlariPage() {
         )}
 
         <form onSubmit={handleSave} className="space-y-8 pb-12">
-          {/* 1. KART: KARGO & TESLİMAT AYARLARI */}
+          {/* 1. KART: KARGO GENEL & TESLİMAT BAREMLERİ */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
               <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1B84F8] flex items-center justify-center font-bold">
@@ -267,7 +289,120 @@ export default function KargoOdemeAyarlariPage() {
             </div>
           </section>
 
-          {/* 2. KART: KREDİ KARTI / PAYTR SANAL POS AYARLARI */}
+          {/* 2. KART: DHL / MNG KARGO API ENTEGRASYONU */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                  <QrCode className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">2. DHL / MNG Kargo API Entegrasyonu</h2>
+                  <p className="text-xs text-slate-500">MNG Kargo şube ve müşteri bilgileri ile A5 otomatik etiket oluşturma</p>
+                </div>
+              </div>
+
+              {/* Aktif/Pasif Toggle */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-xs font-bold text-slate-700">
+                  {mngActive === '1' ? 'Aktif' : 'Pasif'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={mngActive === '1'}
+                  onChange={(e) => setMngActive(e.target.checked ? '1' : '0')}
+                  className="w-4 h-4 text-red-600 rounded border-slate-300 cursor-pointer"
+                />
+              </label>
+            </div>
+
+            <div className="bg-red-50/60 border border-red-100 rounded-xl p-4 text-xs text-red-950 space-y-1">
+              <div className="flex items-center gap-2 font-bold text-red-900">
+                <ShieldCheck className="w-4 h-4 text-red-600" />
+                <span>MNG Kargo / DHL Entegrasyon Bilgileri:</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-red-900">
+                MNG Kargo şubenizden veya kurumsal temsilcinizden aldığınız <strong>Müşteri Numarasını (Abone Kodu)</strong> ve <strong>API Şifrenizi</strong> aşağıdaki alanlara giriniz. Tüm sipariş çıktıları A5 formatında sağ üstte taranabilir barkodlu resmi MNG kargo etiketiyle birlikte basılacaktır.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  MNG Müşteri / Abone No *
+                </label>
+                <input
+                  type="text"
+                  value={mngCustomerNumber}
+                  onChange={(e) => setMngCustomerNumber(e.target.value.trim())}
+                  placeholder="Örn: 12345678"
+                  className="w-full bg-slate-50/60 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-mono font-semibold text-slate-900 focus:outline-hidden focus:border-red-500 focus:bg-white transition"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">MNG Kargo kurumsal müşteri numaranız</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  MNG API Şifresi *
+                </label>
+                <input
+                  type="password"
+                  value={mngPassword}
+                  onChange={(e) => setMngPassword(e.target.value.trim())}
+                  placeholder="••••••••••••"
+                  className="w-full bg-slate-50/60 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-mono font-semibold text-slate-900 focus:outline-hidden focus:border-red-500 focus:bg-white transition"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">MNG Kargo web servis şifreniz</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  MNG API Kullanıcı Adı (Opsiyonel)
+                </label>
+                <input
+                  type="text"
+                  value={mngUsername}
+                  onChange={(e) => setMngUsername(e.target.value.trim())}
+                  placeholder="Varsa kullanıcı adınız"
+                  className="w-full bg-slate-50/60 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:outline-hidden focus:border-red-500 focus:bg-white transition"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">Gerekiyorsa MNG servis kullanıcı adı</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-100">
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Bağlı Bulunulan MNG Şubesi
+                </label>
+                <input
+                  type="text"
+                  value={mngBranchName}
+                  onChange={(e) => setMngBranchName(e.target.value)}
+                  placeholder="Örn: Bursa Yıldırım Şubesi"
+                  className="w-full bg-slate-50/60 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:outline-hidden focus:border-red-500 focus:bg-white transition"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">Kargoların teslim edildiği şubeniz</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  Barkod Ön Eki
+                </label>
+                <input
+                  type="text"
+                  maxLength={5}
+                  value={mngBarcodePrefix}
+                  onChange={(e) => setMngBarcodePrefix(e.target.value.toUpperCase().trim())}
+                  placeholder="Örn: YP"
+                  className="w-full sm:w-48 bg-slate-50/60 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold uppercase text-slate-900 focus:outline-hidden focus:border-red-500 focus:bg-white transition"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">Etiket üzerindeki taranabilir barkod başlangıç harfleri</p>
+              </div>
+            </div>
+          </section>
+
+          {/* 3. KART: KREDİ KARTI / PAYTR SANAL POS AYARLARI */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
@@ -275,7 +410,7 @@ export default function KargoOdemeAyarlariPage() {
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">2. Kredi Kartı / Banka Kartı (PayTR Sanal POS)</h2>
+                  <h2 className="text-base font-bold text-slate-900">3. Kredi Kartı / Banka Kartı (PayTR Sanal POS)</h2>
                   <p className="text-xs text-slate-500">256-Bit SSL ve 3D Secure ile online kredi kartı tahsilatı</p>
                 </div>
               </div>
@@ -360,7 +495,7 @@ export default function KargoOdemeAyarlariPage() {
             </div>
           </section>
 
-          {/* 3. KART: BANKA HAVALESİ / EFT AYARLARI & İNDİRİM */}
+          {/* 4. KART: BANKA HAVALESİ / EFT AYARLARI & İNDİRİM */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
@@ -368,7 +503,7 @@ export default function KargoOdemeAyarlariPage() {
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">3. Banka Havalesi / EFT ile Ödeme & İndirim</h2>
+                  <h2 className="text-base font-bold text-slate-900">4. Banka Havalesi / EFT ile Ödeme & İndirim</h2>
                   <p className="text-xs text-slate-500">Havale seçen müşterilere özel yüzde indirim ve IBAN hesapları</p>
                 </div>
               </div>
@@ -407,7 +542,7 @@ export default function KargoOdemeAyarlariPage() {
                   <Percent className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Örn: <strong>%5</strong> girildiğinde müşteri ödeme sayfasında Havale'yi seçtiği anda sepet tutarından %5 anında düşer ve kazancı canlı gösterilir.
+                  Örn: <strong>%5</strong> girildiğinde müşteri ödeme sayfasında Havale'yi seçtiği anda sepet tutarından %5 anında düşer.
                 </p>
               </div>
 
@@ -446,7 +581,7 @@ export default function KargoOdemeAyarlariPage() {
             </div>
           </section>
 
-          {/* 4. KART: KAPIDA NAKİT ÖDEME AYARLARI */}
+          {/* 5. KART: KAPIDA NAKİT ÖDEME AYARLARI */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
@@ -454,7 +589,7 @@ export default function KargoOdemeAyarlariPage() {
                   <Package className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">4. Kapıda Nakit Ödeme Ayarları</h2>
+                  <h2 className="text-base font-bold text-slate-900">5. Kapıda Nakit Ödeme Ayarları</h2>
                   <p className="text-xs text-slate-500">Kargo teslimatında nakit tahsilat ve hizmet bedeli</p>
                 </div>
               </div>
@@ -503,7 +638,7 @@ export default function KargoOdemeAyarlariPage() {
             </div>
           </section>
 
-          {/* 5. KART: E-FATURA & DOPİGO (SOVOS) ENTEGRASYONU */}
+          {/* 6. KART: E-FATURA & DOPİGO (SOVOS) ENTEGRASYONU */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
@@ -511,7 +646,7 @@ export default function KargoOdemeAyarlariPage() {
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">5. E-Fatura Entegrasyonu (Dopigo & Sovos)</h2>
+                  <h2 className="text-base font-bold text-slate-900">6. E-Fatura Entegrasyonu (Dopigo & Sovos)</h2>
                   <p className="text-xs text-slate-500">Sipariş detayından tek tıkla GİB onaylı E-Arşiv / E-Fatura kesme altyapısı</p>
                 </div>
               </div>

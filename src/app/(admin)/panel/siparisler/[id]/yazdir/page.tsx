@@ -2,6 +2,7 @@ import React from 'react';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PrintButton from '@/components/admin/PrintButton';
+import Barcode from '@/components/admin/Barcode';
 
 interface PrintPageProps {
   params: Promise<{ id: string }>;
@@ -32,7 +33,7 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
               create: {
                 status: 'IN_PRODUCTION',
                 title: 'Sipariş Durumu: Atölyede Üretimde',
-                description: 'Atölye iş fişi yazdırıldı, imalat ve dikim sürecine alındı.',
+                description: 'A5 atölye iş emri ve MNG kargo etiketi yazdırıldı, dikim ve imalata alındı.',
               },
             }
           : undefined,
@@ -47,95 +48,183 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
     notFound();
   }
 
-  const shippingAddr = order.addresses.find((a) => !a.isBilling);
+  const shippingAddr = order.addresses.find((a) => !a.isBilling) || order.addresses[0];
+  const barcodeValue = `YP${order.orderNumber.replace(/[^0-9A-Za-z]/g, '')}`;
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans p-6 sm:p-10 max-w-5xl mx-auto text-xs">
+    <div className="min-h-screen bg-slate-100 print:bg-white text-black font-sans p-4 sm:p-8">
       {/* Üst Yazdırma Buton Çubuğu (Baskıda Gizlenir) */}
-      <div className="no-print mb-8 pb-4 border-b border-slate-200 flex items-center justify-between">
+      <div className="no-print max-w-4xl mx-auto mb-6 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-bold text-slate-900">Sipariş İş Kağıdı / Atölye Üretim Fişi</h2>
-          <p className="text-[11px] text-slate-500">A4 formatında yazdırmak için butona tıklayın.</p>
+          <div className="flex items-center gap-2">
+            <span className="bg-[#1B84F8] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">
+              A5 Tek Sayfa Formatı
+            </span>
+            <span className="text-slate-400 text-xs">•</span>
+            <span className="text-slate-600 text-xs font-bold">MNG Kargo Entegreli</span>
+          </div>
+          <h1 className="text-base font-black text-slate-900 mt-1">
+            Sipariş #{order.orderNumber} - Atölye İş Emri & Kargo Etiketi
+          </h1>
+          <p className="text-[11px] text-slate-500">
+            A5 kağıda tam sığacak şekilde tasarlanmıştır. Sağ üstteki resmi MNG Kargo etiketi ile ek bir kargo fişi çıkarmanıza gerek kalmaz.
+          </p>
         </div>
-        <PrintButton />
+        <PrintButton label="A5 Yazdır" />
       </div>
 
-      {/* A4 FORM ALANI */}
-      <div className="border-2 border-black p-6 rounded-2xl space-y-6">
-        {/* 1. Başlık & Sipariş Bilgisi */}
-        <div className="flex justify-between items-start border-b-2 border-black pb-4">
-          <div>
-            <h1 className="text-xl font-black tracking-tight text-black">
-              YAZAR PERDE SİSTEMLERİ
-            </h1>
-            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-              ATÖLYE İŞ EMRİ & İMALAT KAĞIDI
-            </p>
-            <p className="text-[10px] text-slate-600 mt-1">
-              Tel: +90 212 510 22 55 • www.perdesiparisi.com
-            </p>
-          </div>
-
-          <div className="text-right border-2 border-black p-3 rounded-xl bg-slate-50">
-            <span className="text-[9px] font-bold text-slate-500 uppercase block">Sipariş Numarası</span>
-            <span className="font-mono text-base font-black text-black">{order.orderNumber}</span>
-            <div className="text-[10px] text-slate-600 mt-1">
-              Tarih: {new Date(order.createdAt).toLocaleDateString('tr-TR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
-            <span className="inline-block mt-1 bg-black text-white px-2 py-0.5 rounded text-[9px] font-bold uppercase">
-              {order.paymentMethod === 'PAYTR_CC' && 'KREDİ KARTI (ÖDENDİ)'}
-              {order.paymentMethod === 'BANK_TRANSFER' && 'HAVALE / EFT'}
-              {order.paymentMethod === 'CASH_ON_DELIVERY' && 'KAPIDA ÖDEME'}
-            </span>
-          </div>
-        </div>
-
-        {/* 2. Müşteri & Teslimat Bilgisi */}
-        <div className="grid grid-cols-2 gap-4 bg-slate-50 border border-black p-4 rounded-xl text-xs">
-          <div>
-            <span className="font-bold text-black text-[10px] uppercase block border-b border-slate-300 pb-1 mb-1">
-              Müşteri & Kargo Bilgileri
-            </span>
-            <p className="font-black text-sm text-black">{order.customerName} {order.customerSurname}</p>
-            <p className="text-slate-700 font-bold mt-0.5">Tel: {order.customerPhone}</p>
-            <p className="text-slate-600 text-[11px]">{order.customerEmail}</p>
-          </div>
-
-          <div>
-            <span className="font-bold text-black text-[10px] uppercase block border-b border-slate-300 pb-1 mb-1">
-              Teslimat Adresi
-            </span>
-            <p className="text-slate-800 font-medium">{shippingAddr?.fullAddress}</p>
-            <p className="font-bold text-black mt-0.5">{shippingAddr?.district} / {shippingAddr?.city}</p>
-            {order.customerNote && (
-              <p className="text-black font-bold bg-amber-100 p-1.5 rounded border border-amber-300 text-[10px] mt-2">
-                Genel Sipariş Notu: {order.customerNote}
+      {/* A5 ÇIKTI SAYFASI */}
+      <div className="a5-container bg-white mx-auto border-2 border-black p-3 sm:p-4 rounded-xl shadow-md print:shadow-none print:border-2 print:rounded-none space-y-3">
+        {/* 1. ÜST KISIM: SOLDA ATÖLYE BİLGİSİ - SAĞDA MNG KARGO ETİKETİ */}
+        <div className="grid grid-cols-12 gap-2.5 items-stretch border-b-2 border-black pb-2.5">
+          {/* Sol Kolon: Atölye ve Sipariş Başlığı (%50) */}
+          <div className="col-span-6 flex flex-col justify-between pr-1 border-r border-slate-300">
+            <div>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-black tracking-tight text-black uppercase">
+                  YAZAR PERDE SİSTEMLERİ
+                </h2>
+              </div>
+              <p className="text-[9px] font-bold text-slate-700 uppercase tracking-wide">
+                Özel Ölçü Atölye İmalat Fişi
               </p>
-            )}
+              <p className="text-[8px] text-slate-600 mt-0.5">
+                Tel: 0541 494 51 73 • yazarperde.com
+              </p>
+            </div>
+
+            <div className="mt-2 bg-slate-50 border border-black p-2 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-[8px] font-black uppercase text-slate-500">Sipariş No:</span>
+                <span className="font-mono text-xs font-black text-black">#{order.orderNumber}</span>
+              </div>
+              <div className="flex justify-between items-center mt-0.5 text-[8px] text-slate-600">
+                <span>Tarih:</span>
+                <span className="font-bold">
+                  {new Date(order.createdAt).toLocaleDateString('tr-TR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
+              <div className="mt-1.5 pt-1 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-[8px] font-bold text-slate-600">Ödeme:</span>
+                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${
+                  order.paymentMethod === 'CASH_ON_DELIVERY'
+                    ? 'bg-amber-100 text-amber-950 border border-amber-300 font-extrabold'
+                    : 'bg-black text-white'
+                }`}>
+                  {order.paymentMethod === 'PAYTR_CC' && 'KREDİ KARTI (ÖDENDİ)'}
+                  {order.paymentMethod === 'BANK_TRANSFER' && 'HAVALE / EFT'}
+                  {order.paymentMethod === 'CASH_ON_DELIVERY' && `KAPIDA ÖDEME: ₺${order.grandTotal.toFixed(2)}`}
+                </span>
+              </div>
+            </div>
+
+            {/* Müşteri İletişim Özeti */}
+            <div className="mt-1.5 text-[8px] text-slate-700">
+              <span className="font-bold text-black">Müşteri: </span>
+              <span className="font-bold">{order.customerName} {order.customerSurname}</span>
+              <span className="ml-1 text-slate-600">({order.customerPhone})</span>
+            </div>
+          </div>
+
+          {/* Sağ Kolon: MNG / DHL Kargo Resmi Gönderi Etiketi (%50) */}
+          <div className="col-span-6 bg-slate-50 border-2 border-black p-2 rounded-lg flex flex-col justify-between">
+            {/* Kargo Logo & Barkod */}
+            <div className="border-b border-black pb-1 mb-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-black uppercase tracking-wider bg-black text-white px-1.5 py-0.5 rounded">
+                  DHL / MNG KARGO
+                </span>
+                <span className="text-[8px] font-mono font-bold text-slate-700">
+                  {order.orderNumber}
+                </span>
+              </div>
+
+              {/* Scannable SVG Barcode */}
+              <div className="flex justify-center my-1">
+                <Barcode
+                  value={barcodeValue}
+                  height={28}
+                  barWidth={1.15}
+                  textClassName="text-[8px] font-mono font-bold text-black text-center mt-0.5"
+                />
+              </div>
+            </div>
+
+            {/* Alıcı Bilgileri (Kargo Görevlisinin Okuyacağı Bölüm) */}
+            <div className="space-y-0.5 text-[8px]">
+              <div className="flex items-baseline justify-between">
+                <span className="font-black text-[9px] text-black uppercase">
+                  ALICI: {order.customerName} {order.customerSurname}
+                </span>
+                <span className="font-black text-[9px] text-black">
+                  {order.customerPhone}
+                </span>
+              </div>
+              <div className="text-slate-800 leading-tight font-medium text-[8px] line-clamp-2">
+                {shippingAddr?.fullAddress}
+              </div>
+              <div className="text-[9px] font-black text-black uppercase bg-slate-200 px-1 py-0.5 rounded inline-block mt-0.5">
+                {shippingAddr?.district} / {shippingAddr?.city}
+              </div>
+            </div>
+
+            {/* Kargo Tahsilat / Gönderici Kutusu */}
+            <div className="mt-1.5 pt-1 border-t border-black text-[8px] flex items-center justify-between">
+              <div>
+                <span className="text-[7px] text-slate-500 uppercase block leading-none">Gönderici:</span>
+                <span className="font-bold text-[8px] text-slate-800 leading-none">Yazar Perde - Bursa</span>
+              </div>
+              <div className="text-right">
+                {order.paymentMethod === 'CASH_ON_DELIVERY' ? (
+                  <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
+                    KAPIDA TAHSİLAT: ₺{order.grandTotal.toFixed(2)}
+                  </span>
+                ) : (
+                  <span className="bg-emerald-700 text-white px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">
+                    PEŞİN ÖDENDİ (TAHSİLATSIZ)
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* 3. Özel Ölçülü Perde Üretim Tablosu */}
-        <div>
-          <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-black">
-            İMAL EDİLECEK ÖZEL ÖLÇÜLÜ PERDELER ({order.items.length} KALEM)
-          </h3>
+        {/* 2. ORTA KISIM: GENEL SİPARİŞ NOTU (Varsa) */}
+        {order.customerNote && (
+          <div className="bg-amber-50 border border-amber-300 p-1.5 rounded text-[8px] font-bold text-amber-950 flex items-center gap-1">
+            <span className="bg-amber-200 text-amber-900 px-1 py-0.5 rounded text-[7px] font-black uppercase">
+              MÜŞTERİ NOTU:
+            </span>
+            <span>{order.customerNote}</span>
+          </div>
+        )}
 
-          <table className="w-full border-collapse border-2 border-black text-xs">
+        {/* 3. ATÖLYE ÖZEL ÖLÇÜLÜ PERDE İMALAT TABLOSU */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-[9px] font-black uppercase tracking-wider text-black">
+              İMAL EDİLECEK ÖZEL ÖLÇÜLÜ PERDELER ({order.items.length} KALEM)
+            </h3>
+            <span className="text-[8px] text-slate-500 font-semibold">
+              Kusursuz İmalat ve Dikim Talimatları
+            </span>
+          </div>
+
+          <table className="w-full border-collapse border-2 border-black text-[8px]">
             <thead>
               <tr className="bg-slate-200 text-black font-black border-b-2 border-black">
-                <th className="border border-black p-2 text-center w-8">#</th>
-                <th className="border border-black p-2 text-left">Perde Modeli & Kodu</th>
-                <th className="border border-black p-2 text-center w-28 bg-slate-300">NET EN x BOY</th>
-                <th className="border border-black p-2 text-center w-20">Adet</th>
-                <th className="border border-black p-2 text-left">Mekanizma, Pile & Dikim Talimatları</th>
-                <th className="border border-black p-2 text-center w-20">Kontrol</th>
+                <th className="border border-black p-1 text-center w-6">#</th>
+                <th className="border border-black p-1 text-left">Perde Modeli & Kodu</th>
+                <th className="border border-black p-1 text-center w-24 bg-slate-300 text-black">NET EN x BOY</th>
+                <th className="border border-black p-1 text-center w-10">Adet</th>
+                <th className="border border-black p-1 text-left">Mekanizma, Pile & Dikim Detayları</th>
+                <th className="border border-black p-1 text-center w-10">Onay</th>
               </tr>
             </thead>
             <tbody>
@@ -147,96 +236,96 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
 
                 return (
                   <tr key={item.id} className="border-b border-black">
-                    <td className="border border-black p-2 text-center font-bold">{idx + 1}</td>
+                    <td className="border border-black p-1 text-center font-black">{idx + 1}</td>
 
-                    <td className="border border-black p-2">
-                      <span className="font-mono text-[10px] text-slate-600 block">{item.productSku}</span>
-                      <strong className="text-black block text-xs">{item.productName}</strong>
-                      <span className="text-[10px] font-bold text-slate-700 uppercase">
+                    <td className="border border-black p-1">
+                      <span className="font-mono text-[7px] text-slate-600 block">{item.productSku}</span>
+                      <strong className="text-black block text-[8px] leading-tight">{item.productName}</strong>
+                      <span className="text-[7px] font-bold text-slate-700 uppercase">
                         Tür: {item.curtainType}
                       </span>
                     </td>
 
-                    {/* VURGULANMIŞ BÜYÜK ÖLÇÜLER */}
-                    <td className="border border-black p-2 text-center bg-slate-50">
-                      <div className="text-sm font-black text-black">
+                    {/* VURGULANMIŞ BÜYÜK NET ÖLÇÜ */}
+                    <td className="border border-black p-1 text-center bg-slate-50">
+                      <div className="text-[10px] font-black text-black">
                         {item.width} x {item.height} cm
                       </div>
-                      <span className="text-[9px] text-slate-500 block mt-0.5">
+                      <span className="text-[7px] text-slate-500 block leading-none mt-0.5">
                         {item.calculatedArea} {item.curtainType === 'TULLE' || item.curtainType === 'FON' ? 'Metre' : 'm²'}
                       </span>
                     </td>
 
-                    <td className="border border-black p-2 text-center font-black text-sm">
+                    <td className="border border-black p-1 text-center font-black text-[10px]">
                       {item.quantity}
                     </td>
 
                     {/* ATÖLYE DETAY TALİMATLARI */}
-                    <td className="border border-black p-2 space-y-1">
-                      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] font-semibold text-black">
+                    <td className="border border-black p-1">
+                      <div className="flex flex-wrap gap-1 text-[7px] font-semibold text-black">
                         {snap.pleatLabel && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
                             Pile: <strong>{snap.pleatLabel}</strong>
-                          </div>
+                          </span>
                         )}
                         {snap.caseType && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
                             Kasa: <strong>{snap.caseType === 'CLOSED' ? 'KAPALI KASA' : 'AÇIK KASA'}</strong>
-                          </div>
+                          </span>
                         )}
                         {snap.chainType && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
-                            Zincir: <strong>{snap.chainType === 'METAL' ? 'METAL ZİNCİR' : 'PLASTİK'}</strong>
-                          </div>
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
+                            Zincir: <strong>{snap.chainType === 'METAL' ? 'METAL' : 'PLASTİK'}</strong>
+                          </span>
                         )}
                         {snap.mechanismDirection && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
                             Yön: <strong>{snap.mechanismDirection === 'RIGHT' ? 'SAĞ' : 'SOL'}</strong>
-                          </div>
+                          </span>
                         )}
                         {snap.mountingLabel && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
                             Montaj: <strong>{snap.mountingLabel}</strong>
-                          </div>
+                          </span>
                         )}
                         {snap.plisseMeasurementLabel && (
-                          <div className="bg-blue-50 text-blue-900 border border-blue-100 px-1 py-0.5 rounded">
-                            Ölçü Şekli: <strong>{snap.plisseMeasurementLabel}</strong>
-                          </div>
+                          <span className="bg-blue-50 text-blue-900 border border-blue-200 px-1 py-0.5 rounded">
+                            Ölçü: <strong>{snap.plisseMeasurementLabel}</strong>
+                          </span>
                         )}
                         {snap.plisseColorLabel && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
-                            Kasa Rengi: <strong>{snap.plisseColorLabel}</strong>
-                          </div>
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
+                            Profil: <strong>{snap.plisseColorLabel}</strong>
+                          </span>
                         )}
                         {snap.skirtCut && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
                             Etek: <strong>DİLİMLİ {snap.withBeads ? '+ BONCUK' : ''}</strong>
-                          </div>
+                          </span>
                         )}
                         {snap.rollerType && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
-                            Stor: <strong>{snap.rollerType === 'BLACKOUT_ROLLER' ? 'BLACKOUT KARARTMA' : 'NORMAL'}</strong>
-                          </div>
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
+                            Stor: <strong>{snap.rollerType === 'BLACKOUT_ROLLER' ? 'BLACKOUT' : 'NORMAL'}</strong>
+                          </span>
                         )}
                         {snap.fonWingType && (
-                          <div className="bg-slate-100 px-1 py-0.5 rounded">
-                            Kanat: <strong>{snap.fonWingType === 'DOUBLE_WING' ? 'ÇİFT KANAT' : 'TEK KANAT'}</strong>
-                          </div>
+                          <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
+                            Kanat: <strong>{snap.fonWingType === 'DOUBLE_WING' ? 'ÇİFT' : 'TEK'}</strong>
+                          </span>
                         )}
                       </div>
 
-                      {/* MÜŞTERİ NOTU UYARISI */}
+                      {/* Özel Atölye Kalem Notu */}
                       {item.itemNote && (
-                        <div className="bg-amber-100 p-1.5 rounded border border-amber-400 text-[11px] font-black text-amber-950 mt-1">
+                        <div className="bg-amber-100 p-1 rounded border border-amber-300 text-[7px] font-black text-amber-950 mt-1">
                           ⚠️ ATÖLYE NOTU: {item.itemNote}
                         </div>
                       )}
                     </td>
 
                     {/* Kontrol Onay Kutucuğu */}
-                    <td className="border border-black p-2 text-center">
-                      <div className="w-6 h-6 border-2 border-black mx-auto rounded" />
+                    <td className="border border-black p-1 text-center">
+                      <div className="w-4 h-4 border border-black mx-auto rounded" />
                     </td>
                   </tr>
                 );
@@ -245,33 +334,66 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
           </table>
         </div>
 
-        {/* 4. Atölye İmzaları ve Kalite Kontrol */}
-        <div className="grid grid-cols-4 gap-4 border-2 border-black p-4 rounded-xl text-center text-[10px]">
-          <div className="space-y-4">
-            <span className="font-bold uppercase block text-black">1. Kesim Yapan Usta</span>
-            <div className="h-6 border-b border-dashed border-black" />
+        {/* 4. ALT KISIM: ATÖLYE İMZA & KALİTE KONTROL ALANI */}
+        <div className="grid grid-cols-4 gap-2 border-2 border-black p-2 rounded-lg text-center text-[7px]">
+          <div className="space-y-1.5">
+            <span className="font-bold uppercase block text-black">1. Kesim</span>
+            <div className="h-4 border-b border-dashed border-black" />
             <span className="text-slate-500">İmza / Tarih</span>
           </div>
 
-          <div className="space-y-4">
-            <span className="font-bold uppercase block text-black">2. Dikim Yapan Usta</span>
-            <div className="h-6 border-b border-dashed border-black" />
+          <div className="space-y-1.5">
+            <span className="font-bold uppercase block text-black">2. Dikim</span>
+            <div className="h-4 border-b border-dashed border-black" />
             <span className="text-slate-500">İmza / Tarih</span>
           </div>
 
-          <div className="space-y-4">
-            <span className="font-bold uppercase block text-black">3. Mekanizma / Montaj</span>
-            <div className="h-6 border-b border-dashed border-black" />
+          <div className="space-y-1.5">
+            <span className="font-bold uppercase block text-black">3. Mekanizma</span>
+            <div className="h-4 border-b border-dashed border-black" />
             <span className="text-slate-500">İmza / Tarih</span>
           </div>
 
-          <div className="space-y-4">
-            <span className="font-bold uppercase block text-black">4. Kalite Kontrol & Paket</span>
-            <div className="h-6 border-b border-dashed border-black" />
+          <div className="space-y-1.5">
+            <span className="font-bold uppercase block text-black">4. Kalite & Paket</span>
+            <div className="h-4 border-b border-dashed border-black" />
             <span className="text-slate-500">İmza / Tarih</span>
           </div>
         </div>
       </div>
+
+      {/* A5 YAZDIRMA CSS AYARLARI */}
+      <style>{`
+        @page {
+          size: A5 portrait;
+          margin: 4mm;
+        }
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+          html, body {
+            width: 148mm;
+            height: 210mm;
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: white !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .a5-container {
+            width: 140mm !important;
+            max-width: 140mm !important;
+            margin: 0 auto !important;
+            padding: 3mm !important;
+            border: 1.5pt solid black !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            page-break-inside: avoid !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -50,6 +50,13 @@ export interface SystemSettingsMap {
   dopigo_api_token: string;
   dopigo_invoice_prefix: string;
   dopigo_auto_invoice: number;
+  // DHL / MNG Kargo API Entegrasyonu
+  mng_kargo_active: number;
+  mng_customer_number: string;
+  mng_password: string;
+  mng_username: string;
+  mng_branch_name: string;
+  mng_barcode_prefix: string;
 }
 
 export const DEFAULT_SETTINGS: SystemSettingsMap = {
@@ -107,4 +114,12 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   dopigo_api_token: "",
   dopigo_invoice_prefix: "YZR",
   dopigo_auto_invoice: 0,
+
+  // DHL / MNG Kargo API
+  mng_kargo_active: 1,
+  mng_customer_number: "",
+  mng_password: "",
+  mng_username: "",
+  mng_branch_name: "Bursa Yıldırım Şubesi",
+  mng_barcode_prefix: "YP",
 };
