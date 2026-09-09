@@ -23,15 +23,17 @@ export default function Footer() {
             <div className="space-y-2 text-[11px]">
               <div className="flex items-center gap-2 text-slate-300">
                 <Phone className="w-3.5 h-3.5 text-[#1B84F8]" />
+                <a href="tel:+902243646435" className="hover:text-white transition font-medium">(0224) 364 64 35</a>
+                <span className="text-slate-600">/</span>
                 <a href="tel:+905414945173" className="hover:text-white transition font-medium">0541 494 51 73</a>
               </div>
               <div className="flex items-center gap-2 text-slate-300">
                 <Mail className="w-3.5 h-3.5 text-[#1B84F8]" />
-                <a href="mailto:info@yazarperde.com" className="hover:text-white transition font-medium">info@yazarperde.com</a>
+                <a href="mailto:yazarperde@hotmail.com" className="hover:text-white transition font-medium">yazarperde@hotmail.com</a>
               </div>
               <div className="flex items-start gap-2 text-slate-300">
                 <MapPin className="w-3.5 h-3.5 text-[#1B84F8] shrink-0 mt-0.5" />
-                <span className="leading-snug">Anadolu Mah. Atıcılar Cd. No: 1/A, 16270 Yıldırım/Bursa</span>
+                <span className="leading-snug">Anadolu Mah. Atıcılar Cd. No: 1/A1 Yıldırım / BURSA</span>
               </div>
             </div>
         </div>
