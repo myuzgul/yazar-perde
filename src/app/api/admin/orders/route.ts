@@ -75,7 +75,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, status, paymentStatus, adminNote, timelineTitle, timelineDesc } = body;
+    const { id, status, paymentStatus, adminNote, timelineTitle, timelineDesc, trackingNumber, shippingCompany } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Sipariş ID gerekli' }, { status: 400 });
@@ -86,13 +86,36 @@ export async function PUT(req: NextRequest) {
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
     if (adminNote !== undefined) updateData.adminNote = adminNote;
 
+    if (trackingNumber !== undefined) {
+      const cleanTracking = String(trackingNumber).trim();
+      updateData.trackingNumber = cleanTracking || null;
+      updateData.trackingUrl = cleanTracking
+        ? `https://www.mngkargo.com.tr/gonderitakip?takipno=${encodeURIComponent(cleanTracking)}`
+        : null;
+      updateData.shippingCompany = shippingCompany || 'DHL Kargo (MNG Kargo)';
+      if (cleanTracking) {
+        updateData.shippingStatus = 'DISPATCHED';
+        updateData.dispatchedAt = new Date();
+        if (!status || status === 'PENDING' || status === 'CONFIRMED' || status === 'IN_PRODUCTION') {
+          updateData.status = 'SHIPPED';
+        }
+      }
+    }
+
     let timelineCreate = undefined;
-    if (timelineTitle || status) {
+    if (timelineTitle || status || (trackingNumber && updateData.trackingNumber)) {
+      const tTitle = timelineTitle || (trackingNumber && updateData.trackingNumber
+        ? `Kargo Takip No Girildi (${updateData.trackingNumber})`
+        : `Sipariş Durumu: ${updateData.status || status}`);
+      const tDesc = timelineDesc || (trackingNumber && updateData.trackingNumber
+        ? `MNG Kargo takip numarası kaydedildi. Kargo takibi aktif.`
+        : `Yönetici (${admin.email}) tarafından güncellendi.`);
+
       timelineCreate = {
         create: {
-          status: status || 'UPDATED',
-          title: timelineTitle || `Sipariş Durumu: ${status}`,
-          description: timelineDesc || `Yönetici (${admin.email}) tarafından güncellendi.`,
+          status: updateData.status || status || 'UPDATED',
+          title: tTitle,
+          description: tDesc,
         },
       };
     }

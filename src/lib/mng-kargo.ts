@@ -35,11 +35,12 @@ export interface MngShipmentResult {
  */
 export function getMngTrackingUrl(trackingNumber: string): string {
   if (!trackingNumber) return 'https://www.mngkargo.com.tr/gonderitakip';
-  return `https://www.mngkargo.com.tr/gonderitakip?takipno=${encodeURIComponent(trackingNumber.trim())}`;
+  const clean = trackingNumber.trim();
+  return `https://www.mngkargo.com.tr/gonderitakip?takipno=${encodeURIComponent(clean)}`;
 }
 
 /**
- * Normalizes a Turkish mobile phone number to standard 10 or 11 digits format
+ * Normalizes a Turkish mobile phone number to standard format
  */
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/[^0-9]/g, '');
@@ -72,122 +73,183 @@ export async function sendOrderToMNGKargo(
   const codAmount = isCod ? params.grandTotal : 0;
   const recipientPhone = normalizePhone(String(params.customer?.phone ?? ''));
   const fullName = `${params.customer?.name ?? ''} ${params.customer?.surname ?? ''}`.trim();
+  const address = params.customer?.address || '';
+  const city = params.customer?.city || '';
+  const district = params.customer?.district || '';
 
-  // If credentials are not provided or integration is disabled in settings,
-  // generate a pre-formatted electronic dispatch record for seamless internal tracking and label printing.
+  // 1. Bilgiler eksikse uyarı döndür
   if (!customerNumber || !password) {
-    const trackingCode = `MNG${cleanOrderNum}`;
-    const trackingUrl = getMngTrackingUrl(trackingCode);
-
     return {
-      success: true,
-      trackingNumber: trackingCode,
-      trackingUrl,
-      barcode,
-      shipmentId: `DISPATCH-${cleanOrderNum}`,
-      statusMessage: 'Kargo gönderi kaydı ve A5 barkodu oluşturuldu (MNG Müşteri/API şifresi kaydedildiğinde doğrudan MNG sunucusuna dijital manifesto aktarılır).',
+      success: false,
+      errorMessage: 'MNG Kargo Abone / Müşteri Numarası veya API Şifresi eksik. Lütfen panelden Ayarlar > Kargo & Ödeme bölümünden bilgilerinizi kaydedin.',
     };
   }
 
-  // Attempt live MNG Kargo REST API connection
+  // 2. MNG Kargo Resmi SOAP Web Servisi (standardServices.asmx - SiparisGirisi)
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SiparisGirisi xmlns="http://tempuri.org/">
+      <pKullaniciAdi>${username || customerNumber}</pKullaniciAdi>
+      <pSifre>${password}</pSifre>
+      <pMusteriNo>${customerNumber}</pMusteriNo>
+      <pSiparisNo>${cleanOrderNum}</pSiparisNo>
+      <pBarkod>${barcode}</pBarkod>
+      <pAliciAdi>${fullName}</pAliciAdi>
+      <pAliciAdres>${address}</pAliciAdres>
+      <pAliciIl>${city}</pAliciIl>
+      <pAliciIlce>${district}</pAliciIlce>
+      <pAliciTel>${recipientPhone}</pAliciTel>
+      <pOdemeTipi>${isCod ? 3 : 1}</pOdemeTipi>
+      <pKapidaTahsilatTutari>${codAmount}</pKapidaTahsilatTutari>
+      <pParcaSayisi>${params.itemCount || 1}</pParcaSayisi>
+      <pIcerik>Özel Ölçülü Perde Sistemleri</pIcerik>
+    </SiparisGirisi>
+  </soap:Body>
+</soap:Envelope>`;
 
-    // 1. MNG API Token Request
-    const tokenResponse = await fetch('https://api.mngkargo.com.tr/mngapi/api/token', {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 9000);
+
+    const soapResponse = await fetch('https://service.mngkargo.com.tr/tsws/standardServices.asmx', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/xml; charset=utf-8',
+        SOAPAction: 'http://tempuri.org/SiparisGirisi',
       },
+      body: soapEnvelope,
+      signal: controller.signal,
+    }).catch((err) => {
+      console.warn('MNG SOAP fetch failed:', err.message);
+      return null;
+    });
+
+    clearTimeout(timeoutId);
+
+    if (soapResponse && soapResponse.ok) {
+      const xmlText = await soapResponse.text();
+      console.log('MNG SOAP Response:', xmlText);
+
+      // XML içindeki sonucu incele
+      const resultMatch = xmlText.match(/<SiparisGirisiResult>(.*?)<\/SiparisGirisiResult>/i);
+      const resVal = resultMatch ? resultMatch[1] : '';
+
+      // Eğer 1 veya takip no veya başarılı yanıt döndüyse:
+      if (resVal && !resVal.toLowerCase().includes('hata') && !resVal.toLowerCase().includes('geçersiz') && !resVal.toLowerCase().includes('yetkisiz')) {
+        const trackingCode = resVal.length >= 8 && /^[0-9]+$/.test(resVal) ? resVal : barcode;
+        return {
+          success: true,
+          trackingNumber: trackingCode,
+          trackingUrl: getMngTrackingUrl(trackingCode),
+          barcode: barcode,
+          shipmentId: `MNG-${cleanOrderNum}`,
+          statusMessage: `Sipariş MNG Kargo Web Servisine başarıyla aktarıldı (MNG Yanıtı: ${resVal}).`,
+          rawResponse: xmlText,
+        };
+      } else if (resVal) {
+        // MNG doğrudan bir hata açıklaması döndü:
+        return {
+          success: false,
+          errorMessage: `MNG Kargo Servisi Yanıtı: ${resVal}. (Lütfen MNG Şubeniz veya MNG Bilgi İşlem ile görüşüp Web Servis / API izninizin ve IP yetkinizin açık olduğunu teyit ediniz).`,
+          rawResponse: xmlText,
+        };
+      }
+    }
+  } catch (soapError: any) {
+    console.error('MNG SOAP error:', soapError);
+  }
+
+  // 3. SOAP bağlantısı yanıt vermediyse MNG REST API (Token + Shipment) dene
+  try {
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), 8000);
+
+    const tokenRes = await fetch('https://api.mngkargo.com.tr/mngapi/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customerNumber,
         username: username || customerNumber,
         password,
         identityType: 1,
       }),
-      signal: controller.signal,
+      signal: controller2.signal,
     }).catch(() => null);
 
-    let token = '';
-    if (tokenResponse && tokenResponse.ok) {
-      const tokenData = await tokenResponse.json();
-      token = tokenData.jwt || tokenData.token || tokenData.jwtToken || '';
-    }
+    if (tokenRes) {
+      const tokenData = await tokenRes.json().catch(() => ({}));
+      const token = tokenData.jwt || tokenData.token || tokenData.jwtToken;
 
-    // 2. MNG API Shipment Create Request
-    if (token) {
-      const shipmentPayload = {
-        order: {
-          referenceId: barcode,
-          barcode: barcode,
-          billOfLandingId: barcode,
-          isCod: isCod,
-          codAmount: codAmount,
-          codCollectionType: isCod ? 0 : 0, // 0: Nakit
-          description: params.description || `Yazar Perde Siparişi #${params.orderNumber}`,
-          pieceCount: params.itemCount || 1,
-          recipient: {
-            name: fullName,
-            address: params.customer.address,
-            city: params.customer.city,
-            district: params.customer.district,
-            phone: recipientPhone,
-            email: params.customer.email || '',
+      if (token) {
+        const shipRes = await fetch('https://api.mngkargo.com.tr/mngapi/api/shipment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
-        },
-      };
+          body: JSON.stringify({
+            order: {
+              referenceId: barcode,
+              barcode: barcode,
+              billOfLandingId: barcode,
+              isCod: isCod,
+              codAmount: codAmount,
+              codCollectionType: 0,
+              description: `Yazar Perde - #${params.orderNumber}`,
+              pieceCount: params.itemCount || 1,
+              recipient: {
+                name: fullName,
+                address: address,
+                city: city,
+                district: district,
+                phone: recipientPhone,
+                email: params.customer?.email || '',
+              },
+            },
+          }),
+          signal: controller2.signal,
+        }).catch(() => null);
 
-      const shipResponse = await fetch('https://api.mngkargo.com.tr/mngapi/api/shipment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(shipmentPayload),
-        signal: controller.signal,
-      }).catch(() => null);
+        clearTimeout(timeoutId2);
 
-      clearTimeout(timeoutId);
-
-      if (shipResponse && shipResponse.ok) {
-        const shipData = await shipResponse.json();
-        const mngTracking = shipData.trackingNumber || shipData.shipmentId || shipData.barcode || `MNG${cleanOrderNum}`;
+        if (shipRes && shipRes.ok) {
+          const shipData = await shipRes.json();
+          const trk = shipData.trackingNumber || shipData.shipmentId || barcode;
+          return {
+            success: true,
+            trackingNumber: String(trk),
+            trackingUrl: getMngTrackingUrl(String(trk)),
+            barcode: barcode,
+            shipmentId: String(shipData.shipmentId || barcode),
+            statusMessage: 'Sipariş MNG REST API üzerinden başarıyla iletildi.',
+            rawResponse: shipData,
+          };
+        } else if (shipRes) {
+          const errData = await shipRes.json().catch(() => ({}));
+          return {
+            success: false,
+            errorMessage: `MNG REST API Yanıtı: ${errData.message || errData.error || 'Gönderi oluşturulamadı'}.`,
+            rawResponse: errData,
+          };
+        }
+      } else if (tokenData.message || tokenData.error) {
+        clearTimeout(timeoutId2);
         return {
-          success: true,
-          trackingNumber: String(mngTracking),
-          trackingUrl: getMngTrackingUrl(String(mngTracking)),
-          barcode: barcode,
-          shipmentId: String(shipData.shipmentId || barcode),
-          statusMessage: 'Sipariş MNG Kargo sistemine başarıyla iletildi ve kargo takip numarası oluşturuldu.',
-          rawResponse: shipData,
+          success: false,
+          errorMessage: `MNG API Giriş Başarısız: ${tokenData.message || tokenData.error}. Lütfen MNG Müşteri No ve API Şifrenizi kontrol edin.`,
+          rawResponse: tokenData,
         };
       }
     }
-
-    clearTimeout(timeoutId);
-
-    // Fallback: If MNG API server had a network timeout or credentials need activation
-    const fallbackTracking = `MNG${cleanOrderNum}`;
-    return {
-      success: true,
-      trackingNumber: fallbackTracking,
-      trackingUrl: getMngTrackingUrl(fallbackTracking),
-      barcode: barcode,
-      shipmentId: `MNG-${cleanOrderNum}`,
-      statusMessage: `Kargo kaydı ve A5 barkodu (${barcode}) başarıyla oluşturuldu. Kurye geldiğinde A5 çıktısındaki barkodu okutarak teslim alabilir.`,
-    };
-  } catch (error: any) {
-    console.error('MNG Kargo API Error:', error);
-    const fallbackTracking = `MNG${cleanOrderNum}`;
-    return {
-      success: true,
-      trackingNumber: fallbackTracking,
-      trackingUrl: getMngTrackingUrl(fallbackTracking),
-      barcode: barcode,
-      shipmentId: `MNG-${cleanOrderNum}`,
-      statusMessage: 'Kargo barkodu ve takip kaydı sisteme işlendi.',
-      errorMessage: error?.message,
-    };
+    clearTimeout(timeoutId2);
+  } catch (restError: any) {
+    console.error('MNG REST Error:', restError);
   }
+
+  // 4. MNG sunucusuna erişilemediyse veya henüz API izni verilmediyse:
+  return {
+    success: false,
+    errorMessage: `MNG Kargo sunucusundan yanıt alınamadı. MNG şubenizden Web Servis kullanıcı adı/şifrenizin aktif olduğunu doğrulayınız veya elinizdeki kargo takip kodunu (örn: 827046904757) yukarıdaki alana girerek tek tıkla kaydedebilirsiniz.`,
+  };
 }

@@ -49,8 +49,47 @@ export default function AdminOrderDetailPage() {
 
   // DHL / MNG Kargo State'leri
   const [isSendingMng, setIsSendingMng] = useState(false);
+  const [isSavingTracking, setIsSavingTracking] = useState(false);
+  const [customTracking, setCustomTracking] = useState('');
   const [mngMessage, setMngMessage] = useState<string | null>(null);
   const [mngError, setMngError] = useState<string | null>(null);
+
+  const handleSaveTrackingNumber = async () => {
+    if (!customTracking.trim()) {
+      alert('Lütfen bir kargo takip numarası girin (Örn: 827046904757)');
+      return;
+    }
+    setIsSavingTracking(true);
+    setMngMessage(null);
+    setMngError(null);
+
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          trackingNumber: customTracking.trim(),
+          shippingCompany: order?.shippingCompany || 'DHL Kargo (MNG Kargo)',
+          status: 'SHIPPED',
+          timelineTitle: `Kargo Takip No Girildi: ${customTracking.trim()}`,
+          timelineDesc: `MNG Kargo takip numarası (${customTracking.trim()}) sisteme kaydedildi ve sipariş kargoya verildi.`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOrder(data.data);
+        setStatus(data.data.status);
+        setMngMessage(`Kargo takip numarası (${customTracking.trim()}) başarıyla kaydedildi! Müşteriye SMS/E-posta iletildi.`);
+      } else {
+        setMngError(data.error || 'Takip numarası kaydedilirken hata oluştu');
+      }
+    } catch {
+      setMngError('Sunucu bağlantısı sırasında hata oluştu');
+    } finally {
+      setIsSavingTracking(false);
+    }
+  };
 
   const handleSendToMNG = async () => {
     setIsSendingMng(true);
@@ -65,6 +104,7 @@ export default function AdminOrderDetailPage() {
       if (data.success) {
         setOrder(data.data);
         setStatus(data.data.status);
+        setCustomTracking(data.tracking?.trackingNumber || '');
         setMngMessage(`MNG Kargo kaydı başarıyla açıldı! (Takip No: ${data.tracking?.trackingNumber})`);
       } else {
         setMngError(data.error || 'MNG Kargo servisine bağlanırken hata oluştu');
@@ -109,6 +149,7 @@ export default function AdminOrderDetailPage() {
           setStatus(data.data.status);
           setPaymentStatus(data.data.paymentStatus);
           setAdminNote(data.data.adminNote || '');
+          setCustomTracking(data.data.trackingNumber || '');
         }
         setLoading(false);
       })
@@ -618,16 +659,16 @@ export default function AdminOrderDetailPage() {
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h3 className="font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Truck className="w-4 h-4 text-[#1B84F8]" />
-                  <span>DHL / MNG Kargo Bildirimi</span>
+                  <span>DHL / MNG Kargo Yönetimi</span>
                 </h3>
                 {order.shippingStatus === 'DISPATCHED' || order.trackingNumber ? (
                   <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    <span>BİLDİRİLDİ</span>
+                    <span>KARGODA</span>
                   </span>
                 ) : (
                   <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                    BİLDİRİLMEDİ
+                    BEKLİYOR
                   </span>
                 )}
               </div>
@@ -639,84 +680,67 @@ export default function AdminOrderDetailPage() {
               )}
 
               {mngError && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-[11px] font-bold animate-in fade-in">
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-[11px] font-bold animate-in fade-in leading-relaxed">
                   ⚠️ {mngError}
                 </div>
               )}
 
-              {order.shippingStatus === 'DISPATCHED' || order.trackingNumber ? (
-                <div className="space-y-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Kargo Firması:</span>
-                    <span className="text-xs font-black text-slate-900">{order.shippingCompany || 'DHL Kargo (MNG Kargo)'}</span>
-                  </div>
+              {/* 1. SEÇENEK: MANUEL KARGO TAKİP KODU GİRİŞİ (Örn: 827046904757) */}
+              <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                <label className="block text-[11px] font-black text-slate-900">
+                  📦 Kargo Takip Numarası
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customTracking}
+                    onChange={(e) => setCustomTracking(e.target.value)}
+                    placeholder="Örn: 827046904757"
+                    className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:border-[#1B84F8]"
+                  />
+                  <button
+                    type="button"
+                    disabled={isSavingTracking}
+                    onClick={handleSaveTrackingNumber}
+                    className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white px-3.5 py-2 rounded-xl font-bold text-xs transition cursor-pointer shrink-0 shadow-sm"
+                  >
+                    {isSavingTracking ? '...' : 'Kaydet'}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Kargo şubesinden veya kuryeden aldığınız takip numarasını girip kaydettiğinizde sipariş kargoya verilir ve müşteriye canlı takip linki iletilir.
+                </p>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Takip Numarası:</span>
-                    <span className="font-mono text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 select-all">
-                      {order.trackingNumber}
-                    </span>
-                  </div>
-
-                  {order.mngBarcode && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-slate-500 font-bold uppercase">Kargo Barkodu:</span>
-                      <span className="font-mono text-[11px] font-bold text-slate-700">{order.mngBarcode}</span>
-                    </div>
-                  )}
-
-                  {order.dispatchedAt && (
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500">Bildirim Tarihi:</span>
-                      <span className="font-semibold text-slate-700">
-                        {new Date(order.dispatchedAt).toLocaleDateString('tr-TR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="pt-2 border-t border-slate-200/70 flex flex-col sm:flex-row gap-2">
+                {order.trackingNumber && (
+                  <div className="pt-2 mt-2 border-t border-slate-200">
                     <a
                       href={order.trackingUrl || `https://www.mngkargo.com.tr/gonderitakip?takipno=${order.trackingNumber}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex-1 bg-slate-900 hover:bg-slate-800 text-white py-2.5 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm transition text-center"
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 px-3 rounded-xl font-black flex items-center justify-center gap-1.5 shadow-sm transition text-center"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span>MNG Canlı Takip Et</span>
+                      <span>MNG Canlı Takip Et ({order.trackingNumber}) ↗</span>
                     </a>
-                    <button
-                      type="button"
-                      disabled={isSendingMng}
-                      onClick={handleSendToMNG}
-                      className="px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold transition text-center cursor-pointer disabled:opacity-50"
-                      title="MNG Kargo Bilgilerini Yenile / Tekrar Gönder"
-                    >
-                      <span>{isSendingMng ? '...' : 'Yenile'}</span>
-                    </button>
                   </div>
+                )}
+              </div>
+
+              {/* 2. SEÇENEK: MNG KARGO WEB SERVİS (API) OTOMATİK AKTARIM */}
+              <div className="pt-1">
+                <div className="text-[10px] text-slate-500 mb-2 leading-relaxed">
+                  Veya sipariş teslimat bilgilerini MNG Web Servisine dijital manifesto olarak iletin:
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Sipariş teslimat adresi, alıcı telefonu ve tahsilat tutarı resmi <strong>DHL / MNG Kargo Web Servisine</strong> aktarılır, anında kargo takip kodu üretilir ve müşteriye SMS / E-posta iletilir.
-                  </p>
-                  <button
-                    type="button"
-                    disabled={isSendingMng}
-                    onClick={handleSendToMNG}
-                    className="w-full bg-[#1B84F8] hover:bg-[#156cd1] disabled:opacity-50 text-white py-3 px-4 rounded-xl font-black flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition cursor-pointer uppercase tracking-wide text-xs"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>{isSendingMng ? 'MNG Sistemine İletiliyor...' : "MNG Kargo'ya Bildir (API)"}</span>
-                  </button>
-                </div>
-              )}
+                <button
+                  type="button"
+                  disabled={isSendingMng}
+                  onClick={handleSendToMNG}
+                  className="w-full bg-[#1B84F8] hover:bg-[#156cd1] disabled:opacity-50 text-white py-2.5 px-3 rounded-xl font-black flex items-center justify-center gap-2 shadow-sm transition cursor-pointer text-xs uppercase tracking-wide"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isSendingMng ? 'MNG Sistemine Aktarılıyor...' : "MNG Kargo'ya Otomatik Bildir (API)"}</span>
+                </button>
+              </div>
             </div>
 
             {/* Durum & Ödeme Güncelleme Paneli */}
