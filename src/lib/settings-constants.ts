@@ -57,6 +57,14 @@ export interface SystemSettingsMap {
   mng_username: string;
   mng_branch_name: string;
   mng_barcode_prefix: string;
+  // SMTP E-Posta Ayarları (Hostinger SMTP)
+  smtp_host: string;
+  smtp_port: number;
+  smtp_secure: number;
+  smtp_user: string;
+  smtp_password: string;
+  smtp_from_name: string;
+  smtp_from_email: string;
 }
 
 export const DEFAULT_SETTINGS: SystemSettingsMap = {
@@ -122,4 +130,13 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   mng_username: "",
   mng_branch_name: "Bursa Yıldırım Şubesi",
   mng_barcode_prefix: "YP",
+
+  // SMTP E-Posta Ayarları (Hostinger SMTP)
+  smtp_host: "smtp.hostinger.com",
+  smtp_port: 465,
+  smtp_secure: 1,
+  smtp_user: "info@yazarperde.com",
+  smtp_password: "Tpass147852*",
+  smtp_from_name: "Yazar Perde",
+  smtp_from_email: "info@yazarperde.com",
 };

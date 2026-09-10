@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/auth';
 import { sendSMS, sendEmail, replaceTemplateVariables } from '@/lib/notification-service';
 
@@ -17,11 +17,11 @@ export async function POST(req: NextRequest) {
 
     const dummyVariables: Record<string, string> = {
       musteri_adi: 'Ahmet Yılmaz',
-      siparis_no: 'YP-2026-TEST',
+      siparis_no: 'YP2609101234',
       tutar: '₺1.250,00',
-      kargo_takip_no: 'TR123456789',
-      kargo_takip_linki: 'https://perdesiparisi.com/siparis-takip?orderNumber=YP-2026-TEST',
-      site_adi: 'PerdeSiparisi.com',
+      kargo_takip_no: '827046904757',
+      kargo_takip_linki: 'https://www.mngkargo.com.tr/gonderitakip?takipno=827046904757',
+      site_adi: 'Yazar Perde - Özel Ölçülü Perde Sistemleri',
     };
 
     if (type === 'SMS') {
