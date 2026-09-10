@@ -42,3 +42,8 @@ next-env.d.ts
 
 *.zip
 
+# sqlite database
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-shm
+prisma/*.db-wal
