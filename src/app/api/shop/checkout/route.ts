@@ -166,9 +166,10 @@ export async function POST(req: NextRequest) {
 
     const grandTotal = Math.max(0, Number((subtotal + shippingFee + paymentFee - discountTotal).toFixed(2)));
 
+    // Alfanümerik Sipariş Numarası (PayTR ve MNG Kargo uyumlu - özel karakter içermez)
     const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `YP-${dateStr}-${randomSuffix}`;
+    const orderNumber = `YP${dateStr}${randomSuffix}`;
 
     const order = await prisma.order.create({
       data: {
@@ -269,13 +270,16 @@ export async function POST(req: NextRequest) {
       const merchantSalt = settings.paytr_merchant_salt || '4a2DhnahXQ6XLbid';
       const testMode = Number(settings.paytr_test_mode) || 0;
 
+      // PayTR merchant_oid alfanümerik olmalıdır (özel karakter / tire / boşluk kesinlikle içermez)
+      const merchantOid = orderNumber.replace(/[^a-zA-Z0-9]/g, '');
+
       const paytrRes = await getPayTRIFrameToken({
         merchantId,
         merchantKey,
         merchantSalt,
         email: cleanEmail,
         paymentAmount: Math.round(grandTotal * 100),
-        merchantOid: orderNumber,
+        merchantOid,
         userName: `${firstName} ${lastName}`,
         userAddress: `${addressLine} ${district}/${city}`,
         userPhone: phone,

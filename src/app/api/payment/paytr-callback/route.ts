@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPayTRCallbackHash } from '@/lib/paytr';
 import { getSystemSettings } from '@/lib/settings';
@@ -6,16 +6,16 @@ import { getSystemSettings } from '@/lib/settings';
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const merchantOid = formData.get('merchant_oid') as string;
-    const status = formData.get('status') as string;
-    const totalAmount = formData.get('total_amount') as string;
-    const hash = formData.get('hash') as string;
+    const merchantOid = (formData.get('merchant_oid') as string) || '';
+    const status = (formData.get('status') as string) || '';
+    const totalAmount = (formData.get('total_amount') as string) || '';
+    const hash = (formData.get('hash') as string) || '';
     const failedReasonCode = formData.get('failed_reason_code') as string;
     const failedReasonMsg = formData.get('failed_reason_msg') as string;
 
     const settings = await getSystemSettings();
-    const merchantKey = settings.paytr_merchant_key || 'test_merchant_key';
-    const merchantSalt = settings.paytr_merchant_salt || 'test_merchant_salt';
+    const merchantKey = settings.paytr_merchant_key || 'DDiXU6nQ12gdkiY1';
+    const merchantSalt = settings.paytr_merchant_salt || '4a2DhnahXQ6XLbid';
 
     const isValid = verifyPayTRCallbackHash(
       merchantOid,
@@ -31,8 +31,14 @@ export async function POST(req: NextRequest) {
       return new NextResponse('PAYTR BAD HASH', { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({
-      where: { orderNumber: merchantOid },
+    const cleanOid = merchantOid.replace(/[^a-zA-Z0-9]/g, '');
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [
+          { orderNumber: merchantOid },
+          { orderNumber: cleanOid },
+        ],
+      },
     });
 
     if (!order) {
@@ -50,7 +56,7 @@ export async function POST(req: NextRequest) {
             create: {
               status: 'CONFIRMED',
               title: 'Ödeme Başarılı',
-              description: 'PayTR 3D Secure ile ödeme başarıyla tahsil edildi.',
+              description: 'PayTR 3D Secure ile kredi kartı tahsilatı başarıyla gerçekleştirildi.',
             },
           },
         },
@@ -65,7 +71,7 @@ export async function POST(req: NextRequest) {
             create: {
               status: 'PENDING_PAYMENT',
               title: 'Ödeme Başarısız',
-              description: `PayTR Hata: ${failedReasonMsg} (Kod: ${failedReasonCode})`,
+              description: `PayTR Hata: ${failedReasonMsg || 'İşlem reddedildi'} (Kod: ${failedReasonCode || '-'})`,
             },
           },
         },
