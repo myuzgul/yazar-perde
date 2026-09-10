@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PrintButton from '@/components/admin/PrintButton';
 import Barcode from '@/components/admin/Barcode';
+import { triggerOrderNotification } from '@/lib/notification-service';
 
 interface PrintPageProps {
   params: Promise<{ id: string }>;
@@ -16,9 +17,8 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
     notFound();
   }
 
-  const newStatus = ['SHIPPED', 'DELIVERED', 'CANCELLED'].includes(existing.status)
-    ? existing.status
-    : 'IN_PRODUCTION';
+  const isStatusChanged = !['SHIPPED', 'DELIVERED', 'CANCELLED', 'IN_PRODUCTION'].includes(existing.status);
+  const newStatus = isStatusChanged ? 'IN_PRODUCTION' : existing.status;
 
   const order = await prisma.order.update({
     where: { id },
@@ -28,7 +28,7 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
       printCount: { increment: 1 },
       status: newStatus,
       timeline:
-        newStatus === 'IN_PRODUCTION' && existing.status !== 'IN_PRODUCTION'
+        isStatusChanged
           ? {
               create: {
                 status: 'IN_PRODUCTION',
@@ -43,6 +43,17 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
       addresses: true,
     },
   });
+
+  if (isStatusChanged) {
+    triggerOrderNotification({
+      eventCode: 'IN_PRODUCTION',
+      customerName: `${order.customerName} ${order.customerSurname}`,
+      customerPhone: order.customerPhone,
+      customerEmail: order.customerEmail,
+      orderNumber: order.orderNumber,
+      grandTotal: order.grandTotal,
+    }).catch(console.error);
+  }
 
   if (!order) {
     notFound();

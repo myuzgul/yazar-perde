@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
@@ -15,7 +15,8 @@ import {
   Sparkles,
   Info,
   Calendar,
-  FileText
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 
 interface OrderItem {
@@ -77,6 +78,10 @@ interface OrderDetail {
   paymentFee: number;
   discountTotal: number;
   grandTotal: number;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
+  shippingCompany?: string | null;
+  dispatchedAt?: string | null;
   createdAt: string;
   items: OrderItem[];
   addresses: OrderAddress[];
@@ -184,6 +189,105 @@ export default function SiparisDetayPage(props: { params: Promise<{ id: string }
           <span className="text-2xl font-black text-slate-950">₺{order.grandTotal.toFixed(2)}</span>
         </div>
       </div>
+
+      {/* 4 AŞAMALI SİPARİŞ İLERLEME ÇUBUĞU */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-[#1B84F8]" />
+          <span>Sipariş İlerleme Süreci</span>
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { title: '1. Siparişiniz Alındı', desc: 'Siparişiniz sisteme kaydedildi.', idx: 1 },
+            { title: '2. Siparişiniz Üretimde', desc: 'Atölyede dikim ve imalat aşamasında.', idx: 2 },
+            { title: '3. Kargoya Verildi', desc: 'Paketiniz MNG Kargo\'ya teslim edildi.', idx: 3 },
+            { title: '4. Teslim Edildi', desc: 'Siparişiniz adresinize ulaştı.', idx: 4 },
+          ].map((step) => {
+            const statusMap: Record<string, number> = {
+              PENDING: 1,
+              CONFIRMED: 1,
+              IN_PRODUCTION: 2,
+              SHIPPED: 3,
+              DELIVERED: 4,
+            };
+            const currentStep = statusMap[order.status] || 1;
+            const state = currentStep > step.idx ? 'COMPLETED' : currentStep === step.idx ? 'CURRENT' : 'UPCOMING';
+
+            return (
+              <div
+                key={step.idx}
+                className={`p-3.5 rounded-xl border transition ${
+                  state === 'COMPLETED'
+                    ? 'bg-emerald-50/70 border-emerald-200'
+                    : state === 'CURRENT'
+                    ? 'bg-blue-50/80 border-[#1B84F8] ring-2 ring-[#1B84F8]/20'
+                    : 'bg-slate-50 border-slate-200 opacity-60'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs ${
+                      state === 'COMPLETED'
+                        ? 'bg-emerald-600 text-white'
+                        : state === 'CURRENT'
+                        ? 'bg-[#1B84F8] text-white shadow-sm animate-pulse'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {state === 'COMPLETED' ? <CheckCircle2 className="w-3.5 h-3.5" /> : step.idx}
+                  </div>
+                  {state === 'CURRENT' && (
+                    <span className="bg-[#1B84F8] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">
+                      Aşama
+                    </span>
+                  )}
+                </div>
+                <h4 className={`text-xs font-black ${state === 'CURRENT' ? 'text-[#1B84F8]' : 'text-slate-900'}`}>
+                  {step.title}
+                </h4>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  {step.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* MNG KARGO TAKİP KUTUSU */}
+      {(order.trackingNumber || order.status === 'SHIPPED' || order.status === 'DELIVERED') && (
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-5 sm:p-6 rounded-2xl shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-center gap-3.5 text-left w-full sm:w-auto">
+            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-xs text-white flex items-center justify-center shrink-0 border border-white/30">
+              <Truck className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase text-emerald-100 tracking-wider block">
+                {order.shippingCompany || 'DHL Kargo (MNG Kargo)'}
+              </span>
+              <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                <span className="text-xs font-medium text-emerald-100">Takip Numarası:</span>
+                <span className="font-mono text-sm font-black bg-white text-emerald-950 px-2.5 py-0.5 rounded-md select-all">
+                  {order.trackingNumber || 'Sistemde Kayıtlı'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {order.trackingNumber && (
+            <a
+              href={order.trackingUrl || `https://www.mngkargo.com.tr/gonderitakip?takipno=${order.trackingNumber}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full sm:w-auto bg-white hover:bg-slate-100 text-emerald-900 px-5 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-sm transition text-center shrink-0 cursor-pointer"
+            >
+              <ExternalLink className="w-4 h-4 text-emerald-700" />
+              <span>Kargomu Canlı Takip Et (MNG) ↗</span>
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Sipariş Zaman Çizelgesi (Timeline) */}
       {order.timeline && order.timeline.length > 0 && (

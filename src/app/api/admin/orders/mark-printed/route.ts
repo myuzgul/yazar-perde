@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
+import { triggerOrderNotification } from '@/lib/notification-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,7 +38,9 @@ export async function POST(req: NextRequest) {
         ? order.status
         : 'IN_PRODUCTION';
 
-      const timelineEntry = newStatus === 'IN_PRODUCTION' && order.status !== 'IN_PRODUCTION'
+      const isStatusChanged = newStatus === 'IN_PRODUCTION' && order.status !== 'IN_PRODUCTION';
+
+      const timelineEntry = isStatusChanged
         ? {
             create: {
               status: 'IN_PRODUCTION',
@@ -57,6 +60,17 @@ export async function POST(req: NextRequest) {
           timeline: timelineEntry,
         },
       });
+
+      if (isStatusChanged) {
+        triggerOrderNotification({
+          eventCode: 'IN_PRODUCTION',
+          customerName: `${order.customerName} ${order.customerSurname}`,
+          customerPhone: order.customerPhone,
+          customerEmail: order.customerEmail,
+          orderNumber: order.orderNumber,
+          grandTotal: order.grandTotal,
+        }).catch(console.error);
+      }
     }
 
     return NextResponse.json({
