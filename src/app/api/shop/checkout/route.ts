@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSystemSettings } from '@/lib/settings';
-import { generatePayTRToken } from '@/lib/paytr';
+import { getPayTRIFrameToken } from '@/lib/paytr';
 import { triggerOrderNotification } from '@/lib/notification-service';
 import { getCustomerSession, hashPassword, createSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth';
 import { cookies } from 'next/headers';
@@ -257,20 +257,23 @@ export async function POST(req: NextRequest) {
       grandTotal,
     }).catch(console.error);
 
+    // Kredi Kartı / PayTR iFrame Token Talebi
     if (paymentMethod === 'CREDIT_CARD') {
-      const userIp = req.headers.get('x-forwarded-for') || '127.0.0.1';
-      const host = req.headers.get('host') || 'localhost:3000';
+      const forwardedFor = req.headers.get('x-forwarded-for') || '';
+      const userIp = forwardedFor.split(',')[0].trim() || req.headers.get('x-real-ip') || '127.0.0.1';
+      const host = req.headers.get('host') || 'yazarperde.com';
       const protocol = host.includes('localhost') ? 'http' : 'https';
 
-      const merchantId = settings.paytr_merchant_id || 'test_merchant_id';
-      const merchantKey = settings.paytr_merchant_key || 'test_merchant_key';
-      const merchantSalt = settings.paytr_merchant_salt || 'test_merchant_salt';
+      const merchantId = settings.paytr_merchant_id || '353348';
+      const merchantKey = settings.paytr_merchant_key || 'DDiXU6nQ12gdkiY1';
+      const merchantSalt = settings.paytr_merchant_salt || '4a2DhnahXQ6XLbid';
+      const testMode = Number(settings.paytr_test_mode) || 0;
 
-      const paytrToken = generatePayTRToken({
+      const paytrRes = await getPayTRIFrameToken({
         merchantId,
         merchantKey,
         merchantSalt,
-        email,
+        email: cleanEmail,
         paymentAmount: Math.round(grandTotal * 100),
         merchantOid: orderNumber,
         userName: `${firstName} ${lastName}`,
@@ -280,7 +283,16 @@ export async function POST(req: NextRequest) {
         merchantFailUrl: `${protocol}://${host}/siparis-onay/${orderNumber}?status=failed`,
         userBasket: paytrBasket,
         userIp,
+        testMode,
       });
+
+      if (!paytrRes.success || !paytrRes.token) {
+        console.error('PayTR Token Error:', paytrRes.error);
+        return NextResponse.json({
+          success: false,
+          error: `PayTR Ödeme Başlatılamadı: ${paytrRes.error || 'Bilinmeyen hata'}`,
+        }, { status: 400 });
+      }
 
       return NextResponse.json({
         success: true,
@@ -288,7 +300,8 @@ export async function POST(req: NextRequest) {
           orderNumber,
           grandTotal,
           paymentMethod: 'CREDIT_CARD',
-          paytrToken,
+          paytrToken: paytrRes.token,
+          isIframe: true,
           redirectUrl: `/siparis-onay/${orderNumber}`,
         },
       });

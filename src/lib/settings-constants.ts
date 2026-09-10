@@ -95,10 +95,10 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
 
   // PayTR
   payment_paytr_active: 1,
-  paytr_merchant_id: "",
-  paytr_merchant_key: "",
-  paytr_merchant_salt: "",
-  paytr_test_mode: 1,
+  paytr_merchant_id: "353348",
+  paytr_merchant_key: "DDiXU6nQ12gdkiY1",
+  paytr_merchant_salt: "4a2DhnahXQ6XLbid",
+  paytr_test_mode: 0,
 
   // Havale / EFT
   payment_bank_transfer_active: 1,
