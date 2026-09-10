@@ -173,7 +173,7 @@ function TopluYazdirContent() {
       <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-8 print:space-y-0 print:p-0">
         {orders.map((order, orderIndex) => {
           const shippingAddr = order.addresses.find((a) => !a.isBilling) || order.addresses[0];
-          const barcodeValue = `YP${order.orderNumber.replace(/[^0-9A-Za-z]/g, '')}`;
+          const barcodeValue = (order as any).mngBarcode || `YP${order.orderNumber.replace(/[^0-9A-Za-z]/g, '')}`;
 
           return (
             <div

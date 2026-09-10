@@ -1,4 +1,4 @@
-﻿import prisma from './prisma';
+import prisma from './prisma';
 import { getSystemSettings } from './settings';
 
 export interface NotificationPayload {
@@ -74,8 +74,8 @@ export async function triggerOrderNotification(payload: NotificationPayload): Pr
       siparis_no: payload.orderNumber,
       tutar: `₺${payload.grandTotal.toFixed(2)}`,
       kargo_takip_no: payload.trackingNumber || '',
-      kargo_takip_linki: payload.trackingUrl || `https://perdesiparisi.com/siparis-takip?orderNumber=${payload.orderNumber}`,
-      site_adi: settings.site_title || 'PerdeSiparisi.com',
+      kargo_takip_linki: payload.trackingUrl || `https://yazarperde.com/siparis-takip?orderNumber=${payload.orderNumber}`,
+      site_adi: settings.site_title || 'Yazar Perde - Özel Ölçülü Perde Sistemleri',
     };
 
     // 1. SMS Gönderimi
@@ -96,12 +96,9 @@ export async function triggerOrderNotification(payload: NotificationPayload): Pr
         <head><meta charset="utf-8"><style>body{font-family:sans-serif;background:#f8fafc;color:#1e293b;padding:24px;}.card{background:#ffffff;border-radius:16px;padding:32px;border:1px solid #e2e8f0;max-width:600px;margin:0 auto;}.header{font-weight:900;color:#1B84F8;font-size:20px;margin-bottom:16px;}.footer{margin-top:24px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;}</style></head>
         <body>
           <div class="card">
-            <div class="header">perdesiparisi.com</div>
+            <div class="header">yazarperde.com</div>
             <div>${compiledHtml}</div>
-            <div class="footer">
-              Bu e-posta <strong>PerdeSiparisi.com</strong> tarafından siparişiniz kapsamında otomatik olarak gönderilmiştir.<br>
-              Müşteri Hizmetleri: +90 212 510 22 55
-            </div>
+            <div class="footer">Bu e-posta yazarperde.com sipariş bilgilendirme sistemi tarafından otomatik olarak gönderilmiştir.</div>
           </div>
         </body>
         </html>

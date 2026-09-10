@@ -49,7 +49,7 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
   }
 
   const shippingAddr = order.addresses.find((a) => !a.isBilling) || order.addresses[0];
-  const barcodeValue = `YP${order.orderNumber.replace(/[^0-9A-Za-z]/g, '')}`;
+  const barcodeValue = order.mngBarcode || `YP${order.orderNumber.replace(/[^0-9A-Za-z]/g, '')}`;
 
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white text-black font-sans p-4 sm:p-8">
