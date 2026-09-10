@@ -1,4 +1,4 @@
-﻿import prisma from './prisma';
+import prisma from './prisma';
 import { SystemSettingsMap, DEFAULT_SETTINGS } from './settings-constants';
 
 export * from './settings-constants';
@@ -11,8 +11,14 @@ export async function getSystemSettings(): Promise<SystemSettingsMap> {
     for (const item of settings) {
       if (item.key in result) {
         const val = item.value;
-        const numVal = Number(val);
-        (result as Record<string, unknown>)[item.key] = isNaN(numVal) ? val : numVal;
+        const defaultVal = (DEFAULT_SETTINGS as any)[item.key];
+
+        if (typeof defaultVal === 'number') {
+          const numVal = Number(val);
+          (result as any)[item.key] = isNaN(numVal) ? defaultVal : numVal;
+        } else {
+          (result as any)[item.key] = val != null ? String(val) : '';
+        }
       }
     }
     return result;

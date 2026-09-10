@@ -54,8 +54,8 @@ export async function createDopigoInvoice(
   params: CreateInvoiceParams,
   settings: SystemSettingsMap
 ): Promise<DopigoInvoiceResult> {
-  const token = settings.dopigo_api_token?.trim();
-  const prefix = settings.dopigo_invoice_prefix?.trim() || 'YZR';
+  const token = String(settings.dopigo_api_token ?? '').trim();
+  const prefix = String(settings.dopigo_invoice_prefix ?? '').trim() || 'YZR';
   const defaultVat = Number(settings.default_vat_rate) || 10;
 
   // If token is missing, generate a simulated/pre-formatted invoice record with a clear note

@@ -60,18 +60,18 @@ export async function sendOrderToMNGKargo(
   settings: SystemSettingsMap
 ): Promise<MngShipmentResult> {
   const isActive = Number(settings.mng_kargo_active) === 1;
-  const customerNumber = settings.mng_customer_number?.trim();
-  const password = settings.mng_password?.trim();
-  const username = settings.mng_username?.trim();
-  const branchName = settings.mng_branch_name?.trim() || 'Bursa Yıldırım Şubesi';
-  const prefix = settings.mng_barcode_prefix?.trim() || 'YP';
+  const customerNumber = String(settings.mng_customer_number ?? '').trim();
+  const password = String(settings.mng_password ?? '').trim();
+  const username = String(settings.mng_username ?? '').trim();
+  const branchName = String(settings.mng_branch_name ?? '').trim() || 'Bursa Yıldırım Şubesi';
+  const prefix = String(settings.mng_barcode_prefix ?? '').trim() || 'YP';
 
-  const cleanOrderNum = params.orderNumber.replace(/[^0-9A-Za-z]/g, '');
+  const cleanOrderNum = String(params.orderNumber ?? '').replace(/[^0-9A-Za-z]/g, '');
   const barcode = `${prefix}${cleanOrderNum}`;
   const isCod = params.paymentMethod === 'CASH_ON_DELIVERY';
   const codAmount = isCod ? params.grandTotal : 0;
-  const recipientPhone = normalizePhone(params.customer.phone);
-  const fullName = `${params.customer.name} ${params.customer.surname}`.trim();
+  const recipientPhone = normalizePhone(String(params.customer?.phone ?? ''));
+  const fullName = `${params.customer?.name ?? ''} ${params.customer?.surname ?? ''}`.trim();
 
   // If credentials are not provided or integration is disabled in settings,
   // generate a pre-formatted electronic dispatch record for seamless internal tracking and label printing.
