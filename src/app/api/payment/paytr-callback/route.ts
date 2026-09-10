@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPayTRCallbackHash } from '@/lib/paytr';
 import { getSystemSettings } from '@/lib/settings';
+import { triggerOrderNotification } from '@/lib/notification-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,6 +63,16 @@ export async function POST(req: NextRequest) {
         },
       });
       console.log(`Order ${merchantOid} marked as PAID via PayTR`);
+
+      // Müşteriye SMS & E-Posta Ödeme Onay Bildirimi Gönder
+      triggerOrderNotification({
+        eventCode: 'PAYMENT_RECEIVED',
+        customerName: `${order.customerName} ${order.customerSurname}`,
+        customerPhone: order.customerPhone,
+        customerEmail: order.customerEmail,
+        orderNumber: order.orderNumber,
+        grandTotal: order.grandTotal,
+      }).catch(console.error);
     } else {
       await prisma.order.update({
         where: { id: order.id },

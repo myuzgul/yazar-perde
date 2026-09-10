@@ -65,6 +65,12 @@ export interface SystemSettingsMap {
   smtp_password: string;
   smtp_from_name: string;
   smtp_from_email: string;
+  // SMS Bildirim Ayarları (İleti Merkezi)
+  sms_active: number;
+  sms_provider: string;
+  sms_api_key: string;
+  sms_api_hash: string;
+  sms_sender_title: string;
 }
 
 export const DEFAULT_SETTINGS: SystemSettingsMap = {
@@ -139,4 +145,11 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   smtp_password: "Tpass147852*",
   smtp_from_name: "Yazar Perde",
   smtp_from_email: "info@yazarperde.com",
+
+  // SMS Bildirim Ayarları (İleti Merkezi)
+  sms_active: 1,
+  sms_provider: "iletimerkezi",
+  sms_api_key: "0cf1e359e03007ff7d0a10279b9d59e5",
+  sms_api_hash: "920de97ae51132626b9b47eb7b788c968f4f0b1e5b183af9d465af1e62b66152",
+  sms_sender_title: "YazarPerde",
 };

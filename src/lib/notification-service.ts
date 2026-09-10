@@ -99,17 +99,169 @@ export async function sendEmail(
 }
 
 /**
- * Asynchronous SMS Dispatcher (Netgsm / API)
+ * Normalizes Turkish phone number to 905XXXXXXXXX format (12 digits)
  */
-export async function sendSMS(phone: string, message: string): Promise<boolean> {
+export function normalizeTurkishPhone(phone: string): string {
+  if (!phone) return '';
+  let clean = phone.replace(/\D/g, '');
+  if (clean.startsWith('0090')) {
+    clean = clean.substring(2);
+  }
+  if (clean.startsWith('90') && clean.length === 12) {
+    return clean;
+  }
+  if (clean.startsWith('0') && clean.length === 11) {
+    return '9' + clean;
+  }
+  if (clean.length === 10 && clean.startsWith('5')) {
+    return '90' + clean;
+  }
+  return clean;
+}
+
+/**
+ * Gets remaining SMS balance from Ileti Merkezi API
+ */
+export async function getSMSBalance(settings?: SystemSettingsMap): Promise<{
+  success: boolean;
+  smsCount?: number;
+  balance?: number;
+  message?: string;
+  error?: string;
+}> {
   try {
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
-    console.log(`[SMS DISPATCHER] Phone: ${cleanPhone} | Message: ${message}`);
-    // Netgsm veya ilgili SMS sağlayıcısı HTTP çağrısı
-    return true;
-  } catch (error) {
-    console.error('[SMS ERROR]', error);
-    return false;
+    const sysSettings = settings || (await getSystemSettings());
+    const apiKey = String(sysSettings.sms_api_key || '0cf1e359e03007ff7d0a10279b9d59e5').trim();
+    const apiHash = String(sysSettings.sms_api_hash || '920de97ae51132626b9b47eb7b788c968f4f0b1e5b183af9d465af1e62b66152').trim();
+
+    if (!apiKey || !apiHash) {
+      return { success: false, error: 'İleti Merkezi API Anahtarı veya Hash bilgisi eksik' };
+    }
+
+    const res = await fetch('https://api.iletimerkezi.com/v1/get-balance/json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        request: {
+          authentication: {
+            key: apiKey,
+            hash: apiHash,
+          },
+        },
+      }),
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!data || !data.response) {
+      return { success: false, error: 'İleti Merkezi sunucusundan geçersiz yanıt alındı' };
+    }
+
+    const statusCode = data.response?.status?.code;
+    const statusMsg = data.response?.status?.message || '';
+
+    if (statusCode === 200) {
+      const sms = Number(data.response?.balance?.sms) || 0;
+      const amount = Number(data.response?.balance?.amount) || 0;
+      return {
+        success: true,
+        smsCount: sms,
+        balance: amount,
+        message: `Mevcut Bakiye: ${sms} SMS (${statusMsg})`,
+      };
+    } else {
+      return {
+        success: false,
+        error: `İleti Merkezi Hatası [Kod ${statusCode}]: ${statusMsg}`,
+      };
+    }
+  } catch (error: any) {
+    console.error('[SMS BALANCE ERROR]', error);
+    return { success: false, error: error?.message || 'Bakiye sorgulanırken bağlantı hatası' };
+  }
+}
+
+/**
+ * Sends SMS via Ileti Merkezi API v1 JSON
+ */
+export async function sendSMS(
+  phone: string,
+  message: string,
+  settings?: SystemSettingsMap
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const sysSettings = settings || (await getSystemSettings());
+    const isActive = Number(sysSettings.sms_active) !== 0;
+
+    if (!isActive) {
+      console.log('[SMS INFO] SMS gönderimi ayarlardan devre dışı bırakılmış');
+      return { success: false, error: 'SMS gönderimi sistem ayarlarında pasif' };
+    }
+
+    const formattedPhone = normalizeTurkishPhone(phone);
+    if (!formattedPhone || formattedPhone.length < 10) {
+      console.warn('[SMS WARNING] Geçersiz telefon numarası:', phone);
+      return { success: false, error: 'Geçersiz telefon numarası' };
+    }
+
+    const apiKey = String(sysSettings.sms_api_key || '0cf1e359e03007ff7d0a10279b9d59e5').trim();
+    const apiHash = String(sysSettings.sms_api_hash || '920de97ae51132626b9b47eb7b788c968f4f0b1e5b183af9d465af1e62b66152').trim();
+    const sender = String(sysSettings.sms_sender_title || 'YazarPerde').trim();
+
+    if (!apiKey || !apiHash) {
+      console.warn('[SMS WARNING] İleti Merkezi API Key veya Hash eksik');
+      return { success: false, error: 'API anahtarları eksik' };
+    }
+
+    const payload = {
+      request: {
+        authentication: {
+          key: apiKey,
+          hash: apiHash,
+        },
+        order: {
+          sender: sender,
+          sendDateTime: '',
+          message: {
+            text: message,
+            receipents: {
+              number: [formattedPhone],
+            },
+          },
+        },
+      },
+    };
+
+    console.log(`[SMS SENDING] To: ${formattedPhone} | Sender: ${sender} | Message: ${message}`);
+
+    const res = await fetch('https://api.iletimerkezi.com/v1/send-sms/json', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => null);
+    console.log('[SMS RESPONSE]', JSON.stringify(data));
+
+    if (!data || !data.response) {
+      return { success: false, error: 'İleti Merkezi servisinden boş yanıt alındı' };
+    }
+
+    const statusCode = data.response?.status?.code;
+    const statusMsg = data.response?.status?.message || '';
+
+    if (statusCode === 200) {
+      const orderId = data.response?.order?.id ? String(data.response.order.id) : undefined;
+      console.log(`[SMS SUCCESS] SMS başarıyla gönderildi! OrderId: ${orderId}`);
+      return { success: true, messageId: orderId };
+    } else {
+      console.error(`[SMS ERROR] İleti Merkezi Hata Kodu ${statusCode}: ${statusMsg}`);
+      return { success: false, error: `Hata [${statusCode}]: ${statusMsg}` };
+    }
+  } catch (error: any) {
+    console.error('[SMS EXCEPTION]', error);
+    return { success: false, error: error?.message || 'SMS gönderim sırasında bilinmeyen hata' };
   }
 }
 
@@ -360,12 +512,44 @@ export async function triggerOrderNotification(payload: NotificationPayload): Pr
       sendEmail(adminEmail, adminSubject, adminHtml, settings).catch(console.error);
     }
 
-    // 4. SMS Gönderimi (Şablon varsa)
-    if (dbTemplate?.smsBody && payload.customerPhone) {
-      const compiledSms = replaceTemplateVariables(dbTemplate.smsBody, variables);
-      sendSMS(payload.customerPhone, compiledSms).catch(console.error);
+    // 4. Müşteriye SMS Gönderimi (İleti Merkezi)
+    if (payload.customerPhone) {
+      let smsText = '';
+
+      if (dbTemplate && dbTemplate.isActive && dbTemplate.smsBody) {
+        smsText = replaceTemplateVariables(dbTemplate.smsBody, variables);
+      } else {
+        // Otomatik varsayılan SMS metinleri
+        switch (payload.eventCode) {
+          case 'ORDER_CREATED':
+            smsText = `Sayın ${payload.customerName}, #${payload.orderNumber} numaralı özel ölçü perde siparişiniz alınmıştır. Tutar: ${totalFormatted}. yazarperde.com`;
+            break;
+          case 'PAYMENT_RECEIVED':
+            smsText = `Sayın ${payload.customerName}, #${payload.orderNumber} siparişinizin ödemesi onaylanmıştır. Perdeleriniz dikim sırasına alınmıştır. yazarperde.com`;
+            break;
+          case 'IN_PRODUCTION':
+            smsText = `Sayın ${payload.customerName}, #${payload.orderNumber} özel ölçü perdeniz atölyemizde dikim ve üretime alınmıştır. yazarperde.com`;
+            break;
+          case 'SHIPPED':
+            smsText = `Sayın ${payload.customerName}, #${payload.orderNumber} siparişiniz kargoya verilmiştir. ${cargoCompany} Takip No: ${payload.trackingNumber || ''}. yazarperde.com`;
+            break;
+          case 'DELIVERED':
+            smsText = `Sayın ${payload.customerName}, #${payload.orderNumber} siparişiniz teslim edilmiştir. Bizi tercih ettiğiniz için teşekkür ederiz. yazarperde.com`;
+            break;
+          case 'CANCELLED':
+            smsText = `Sayın ${payload.customerName}, #${payload.orderNumber} siparişiniz iptal edilmiştir. Bilgi için: 0541 494 51 73. yazarperde.com`;
+            break;
+        }
+      }
+
+      if (smsText.trim()) {
+        sendSMS(payload.customerPhone, smsText.trim(), settings).catch((err) =>
+          console.error('[TRIGGER SMS ERROR]', err)
+        );
+      }
     }
   } catch (error) {
     console.error('[TRIGGER NOTIFICATION ERROR]', error);
   }
 }
+

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/auth';
-import { sendSMS, sendEmail, replaceTemplateVariables } from '@/lib/notification-service';
+import { sendSMS, sendEmail, getSMSBalance, replaceTemplateVariables } from '@/lib/notification-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +10,23 @@ export async function POST(req: NextRequest) {
     }
 
     const { type, recipient, templateBody, templateSubject } = await req.json();
+
+    if (type === 'SMS_BALANCE') {
+      const balanceResult = await getSMSBalance();
+      if (balanceResult.success) {
+        return NextResponse.json({
+          success: true,
+          smsCount: balanceResult.smsCount,
+          balance: balanceResult.balance,
+          message: balanceResult.message,
+        });
+      } else {
+        return NextResponse.json({
+          success: false,
+          error: balanceResult.error || 'Bakiye bilgisi alınamadı',
+        }, { status: 400 });
+      }
+    }
 
     if (!type || !recipient) {
       return NextResponse.json({ success: false, error: 'Alıcı ve bildirim türü zorunludur' }, { status: 400 });
@@ -21,20 +38,35 @@ export async function POST(req: NextRequest) {
       tutar: '₺1.250,00',
       kargo_takip_no: '827046904757',
       kargo_takip_linki: 'https://www.mngkargo.com.tr/gonderitakip?takipno=827046904757',
+      kargo_firmasi: 'DHL Kargo (MNG Kargo)',
       site_adi: 'Yazar Perde - Özel Ölçülü Perde Sistemleri',
     };
 
     if (type === 'SMS') {
-      const message = replaceTemplateVariables(templateBody || 'Test SMS bildirimi', dummyVariables);
-      const ok = await sendSMS(recipient, message);
-      return NextResponse.json({ success: ok, message: 'Test SMS başarıyla kuyruğa alındı' });
+      const message = replaceTemplateVariables(templateBody || 'Sayın {{musteri_adi}}, #{{siparis_no}} numaralı test SMS bildirimi. yazarperde.com', dummyVariables);
+      const res = await sendSMS(recipient, message);
+      if (res.success) {
+        return NextResponse.json({ 
+          success: true, 
+          message: `Test SMS başarıyla gönderildi (${recipient}). İleti Merkezi Paket/Sipariş No: ${res.messageId || 'OK'}` 
+        });
+      } else {
+        return NextResponse.json({ 
+          success: false, 
+          error: res.error || 'SMS gönderilemedi' 
+        }, { status: 400 });
+      }
     }
 
     if (type === 'EMAIL') {
       const subject = replaceTemplateVariables(templateSubject || 'Test Bildirim Başlığı', dummyVariables);
       const htmlBody = replaceTemplateVariables(templateBody || '<p>Bu bir test e-postasıdır.</p>', dummyVariables);
       const ok = await sendEmail(recipient, subject, htmlBody);
-      return NextResponse.json({ success: ok, message: 'Test E-posta başarıyla kuyruğa alındı' });
+      if (ok) {
+        return NextResponse.json({ success: true, message: 'Test E-posta başarıyla gönderildi' });
+      } else {
+        return NextResponse.json({ success: false, error: 'E-posta gönderilemedi. SMTP ayarlarını kontrol ediniz.' }, { status: 400 });
+      }
     }
 
     return NextResponse.json({ success: false, error: 'Geçersiz tür' }, { status: 400 });
