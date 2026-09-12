@@ -35,23 +35,45 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
   }
 
   const shippingAddress = order.addresses.find((a) => !a.isBilling);
+  const isFailed = status === 'failed' || order.paymentStatus === 'FAILED';
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
-      {/* Üst Başarı Kartı */}
-      <div className="bg-white p-6 sm:p-10 rounded-3xl border border-slate-200/80 shadow-md text-center mb-8">
-        <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-8 h-8" />
+      {/* Üst Başarı / Durum Kartı */}
+      <div className={`bg-white p-6 sm:p-10 rounded-3xl border shadow-md text-center mb-8 ${isFailed ? 'border-red-200 shadow-red-500/5' : 'border-slate-200/80'}`}>
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isFailed ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+          {isFailed ? (
+            <span className="text-3xl font-black">!</span>
+          ) : (
+            <CheckCircle2 className="w-8 h-8" />
+          )}
         </div>
-        <span className="text-xs font-black text-emerald-600 uppercase tracking-wider bg-emerald-50 px-3 py-1 rounded-full">
-          SİPARİŞİNİZ ALINDI
+        <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${isFailed ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+          {isFailed ? 'ÖDEME ONAYLANMADI (BEKLEMEDE)' : 'SİPARİŞİNİZ ALINDI'}
         </span>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-3 mb-2">
-          Teşekkür Ederiz, Siparişiniz Başarıyla Oluşturuldu!
+          {isFailed 
+            ? 'Kredi Kartı Ödemeniz Tamamlanamadı' 
+            : 'Teşekkür Ederiz, Siparişiniz Başarıyla Oluşturuldu!'
+          }
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
-          Özel ölçülü perde siparişiniz atölye üretim kuyruğuna alınmıştır. Süreçle ilgili tüm bilgilendirmeler e-posta ve SMS ile iletilecektir.
+          {isFailed 
+            ? 'Kartınızdan tahsilat yapılamadı veya 3D Secure doğrulaması tamamlanamadı. Sipariş kaydınız sistemimizde tutulmaktadır, dilerseniz tekrar deneyebilir veya müşteri hizmetlerimizle iletişime geçebilirsiniz.'
+            : 'Özel ölçülü perde siparişiniz atölye üretim kuyruğuna alınmıştır. Süreçle ilgili tüm bilgilendirmeler e-posta ve SMS ile iletilecektir.'
+          }
         </p>
+
+        {isFailed && (
+          <div className="mt-5 inline-flex items-center gap-3">
+            <Link 
+              href="/odeme" 
+              className="bg-[#1B84F8] hover:bg-[#156cd1] text-white px-6 py-2.5 rounded-xl text-xs font-bold transition shadow-md shadow-blue-500/20"
+            >
+              Tekrar Ödeme Yap / Yöntem Değiştir
+            </Link>
+          </div>
+        )}
 
         {/* Sipariş No & Tarih Kutusu */}
         <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">

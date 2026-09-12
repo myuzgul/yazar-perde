@@ -260,8 +260,16 @@ export async function POST(req: NextRequest) {
 
     // Kredi Kartı / PayTR iFrame Token Talebi
     if (paymentMethod === 'CREDIT_CARD') {
+      // Güvenilir Gerçek İstemci IP Tespiti
       const forwardedFor = req.headers.get('x-forwarded-for') || '';
-      const userIp = forwardedFor.split(',')[0].trim() || req.headers.get('x-real-ip') || '127.0.0.1';
+      const realIp = req.headers.get('x-real-ip') || '';
+      const cfConnectingIp = req.headers.get('cf-connecting-ip') || '';
+      
+      let userIp = forwardedFor.split(',')[0].trim() || realIp.trim() || cfConnectingIp.trim() || '179.198.199.217';
+      if (!userIp || userIp === '127.0.0.1' || userIp === '::1' || userIp.startsWith('192.168.') || userIp.startsWith('10.')) {
+        userIp = '179.198.199.217';
+      }
+
       const host = req.headers.get('host') || 'yazarperde.com';
       const protocol = host.includes('localhost') ? 'http' : 'https';
 
@@ -273,6 +281,12 @@ export async function POST(req: NextRequest) {
       // PayTR merchant_oid alfanümerik olmalıdır (özel karakter / tire / boşluk kesinlikle içermez)
       const merchantOid = orderNumber.replace(/[^a-zA-Z0-9]/g, '');
 
+      // Kargo ücreti varsa PayTR sepetine ekle
+      const fullPaytrBasket = [...paytrBasket];
+      if (shippingFee > 0) {
+        fullPaytrBasket.push(['Kargo Bedeli', shippingFee.toFixed(2), 1]);
+      }
+
       const paytrRes = await getPayTRIFrameToken({
         merchantId,
         merchantKey,
@@ -280,12 +294,12 @@ export async function POST(req: NextRequest) {
         email: cleanEmail,
         paymentAmount: Math.round(grandTotal * 100),
         merchantOid,
-        userName: `${firstName} ${lastName}`,
-        userAddress: `${addressLine} ${district}/${city}`,
-        userPhone: phone,
+        userName: `${firstName.trim()} ${lastName.trim()}`,
+        userAddress: `${addressLine.trim()}, ${district.trim()} / ${city.trim()}`,
+        userPhone: phone.replace(/[^\d+]/g, '').trim(),
         merchantOkUrl: `${protocol}://${host}/siparis-onay/${orderNumber}?status=success`,
         merchantFailUrl: `${protocol}://${host}/siparis-onay/${orderNumber}?status=failed`,
-        userBasket: paytrBasket,
+        userBasket: fullPaytrBasket,
         userIp,
         testMode,
       });
@@ -294,7 +308,7 @@ export async function POST(req: NextRequest) {
         console.error('PayTR Token Error:', paytrRes.error);
         return NextResponse.json({
           success: false,
-          error: `PayTR Ödeme Başlatılamadı: ${paytrRes.error || 'Bilinmeyen hata'}`,
+          error: `Kredi kartı ödeme sistemi başlatılamadı: ${paytrRes.error || 'Bilinmeyen hata'}. Lütfen bilgilerinizi kontrol ediniz veya Havale / Kapıda Ödeme seçeneğini kullanınız.`,
         }, { status: 400 });
       }
 

@@ -15,6 +15,7 @@ import {
   ArrowLeft, 
   ChevronRight,
   CheckCircle2,
+  AlertCircle,
   Tag,
   Sparkles,
   X
@@ -165,24 +166,7 @@ export default function CheckoutPage() {
   const totalDiscount = couponDiscountAmount + bankDiscountAmount;
   const grandTotal = Math.max(0, Number((subtotal - totalDiscount + shippingFee + codFee).toFixed(2)));
 
-  // Sipariş başarıyla oluşturulduğunda yönlendirme ekranı
-  if (isSubmitting && !showPaytrModal) {
-    return (
-      <main className="max-w-7xl mx-auto px-4 py-16 text-center min-h-[60vh] flex items-center justify-center">
-        <div className="max-w-md w-full border border-slate-200 p-8 rounded-2xl bg-white shadow-sm space-y-4 animate-in fade-in">
-          <div className="w-10 h-10 border-3 border-[#1B84F8] border-t-transparent rounded-full animate-spin mx-auto" />
-          <div>
-            <h1 className="text-base font-bold text-slate-900">
-              {paymentMethod === 'CREDIT_CARD' ? 'PayTR Güvenli Ödeme Ekranı Hazırlanıyor...' : 'Siparişiniz Hazırlanıyor...'}
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">Lütfen bekleyiniz, işlem tamamlanıyor.</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (items.length === 0 && !showPaytrModal && !isSuccess) {
+  if (items.length === 0 && !paytrIframeToken && !isSuccess) {
     return (
       <main className="max-w-7xl mx-auto px-4 py-16 text-center min-h-[60vh] flex items-center justify-center">
         <div className="max-w-md w-full border border-slate-200 p-8 rounded-2xl bg-white">
@@ -197,8 +181,32 @@ export default function CheckoutPage() {
   }
 
   const handleSubmitOrder = async () => {
-    if (!email || !phone || !firstName || !lastName || !city || !district || !addressLine) {
-      setErrorMessage('Lütfen tüm zorunlu iletişim ve teslimat adresi alanlarını doldurunuz.');
+    const cleanFirstName = firstName.trim();
+    const cleanLastName = lastName.trim();
+    const cleanEmail = email.trim();
+    const cleanPhone = phone.trim();
+    const cleanCity = city.trim();
+    const cleanDistrict = district.trim();
+    const cleanAddress = addressLine.trim();
+
+    if (!cleanFirstName || !cleanLastName) {
+      setErrorMessage('Lütfen ad ve soyad alanlarını eksiksiz doldurunuz.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setErrorMessage('Lütfen geçerli bir e-posta adresi giriniz.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (!cleanPhone || cleanPhone.replace(/\D/g, '').length < 10) {
+      setErrorMessage('Lütfen geçerli bir cep telefonu numarası giriniz (en az 10 hane).');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (!cleanCity || !cleanDistrict || !cleanAddress) {
+      setErrorMessage('Lütfen teslimat il, ilçe ve açık adres bilgilerini eksiksiz doldurunuz.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     if (!agreeTerms) {
@@ -214,22 +222,22 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email,
-          phone,
-          firstName,
-          lastName,
-          city,
-          district,
-          addressLine,
-          postalCode,
+          email: cleanEmail,
+          phone: cleanPhone,
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
+          city: cleanCity,
+          district: cleanDistrict,
+          addressLine: cleanAddress,
+          postalCode: postalCode.trim(),
           invoiceType,
-          identityNumber,
-          companyName,
-          taxOffice,
-          taxNumber,
+          identityNumber: identityNumber.trim(),
+          companyName: companyName.trim(),
+          taxOffice: taxOffice.trim(),
+          taxNumber: taxNumber.trim(),
           sameInvoiceAddress,
-          invoiceAddressLine,
-          orderNote,
+          invoiceAddressLine: invoiceAddressLine.trim(),
+          orderNote: orderNote.trim(),
           paymentMethod,
           items,
           createAccount,
@@ -244,8 +252,8 @@ export default function CheckoutPage() {
         if (paymentMethod === 'CREDIT_CARD' && data.data?.isIframe && data.data?.paytrToken) {
           setPaytrIframeToken(data.data.paytrToken);
           setActiveOrderNumber(data.data.orderNumber);
-          setShowPaytrModal(true);
           setIsSubmitting(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
 
@@ -254,12 +262,14 @@ export default function CheckoutPage() {
         clearCart();
         router.push(data.data.redirectUrl);
       } else {
-        setErrorMessage(data.error || 'Sipariş oluşturulamadı');
+        setErrorMessage(data.error || 'Sipariş oluşturulamadı. Lütfen bilgilerinizi kontrol ediniz.');
         setIsSubmitting(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch {
-      setErrorMessage('Bağlantı hatası oluştu, lütfen tekrar deneyiniz');
+      setErrorMessage('Bağlantı hatası oluştu, lütfen internet bağlantınızı kontrol edip tekrar deneyiniz.');
       setIsSubmitting(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -278,95 +288,104 @@ export default function CheckoutPage() {
           <span>Sepete Dön</span>
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />
-        <span className="font-bold text-slate-900">Güvenli Ödeme & Teslimat</span>
+        <span className="font-bold text-slate-900">
+          {paytrIframeToken ? 'PayTR 3D Secure Güvenli Ödeme' : 'Güvenli Ödeme & Teslimat'}
+        </span>
       </div>
 
       {errorMessage && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-xs font-bold mb-6">
-          {errorMessage}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-xs font-bold mb-6 flex items-start gap-2.5 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* PAYTR 3D SECURE MODAL */}
-      {showPaytrModal && paytrIframeToken && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[96vh] flex flex-col overflow-hidden border border-slate-200">
-            {/* Modal Başlık */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
-                    <span>PayTR 3D Secure Güvenli Kart Ödemesi</span>
-                  </h3>
-                  <p className="text-[10px] text-slate-400 font-mono">Sipariş No: #{activeOrderNumber}</p>
-                </div>
+      {/* 1. SEÇENEK: PAYTR 3D SECURE GÜVENLİ KART ÖDEME EKRANI */}
+      {paytrIframeToken ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Üst Bilgi Kartı */}
+          <div className="bg-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shrink-0">
+                <ShieldCheck className="w-6 h-6" />
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('Ödeme penceresini kapatmak istediğinize emin misiniz? Siparişiniz ödeme bekliyor durumunda kalacaktır.')) {
-                    setShowPaytrModal(false);
-                  }
-                }}
-                className="text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition cursor-pointer"
-                title="Kapat"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-base sm:text-lg font-black text-white">PayTR 3D Secure Kart Ödemesi</h1>
+                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-500/30">
+                    256-BIT SSL KORUMALI
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1 font-mono">
+                  Sipariş No: <strong className="text-white">#{activeOrderNumber}</strong> • Toplam Tutar: <strong className="text-emerald-400 font-black text-sm">₺{grandTotal.toFixed(2)}</strong>
+                </p>
+              </div>
             </div>
 
-            {/* PayTR iframe */}
-            <div className="flex-1 overflow-y-auto p-1 sm:p-3 bg-slate-50 min-h-[580px]">
-              <iframe
-                src={`https://www.paytr.com/odeme/guvenli/${paytrIframeToken}`}
-                id="paytriframe"
-                frameBorder="0"
-                scrolling="no"
-                style={{ width: '100%', minHeight: '580px', border: 'none' }}
-                className="rounded-xl w-full"
-                onLoad={() => {
-                  if (typeof (window as any).iFrameResize === 'function') {
-                    (window as any).iFrameResize({}, '#paytriframe');
-                  }
-                }}
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Ödeme ekranından çıkıp teslimat bilgilerinizi düzenlemek veya farklı bir ödeme yöntemi seçmek istiyor musunuz?')) {
+                  setPaytrIframeToken(null);
+                  setActiveOrderNumber(null);
+                }
+              }}
+              className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-700 shrink-0"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Bilgileri Düzenle / Farklı Ödeme Seç</span>
+            </button>
+          </div>
 
-            {/* Alt Güvenlik Bildirimi */}
-            <div className="p-3 bg-slate-100 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500">
-              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
-                <Lock className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Kart bilgileriniz 256-Bit SSL ve PCI-DSS Level 1 güvencesiyle doğrudan bankaya iletilir.</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('Ödemeyi iptal etmek istediğinize emin misiniz?')) {
-                    setShowPaytrModal(false);
-                  }
-                }}
-                className="text-red-600 hover:underline font-bold shrink-0 cursor-pointer"
-              >
-                Ödemeyi İptal Et
-              </button>
+          {/* PayTR iFrame Konteyneri */}
+          <div className="bg-slate-50 rounded-3xl border border-slate-200/80 shadow-md p-2 sm:p-4 min-h-[680px] flex flex-col items-center">
+            <iframe
+              src={`https://www.paytr.com/odeme/guvenli/${paytrIframeToken}`}
+              id="paytriframe"
+              frameBorder="0"
+              scrolling="yes"
+              style={{ width: '100%', minHeight: '680px', border: 'none', display: 'block' }}
+              className="w-full rounded-2xl bg-white shadow-xs"
+              onLoad={() => {
+                if (typeof (window as any).iFrameResize === 'function') {
+                  (window as any).iFrameResize({}, '#paytriframe');
+                }
+              }}
+            />
+          </div>
+
+          {/* Alt Güvenlik Bildirimi */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 py-2 border-t border-slate-100">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Kart bilgileriniz doğrudan bankanızın 3D Secure ekranına iletilir. Sitemizde kart bilgisi saklanmaz.</span>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Ödemeyi iptal etmek istediğinize emin misiniz?')) {
+                  setPaytrIframeToken(null);
+                  setActiveOrderNumber(null);
+                }
+              }}
+              className="text-red-600 hover:underline font-bold text-xs shrink-0 cursor-pointer"
+            >
+              Ödemeyi İptal Et
+            </button>
           </div>
         </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* SOL: Form Alanları */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* 1. İletişim Bilgileri */}
-          <div className="border border-slate-200 rounded-2xl p-5 space-y-4 bg-white">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-              <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-[#1B84F8]" />
-                <span>1. İletişim Bilgileri</span>
-              </h2>
+      ) : (
+        /* 2. SEÇENEK: SİPARİŞ & ADRES FORMU */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* SOL: Form Alanları */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* 1. İletişim Bilgileri */}
+            <div className="border border-slate-200 rounded-2xl p-5 space-y-4 bg-white">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-[#1B84F8]" />
+                  <span>1. İletişim Bilgileri</span>
+                </h2>
               {currentUser ? (
                 <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-[#1B84F8]" />
@@ -846,6 +865,14 @@ export default function CheckoutPage() {
               </label>
             </div>
 
+            {/* Hata Mesajı (Buton Üstü) */}
+            {errorMessage && (
+              <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-xs font-bold animate-in fade-in flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             {/* Buton */}
             <button
               type="button"
@@ -871,6 +898,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      )}
     </main>
   );
 }
