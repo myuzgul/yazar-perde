@@ -174,14 +174,17 @@ export async function sendOrderToMNGKargo(
 
       // MNG V3 "1" veya takip numarası döndüğünde başarılıdır
       if (resVal === '1' || (!resVal.toLowerCase().includes('hata') && !resVal.toLowerCase().includes('geçersiz') && !resVal.toLowerCase().includes('yetkisiz') && !resVal.startsWith('E0') && !resVal.startsWith('H0'))) {
-        const trackingCode = resVal.length >= 8 && /^[0-9]+$/.test(resVal) ? resVal : barcode;
+        const isNumericCode = resVal.length >= 8 && /^[0-9]+$/.test(resVal);
+        const trackingCode = isNumericCode ? resVal : undefined;
         return {
           success: true,
           trackingNumber: trackingCode,
-          trackingUrl: getMngTrackingUrl(trackingCode),
+          trackingUrl: trackingCode ? getMngTrackingUrl(trackingCode) : undefined,
           barcode: barcode,
           shipmentId: `MNG-${cleanOrderNum}`,
-          statusMessage: `Sipariş MNG Kargo sistemine başarıyla aktarıldı (Barkod / Takip No: ${trackingCode}).`,
+          statusMessage: isNumericCode
+            ? `Sipariş MNG Kargo sistemine aktarıldı. Takip No: ${trackingCode}`
+            : `Sipariş MNG Kargo sistemine dijital manifesto olarak başarıyla aktarıldı (Barkod: #${barcode}).`,
           rawResponse: xmlText,
         };
       } else if (resVal) {

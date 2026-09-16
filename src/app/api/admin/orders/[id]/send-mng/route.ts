@@ -64,22 +64,31 @@ export async function POST(
       );
     }
 
-    // Sipariş Durumunu SHIPPED (Kargoya Verildi) olarak güncelle
+    // Sipariş Durumunu güncelle
+    const updateData: any = {
+      shippingCompany: settings.shipping_company_name || 'DHL Kargo (MNG Kargo)',
+      mngBarcode: mngResult.barcode,
+      shippingStatus: 'DISPATCHED',
+      dispatchedAt: new Date(),
+    };
+
+    if (mngResult.trackingNumber) {
+      updateData.trackingNumber = mngResult.trackingNumber;
+      updateData.trackingUrl = mngResult.trackingUrl;
+      updateData.status = 'SHIPPED';
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id: order.id },
       data: {
-        status: 'SHIPPED',
-        shippingCompany: settings.shipping_company_name || 'DHL Kargo (MNG Kargo)',
-        trackingNumber: mngResult.trackingNumber,
-        trackingUrl: mngResult.trackingUrl,
-        shippingStatus: 'DISPATCHED',
-        dispatchedAt: new Date(),
-        mngBarcode: mngResult.barcode,
+        ...updateData,
         timeline: {
           create: {
-            status: 'SHIPPED',
-            title: 'MNG Kargo Sistemine Bildirildi (Kargoya Verildi)',
-            description: `Takip No: ${mngResult.trackingNumber} • Barkod: ${mngResult.barcode}. Kargo firmasına gönderi kaydı açıldı.`,
+            status: mngResult.trackingNumber ? 'SHIPPED' : (order.status || 'PROCESSING'),
+            title: 'MNG Kargo Sistemine Bildirildi',
+            description: mngResult.trackingNumber
+              ? `Takip No: ${mngResult.trackingNumber} • Barkod: ${mngResult.barcode}. Kargo firmasına gönderi kaydı açıldı.`
+              : `MNG Kargo sistemine dijital manifesto kaydı açıldı (Barkod / İrsaliye: ${mngResult.barcode}). Kargo teslim alınınca 12 haneli takip numarasını girip kaydedebilirsiniz.`,
           },
         },
       },
@@ -90,25 +99,27 @@ export async function POST(
       },
     });
 
-    // Müşteriye Kargo Takip Bildirimi (SMS / E-Posta) Tetikle
-    triggerOrderNotification({
-      eventCode: 'SHIPPED',
-      customerName: `${updatedOrder.customerName} ${updatedOrder.customerSurname}`,
-      customerPhone: updatedOrder.customerPhone,
-      customerEmail: updatedOrder.customerEmail,
-      orderNumber: updatedOrder.orderNumber,
-      grandTotal: updatedOrder.grandTotal,
-      trackingNumber: mngResult.trackingNumber,
-      cargoCompany: settings.shipping_company_name || 'DHL Kargo (MNG Kargo)',
-    }).catch((err) => console.error('Kargo bildirim hatası:', err));
+    // Eğer MNG'den anında takip numarası döndüyse müşteriye bildirim tetikle
+    if (mngResult.trackingNumber) {
+      triggerOrderNotification({
+        eventCode: 'SHIPPED',
+        customerName: `${updatedOrder.customerName} ${updatedOrder.customerSurname}`,
+        customerPhone: updatedOrder.customerPhone,
+        customerEmail: updatedOrder.customerEmail,
+        orderNumber: updatedOrder.orderNumber,
+        grandTotal: updatedOrder.grandTotal,
+        trackingNumber: mngResult.trackingNumber,
+        cargoCompany: settings.shipping_company_name || 'DHL Kargo (MNG Kargo)',
+      }).catch((err) => console.error('Kargo bildirim hatası:', err));
+    }
 
     return NextResponse.json({
       success: true,
       message: mngResult.statusMessage || 'MNG Kargo gönderisi başarıyla oluşturuldu!',
       data: updatedOrder,
       tracking: {
-        trackingNumber: mngResult.trackingNumber,
-        trackingUrl: mngResult.trackingUrl,
+        trackingNumber: mngResult.trackingNumber || updatedOrder.trackingNumber,
+        trackingUrl: mngResult.trackingUrl || updatedOrder.trackingUrl,
         barcode: mngResult.barcode,
         shippingCompany: updatedOrder.shippingCompany,
       },

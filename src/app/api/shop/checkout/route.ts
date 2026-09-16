@@ -166,10 +166,10 @@ export async function POST(req: NextRequest) {
 
     const grandTotal = Math.max(0, Number((subtotal + shippingFee + paymentFee - discountTotal).toFixed(2)));
 
-    // Alfanümerik Sipariş Numarası (PayTR ve MNG Kargo uyumlu - özel karakter içermez)
+    // Sayısal Sipariş Numarası (PayTR ve MNG Kargo uyumlu)
     const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `YP${dateStr}${randomSuffix}`;
+    const orderNumber = `${dateStr}${randomSuffix}`;
 
     const order = await prisma.order.create({
       data: {

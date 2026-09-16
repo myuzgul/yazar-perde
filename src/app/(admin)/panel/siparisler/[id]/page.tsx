@@ -105,7 +105,7 @@ export default function AdminOrderDetailPage() {
         setOrder(data.data);
         setStatus(data.data.status);
         setCustomTracking(data.tracking?.trackingNumber || '');
-        setMngMessage(`MNG Kargo kaydı başarıyla açıldı! (Takip No: ${data.tracking?.trackingNumber})`);
+        setMngMessage(data.message || 'MNG Kargo sistemine dijital manifesto kaydı başarıyla açıldı!');
       } else {
         setMngError(data.error || 'MNG Kargo servisine bağlanırken hata oluştu');
       }
