@@ -41,7 +41,7 @@ export default function KargoOdemeAyarlariPage() {
   const [mngPassword, setMngPassword] = useState('');
   const [mngUsername, setMngUsername] = useState('');
   const [mngBranchName, setMngBranchName] = useState('Bursa Yıldırım Şubesi');
-  const [mngBarcodePrefix, setMngBarcodePrefix] = useState('YP');
+  const [mngBarcodePrefix, setMngBarcodePrefix] = useState('');
 
   // PayTR State
   const [paytrActive, setPaytrActive] = useState('1');
@@ -394,10 +394,10 @@ export default function KargoOdemeAyarlariPage() {
                   maxLength={5}
                   value={mngBarcodePrefix}
                   onChange={(e) => setMngBarcodePrefix(e.target.value.toUpperCase().trim())}
-                  placeholder="Örn: YP"
+                  placeholder="İsteğe bağlı"
                   className="w-full sm:w-48 bg-slate-50/60 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold uppercase text-slate-900 focus:outline-hidden focus:border-red-500 focus:bg-white transition"
                 />
-                <p className="text-[11px] text-slate-500 mt-1">Etiket üzerindeki taranabilir barkod başlangıç harfleri</p>
+                <p className="text-[11px] text-slate-500 mt-1">Varsayılan boştur (Sipariş numarası doğrudan kullanılır)</p>
               </div>
             </div>
           </section>

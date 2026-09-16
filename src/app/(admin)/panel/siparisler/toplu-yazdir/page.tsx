@@ -170,165 +170,113 @@ function TopluYazdirContent() {
       </div>
 
       {/* Sipariş Sayfaları (Her biri ayrı A5 Yaprağı) */}
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-8 print:space-y-0 print:p-0">
+      <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-8 print:space-y-0 print:p-0">
         {orders.map((order, orderIndex) => {
           const shippingAddr = order.addresses.find((a) => !a.isBilling) || order.addresses[0];
-          const barcodeValue = (order as any).mngBarcode || `YP${order.orderNumber.replace(/[^0-9A-Za-z]/g, '')}`;
+          const barcodeValue = (order as any).mngBarcode || (order as any).trackingNumber || order.orderNumber;
+
+          const formattedDate = new Date(order.createdAt).toLocaleDateString('tr-TR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          });
+
+          const paymentLabel = (() => {
+            if (order.paymentMethod === 'PAYTR_CC') return 'Kredi Banka Kartı (PayTR)';
+            if (order.paymentMethod === 'BANK_TRANSFER') return 'Banka Havalesi / EFT';
+            if (order.paymentMethod === 'CASH_ON_DELIVERY') return `Kapıda Nakit Ödeme (₺${order.grandTotal.toFixed(2)})`;
+            return order.paymentMethod;
+          })();
+
+          const vatAmount = (order.grandTotal * 0.1).toFixed(2);
 
           return (
             <div
               key={order.id}
-              className="order-sheet a5-container bg-white p-3 sm:p-4 rounded-xl border-2 border-black print:border-2 print:border-black print:rounded-none print:shadow-none shadow-md space-y-3"
+              className="order-sheet a5-container bg-white p-6 rounded-none border border-black print:border-0 print:p-0 shadow-none space-y-3"
               style={{ pageBreakAfter: orderIndex < orders.length - 1 ? 'always' : 'auto' }}
             >
-              {/* 1. ÜST KISIM: SOLDA ATÖLYE BİLGİSİ - SAĞDA MNG KARGO ETİKETİ */}
-              <div className="grid grid-cols-12 gap-2.5 items-stretch border-b-2 border-black pb-2.5">
-                {/* Sol Kolon: Atölye ve Sipariş Başlığı (%50) */}
-                <div className="col-span-6 flex flex-col justify-between pr-1 border-r border-slate-300">
-                  <div>
-                    <h2 className="text-sm font-black tracking-tight text-black uppercase">
-                      YAZAR PERDE SİSTEMLERİ
-                    </h2>
-                    <p className="text-[9px] font-bold text-slate-700 uppercase tracking-wide">
-                      Özel Ölçü Atölye İmalat Fişi
-                    </p>
-                    <p className="text-[8px] text-slate-600 mt-0.5">
-                      Tel: 0541 494 51 73 • yazarperde.com
-                    </p>
+              {/* 1. ÜST BAŞLIK & MÜŞTERİ / SİPARİŞ BİLGİLERİ */}
+              <div className="flex justify-between items-start pb-4">
+                {/* Sol Kolon: FATURA Başlığı ve Müşteri Bilgileri */}
+                <div className="space-y-1.5 max-w-[55%]">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-black tracking-tight text-black uppercase">
+                      FATURA
+                    </h1>
+                    <span className="no-print bg-slate-900 text-white text-[9px] font-bold px-2 py-0.5 rounded">
+                      {orderIndex + 1}/{orders.length}
+                    </span>
                   </div>
-
-                  <div className="mt-2 bg-slate-50 border border-black p-2 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[8px] font-black uppercase text-slate-500">Sipariş No:</span>
-                      <span className="font-mono text-xs font-black text-black">#{order.orderNumber}</span>
-                    </div>
-                    <div className="flex justify-between items-center mt-0.5 text-[8px] text-slate-600">
-                      <span>Tarih:</span>
-                      <span className="font-bold">
-                        {new Date(order.createdAt).toLocaleDateString('tr-TR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 pt-1 border-t border-slate-200 flex justify-between items-center">
-                      <span className="text-[8px] font-bold text-slate-600">Ödeme:</span>
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${
-                        order.paymentMethod === 'CASH_ON_DELIVERY'
-                          ? 'bg-amber-100 text-amber-950 border border-amber-300 font-extrabold'
-                          : 'bg-black text-white'
-                      }`}>
-                        {order.paymentMethod === 'PAYTR_CC' && 'KREDİ KARTI (ÖDENDİ)'}
-                        {order.paymentMethod === 'BANK_TRANSFER' && 'HAVALE / EFT'}
-                        {order.paymentMethod === 'CASH_ON_DELIVERY' && `KAPIDA ÖDEME: ₺${order.grandTotal.toFixed(2)}`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Müşteri İletişim Özeti */}
-                  <div className="mt-1.5 text-[8px] text-slate-700">
-                    <span className="font-bold text-black">Müşteri: </span>
-                    <span className="font-bold">{order.customerName} {order.customerSurname}</span>
-                    <span className="ml-1 text-slate-600">({order.customerPhone})</span>
+                  <div className="text-[13px] leading-snug text-black">
+                    <p className="font-bold capitalize">{order.customerName} {order.customerSurname}</p>
+                    <p className="text-black font-normal">{shippingAddr?.fullAddress}</p>
+                    <p className="font-medium text-black">
+                      {shippingAddr?.postalCode ? `${shippingAddr.postalCode} ` : ''}
+                      {shippingAddr?.district} {shippingAddr?.city}
+                    </p>
+                    {order.customerPhone && (
+                      <p className="font-semibold text-black mt-0.5">Tel: {order.customerPhone}</p>
+                    )}
                   </div>
                 </div>
 
-                {/* Sağ Kolon: MNG / DHL Kargo Resmi Gönderi Etiketi (%50) */}
-                <div className="col-span-6 bg-slate-50 border-2 border-black p-2 rounded-lg flex flex-col justify-between">
-                  {/* Kargo Logo & Barkod */}
-                  <div className="border-b border-black pb-1 mb-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-black uppercase tracking-wider bg-black text-white px-1.5 py-0.5 rounded">
-                        DHL / MNG KARGO
-                      </span>
-                      <span className="text-[8px] font-mono font-bold text-slate-700">
-                        {order.orderNumber}
-                      </span>
-                    </div>
+                {/* Sağ Kolon: Sipariş Bilgileri & MNG Barkodu */}
+                <div className="text-right space-y-1 text-[12px] text-black">
+                  <div className="flex justify-end gap-2">
+                    <span className="text-black">Sipariş Numarası:</span>
+                    <span className="font-bold text-black font-mono">#{order.orderNumber}</span>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <span className="text-black">Sipariş Tarihi:</span>
+                    <span className="font-bold text-black">{formattedDate}</span>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <span className="text-black">Ödeme Yöntemi:</span>
+                    <span className="font-bold text-black">{paymentLabel}</span>
+                  </div>
 
-                    {/* Scannable SVG Barcode */}
-                    <div className="flex justify-center my-1">
+                  {/* MNG Barkodu */}
+                  <div className="pt-2 flex flex-col items-end">
+                    <div className="border border-black p-1.5 inline-block bg-white">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-[8px] font-black uppercase tracking-wider bg-black text-white px-1 py-0.2 rounded">
+                          MNG / DHL
+                        </span>
+                        <span className="text-[9px] font-mono font-black text-black">
+                          {barcodeValue}
+                        </span>
+                      </div>
                       <Barcode
                         value={barcodeValue}
-                        height={28}
-                        barWidth={1.15}
-                        textClassName="text-[8px] font-mono font-bold text-black text-center mt-0.5"
+                        height={32}
+                        barWidth={1.3}
+                        showText={false}
                       />
-                    </div>
-                  </div>
-
-                  {/* Alıcı Bilgileri */}
-                  <div className="space-y-0.5 text-[8px]">
-                    <div className="flex items-baseline justify-between">
-                      <span className="font-black text-[9px] text-black uppercase">
-                        ALICI: {order.customerName} {order.customerSurname}
-                      </span>
-                      <span className="font-black text-[9px] text-black">
-                        {order.customerPhone}
-                      </span>
-                    </div>
-                    <div className="text-slate-800 leading-tight font-medium text-[8px] line-clamp-2">
-                      {shippingAddr?.fullAddress}
-                    </div>
-                    <div className="text-[9px] font-black text-black uppercase bg-slate-200 px-1 py-0.5 rounded inline-block mt-0.5">
-                      {shippingAddr?.district} / {shippingAddr?.city}
-                    </div>
-                  </div>
-
-                  {/* Kargo Tahsilat / Gönderici Kutusu */}
-                  <div className="mt-1.5 pt-1 border-t border-black text-[8px] flex items-center justify-between">
-                    <div>
-                      <span className="text-[7px] text-slate-500 uppercase block leading-none">Gönderici:</span>
-                      <span className="font-bold text-[8px] text-slate-800 leading-none">Yazar Perde - Bursa</span>
-                    </div>
-                    <div className="text-right">
-                      {order.paymentMethod === 'CASH_ON_DELIVERY' ? (
-                        <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
-                          KAPIDA TAHSİLAT: ₺{order.grandTotal.toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="bg-emerald-700 text-white px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">
-                          PEŞİN ÖDENDİ (TAHSİLATSIZ)
-                        </span>
-                      )}
+                      <div className="text-[9px] font-mono font-bold text-center mt-0.5 text-black">
+                        *{barcodeValue}*
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 2. ORTA KISIM: GENEL SİPARİŞ NOTU (Varsa) */}
+              {/* 2. MÜŞTERİ GENEL NOTU (Varsa) */}
               {order.customerNote && (
-                <div className="bg-amber-50 border border-amber-300 p-1.5 rounded text-[8px] font-bold text-amber-950 flex items-center gap-1">
-                  <span className="bg-amber-200 text-amber-900 px-1 py-0.5 rounded text-[7px] font-black uppercase">
-                    MÜŞTERİ NOTU:
-                  </span>
+                <div className="my-2 p-2 border border-black text-[11px] font-bold text-black bg-white">
+                  <span className="font-black underline mr-1">MÜŞTERİ NOTU:</span>
                   <span>{order.customerNote}</span>
                 </div>
               )}
 
-              {/* 3. ATÖLYE ÖZEL ÖLÇÜLÜ PERDE İMALAT TABLOSU */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-[9px] font-black uppercase tracking-wider text-black">
-                    İMAL EDİLECEK ÖZEL ÖLÇÜLÜ PERDELER ({order.items.length} KALEM)
-                  </h3>
-                  <span className="text-[8px] text-slate-500 font-semibold">
-                    (Sayfa {orderIndex + 1} / {orders.length})
-                  </span>
-                </div>
-
-                <table className="w-full border-collapse border-2 border-black text-[8px]">
+              {/* 3. ÜRÜN TABLOSU (Siyah Başlık Çubuğu) */}
+              <div className="mt-3">
+                <table className="w-full border-collapse text-[12px]">
                   <thead>
-                    <tr className="bg-slate-200 text-black font-black border-b-2 border-black">
-                      <th className="border border-black p-1 text-center w-6">#</th>
-                      <th className="border border-black p-1 text-left">Perde Modeli & Kodu</th>
-                      <th className="border border-black p-1 text-center w-24 bg-slate-300 text-black">NET EN x BOY</th>
-                      <th className="border border-black p-1 text-center w-10">Adet</th>
-                      <th className="border border-black p-1 text-left">Mekanizma, Pile & Dikim Detayları</th>
-                      <th className="border border-black p-1 text-center w-10">Onay</th>
+                    <tr className="bg-black text-white font-bold">
+                      <th className="py-1.5 px-2 text-left w-[60%]">Ürün</th>
+                      <th className="py-1.5 px-2 text-center w-[15%]">Miktar</th>
+                      <th className="py-1.5 px-2 text-right w-[25%]">Fiyat</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -339,96 +287,92 @@ function TopluYazdirContent() {
                       } catch {}
 
                       return (
-                        <tr key={item.id} className="border-b border-black">
-                          <td className="border border-black p-1 text-center font-black">{idx + 1}</td>
-
-                          <td className="border border-black p-1">
-                            <span className="font-mono text-[7px] text-slate-600 block">{item.productSku}</span>
-                            <strong className="text-black block text-[8px] leading-tight">{item.productName}</strong>
-                            <span className="text-[7px] font-bold text-slate-700 uppercase">
-                              Tür: {item.curtainType}
-                            </span>
-                          </td>
-
-                          {/* NET EN x BOY */}
-                          <td className="border border-black p-1 text-center bg-slate-50">
-                            <div className="text-[10px] font-black text-black">
-                              {item.width} x {item.height} cm
+                        <tr key={item.id} className="border-b border-gray-300">
+                          {/* Ürün İsmi ve Özel İmalat Detayları */}
+                          <td className="py-2 px-2 align-top">
+                            <div className="font-bold text-black text-[13px] leading-tight">
+                              {item.productName}
                             </div>
-                            <span className="text-[7px] text-slate-500 block leading-none mt-0.5">
-                              {item.calculatedArea} {item.curtainType === 'TULLE' || item.curtainType === 'FON' ? 'Metre' : 'm²'}
-                            </span>
+                            {item.productSku && (
+                              <span className="font-mono text-[10px] text-black font-semibold block">
+                                Kod: {item.productSku}
+                              </span>
+                            )}
+
+                            {/* İmalat Ölçüleri ve Dikim Özellikleri */}
+                            <div className="mt-1.5 space-y-0.5 text-[11px] text-black">
+                              <div className="font-bold text-black">
+                                Ölçü: <span className="font-black text-[12px]">{item.width} x {item.height} cm</span>
+                                <span className="font-normal ml-1">
+                                  ({item.calculatedArea} {item.curtainType === 'TULLE' || item.curtainType === 'FON' ? 'Metre' : 'm²'})
+                                </span>
+                              </div>
+
+                              {snap.pleatLabel && (
+                                <div>
+                                  <span className="font-bold">Pile: </span>
+                                  <span>{snap.pleatLabel}</span>
+                                </div>
+                              )}
+                              {snap.caseType && (
+                                <div>
+                                  <span className="font-bold">Kasa: </span>
+                                  <span>{snap.caseType === 'CLOSED' ? 'Kapalı Kasa' : 'Açık Kasa'}</span>
+                                </div>
+                              )}
+                              {snap.chainType && (
+                                <div>
+                                  <span className="font-bold">Zincir: </span>
+                                  <span>{snap.chainType === 'METAL' ? 'Metal' : 'Plastik'} {snap.mechanismDirection ? `(${snap.mechanismDirection === 'RIGHT' ? 'Sağ' : 'Sol'})` : ''}</span>
+                                </div>
+                              )}
+                              {snap.mountingLabel && (
+                                <div>
+                                  <span className="font-bold">Montaj: </span>
+                                  <span>{snap.mountingLabel}</span>
+                                </div>
+                              )}
+                              {snap.plisseColorLabel && (
+                                <div>
+                                  <span className="font-bold">Profil: </span>
+                                  <span>{snap.plisseColorLabel}</span>
+                                </div>
+                              )}
+                              {snap.rollerType && (
+                                <div>
+                                  <span className="font-bold">Stor: </span>
+                                  <span>{snap.rollerType === 'BLACKOUT_ROLLER' ? 'Blackout' : 'Normal'}</span>
+                                </div>
+                              )}
+                              {snap.skirtCut && (
+                                <div>
+                                  <span className="font-bold">Etek: </span>
+                                  <span>Dilimli {snap.withBeads ? '+ Boncuk' : ''}</span>
+                                </div>
+                              )}
+                              {snap.fonWingType && (
+                                <div>
+                                  <span className="font-bold">Kanat: </span>
+                                  <span>{snap.fonWingType === 'DOUBLE_WING' ? 'Çift Kanat' : 'Tek Kanat'}</span>
+                                </div>
+                              )}
+                              {item.itemNote && (
+                                <div className="font-bold mt-1 text-black">
+                                  <span>Kalem Notu: </span>
+                                  <span className="font-black">{item.itemNote}</span>
+                                </div>
+                              )}
+                            </div>
                           </td>
 
-                          <td className="border border-black p-1 text-center font-black text-[10px]">
+                          {/* Miktar */}
+                          <td className="py-2 px-2 text-center align-top font-bold text-black text-[13px]">
                             {item.quantity}
                           </td>
 
-                          {/* ATÖLYE DETAY TALİMATLARI */}
-                          <td className="border border-black p-1">
-                            <div className="flex flex-wrap gap-1 text-[7px] font-semibold text-black">
-                              {snap.pleatLabel && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Pile: <strong>{snap.pleatLabel}</strong>
-                                </span>
-                              )}
-                              {snap.caseType && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Kasa: <strong>{snap.caseType === 'CLOSED' ? 'KAPALI KASA' : 'AÇIK KASA'}</strong>
-                                </span>
-                              )}
-                              {snap.chainType && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Zincir: <strong>{snap.chainType === 'METAL' ? 'METAL' : 'PLASTİK'}</strong>
-                                </span>
-                              )}
-                              {snap.mechanismDirection && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Yön: <strong>{snap.mechanismDirection === 'RIGHT' ? 'SAĞ' : 'SOL'}</strong>
-                                </span>
-                              )}
-                              {snap.mountingLabel && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Montaj: <strong>{snap.mountingLabel}</strong>
-                                </span>
-                              )}
-                              {snap.plisseMeasurementLabel && (
-                                <span className="bg-blue-50 text-blue-900 border border-blue-200 px-1 py-0.5 rounded">
-                                  Ölçü: <strong>{snap.plisseMeasurementLabel}</strong>
-                                </span>
-                              )}
-                              {snap.plisseColorLabel && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Profil: <strong>{snap.plisseColorLabel}</strong>
-                                </span>
-                              )}
-                              {snap.skirtCut && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Etek: <strong>DİLİMLİ {snap.withBeads ? '+ BONCUK' : ''}</strong>
-                                </span>
-                              )}
-                              {snap.rollerType && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Stor: <strong>{snap.rollerType === 'BLACKOUT_ROLLER' ? 'BLACKOUT' : 'NORMAL'}</strong>
-                                </span>
-                              )}
-                              {snap.fonWingType && (
-                                <span className="bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
-                                  Kanat: <strong>{snap.fonWingType === 'DOUBLE_WING' ? 'ÇİFT' : 'TEK'}</strong>
-                                </span>
-                              )}
-                            </div>
-
-                            {item.itemNote && (
-                              <div className="bg-amber-100 p-1 rounded border border-amber-300 text-[7px] font-black text-amber-950 mt-1">
-                                ⚠️ ATÖLYE NOTU: {item.itemNote}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Kontrol Onay Kutucuğu */}
-                          <td className="border border-black p-1 text-center">
-                            <div className="w-4 h-4 border border-black mx-auto rounded" />
+                          {/* Fiyat */}
+                          <td className="py-2 px-2 text-right align-top font-bold text-black text-[13px] font-mono">
+                            {item.totalPrice.toFixed(2)}₺
                           </td>
                         </tr>
                       );
@@ -437,30 +381,74 @@ function TopluYazdirContent() {
                 </table>
               </div>
 
-              {/* 4. ALT KISIM: ATÖLYE İMZA & KALİTE KONTROL ALANI */}
-              <div className="grid grid-cols-4 gap-2 border-2 border-black p-2 rounded-lg text-center text-[7px]">
-                <div className="space-y-1.5">
-                  <span className="font-bold uppercase block text-black">1. Kesim</span>
-                  <div className="h-4 border-b border-dashed border-black" />
-                  <span className="text-slate-500">İmza / Tarih</span>
-                </div>
+              {/* 4. ALT TOPLAM VE FİYATLANDIRMA DÖKÜMÜ */}
+              <div className="mt-4 flex justify-end">
+                <div className="w-64 space-y-1 text-[12px] text-black">
+                  <div className="flex justify-between py-0.5">
+                    <span className="font-medium">Ara toplam</span>
+                    <span className="font-bold font-mono">{order.subtotal.toFixed(2)}₺</span>
+                  </div>
 
-                <div className="space-y-1.5">
-                  <span className="font-bold uppercase block text-black">2. Dikim</span>
-                  <div className="h-4 border-b border-dashed border-black" />
-                  <span className="text-slate-500">İmza / Tarih</span>
-                </div>
+                  {order.shippingFee > 0 && (
+                    <div className="flex justify-between py-0.5">
+                      <span className="font-medium">Kargo Ücreti</span>
+                      <span className="font-bold font-mono">{order.shippingFee.toFixed(2)}₺</span>
+                    </div>
+                  )}
 
-                <div className="space-y-1.5">
-                  <span className="font-bold uppercase block text-black">3. Mekanizma</span>
-                  <div className="h-4 border-b border-dashed border-black" />
-                  <span className="text-slate-500">İmza / Tarih</span>
-                </div>
+                  {order.discountTotal > 0 && (
+                    <div className="flex justify-between py-0.5">
+                      <span className="font-medium">İndirim</span>
+                      <span className="font-bold font-mono">-{order.discountTotal.toFixed(2)}₺</span>
+                    </div>
+                  )}
 
-                <div className="space-y-1.5">
-                  <span className="font-bold uppercase block text-black">4. Kalite & Paket</span>
-                  <div className="h-4 border-b border-dashed border-black" />
-                  <span className="text-slate-500">İmza / Tarih</span>
+                  {order.paymentFee > 0 && (
+                    <div className="flex justify-between py-0.5">
+                      <span className="font-medium">Kapıda Ödeme Bedeli</span>
+                      <span className="font-bold font-mono">{order.paymentFee.toFixed(2)}₺</span>
+                    </div>
+                  )}
+
+                  {/* Kalın Çizgili Toplam */}
+                  <div className="border-t-2 border-b-2 border-black py-1.5 mt-1 flex justify-between items-baseline">
+                    <span className="font-black text-sm uppercase">Toplam</span>
+                    <div className="text-right">
+                      <span className="font-black text-sm font-mono">{order.grandTotal.toFixed(2)}₺</span>
+                      <span className="text-[11px] font-normal block">
+                        ({vatAmount}₺ KDV dahil)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. ATÖLYE İMALAT VE KONTROL ONAY BÖLÜMÜ */}
+              <div className="mt-6 pt-3 border-t border-black text-[10px] text-black">
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="border border-black p-1">
+                    <span className="font-bold block">1. KESİM</span>
+                    <div className="h-5" />
+                    <span className="text-[8px]">İmza: ________</span>
+                  </div>
+                  <div className="border border-black p-1">
+                    <span className="font-bold block">2. DİKİM</span>
+                    <div className="h-5" />
+                    <span className="text-[8px]">İmza: ________</span>
+                  </div>
+                  <div className="border border-black p-1">
+                    <span className="font-bold block">3. MEKANİZMA</span>
+                    <div className="h-5" />
+                    <span className="text-[8px]">İmza: ________</span>
+                  </div>
+                  <div className="border border-black p-1">
+                    <span className="font-bold block">4. KALİTE & PAKET</span>
+                    <div className="h-5" />
+                    <span className="text-[8px]">İmza: ________</span>
+                  </div>
+                </div>
+                <div className="mt-2 text-center text-[9px] text-black font-semibold">
+                  Yazar Perde Sistemleri • Tel: 0541 494 51 73 • yazarperde.com
                 </div>
               </div>
             </div>
@@ -472,7 +460,7 @@ function TopluYazdirContent() {
       <style>{`
         @page {
           size: A5 portrait;
-          margin: 4mm;
+          margin: 6mm;
         }
         @media print {
           .no-print {
@@ -483,8 +471,9 @@ function TopluYazdirContent() {
             height: 210mm;
             margin: 0 !important;
             padding: 0 !important;
-            background-color: white !important;
-            color: black !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            font-size: 11px !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
@@ -492,12 +481,12 @@ function TopluYazdirContent() {
             page-break-after: always !important;
             break-after: page !important;
             margin: 0 !important;
-            padding: 3mm !important;
-            border: 1.5pt solid black !important;
+            padding: 0 !important;
+            border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
-            width: 140mm !important;
-            max-width: 140mm !important;
+            width: 136mm !important;
+            max-width: 136mm !important;
             page-break-inside: avoid !important;
           }
           .order-sheet:last-child {

@@ -135,7 +135,7 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   mng_password: "",
   mng_username: "",
   mng_branch_name: "Bursa Yıldırım Şubesi",
-  mng_barcode_prefix: "YP",
+  mng_barcode_prefix: "",
 
   // SMTP E-Posta Ayarları (Hostinger SMTP)
   smtp_host: "smtp.hostinger.com",

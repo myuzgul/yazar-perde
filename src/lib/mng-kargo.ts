@@ -40,17 +40,27 @@ export function getMngTrackingUrl(trackingNumber: string): string {
 }
 
 /**
- * Normalizes a Turkish mobile phone number to standard format
+ * Normalizes a Turkish mobile phone number
  */
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/[^0-9]/g, '');
+function normalizePhone(phone: string): { phone10: string; phone11: string } {
+  const digits = String(phone || '').replace(/[^0-9]/g, '');
+  let phone10 = digits;
   if (digits.startsWith('90') && digits.length === 12) {
-    return '0' + digits.slice(2);
+    phone10 = digits.slice(2);
+  } else if (digits.startsWith('0') && digits.length === 11) {
+    phone10 = digits.slice(1);
   }
-  if (digits.length === 10) {
-    return '0' + digits;
-  }
-  return digits;
+  const phone11 = phone10.length === 10 ? `0${phone10}` : phone10;
+  return { phone10, phone11 };
+}
+
+function escapeXml(unsafe: string): string {
+  return String(unsafe || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 /**
@@ -60,18 +70,20 @@ export async function sendOrderToMNGKargo(
   params: MngShipmentParams,
   settings: SystemSettingsMap
 ): Promise<MngShipmentResult> {
-  const isActive = Number(settings.mng_kargo_active) === 1;
   const customerNumber = String(settings.mng_customer_number ?? '').trim();
   const password = String(settings.mng_password ?? '').trim();
   const username = String(settings.mng_username ?? '').trim();
-  const branchName = String(settings.mng_branch_name ?? '').trim() || 'Bursa Yıldırım Şubesi';
-  const prefix = String(settings.mng_barcode_prefix ?? '').trim() || 'YP';
 
-  const cleanOrderNum = String(params.orderNumber ?? '').replace(/[^0-9A-Za-z]/g, '');
-  const barcode = `${prefix}${cleanOrderNum}`;
+  // Barkod / Sipariş No: Kesinlikle YP veya YZ gibi zorunlu ön ekler eklenmez!
+  const cleanOrderNum = String(params.orderNumber ?? '').replace(/[^0-9A-Za-z]/g, '').trim();
+  const customPrefix = String(settings.mng_barcode_prefix ?? '').trim();
+  const barcode = customPrefix && !cleanOrderNum.toUpperCase().startsWith(customPrefix.toUpperCase())
+    ? `${customPrefix}${cleanOrderNum}`
+    : cleanOrderNum;
+
   const isCod = params.paymentMethod === 'CASH_ON_DELIVERY';
   const codAmount = isCod ? params.grandTotal : 0;
-  const recipientPhone = normalizePhone(String(params.customer?.phone ?? ''));
+  const { phone10, phone11 } = normalizePhone(String(params.customer?.phone ?? ''));
   const fullName = `${params.customer?.name ?? ''} ${params.customer?.surname ?? ''}`.trim();
   const address = params.customer?.address || '';
   const city = params.customer?.city || '';
@@ -85,26 +97,101 @@ export async function sendOrderToMNGKargo(
     };
   }
 
-  // 2. MNG Kargo Resmi SOAP Web Servisi (standardServices.asmx - SiparisGirisi)
+  const authUser = username || customerNumber;
+
+  // 2. DENEME 1: MNG Kargo Resmi SOAP Web Servisi (musterikargosiparis.asmx - SiparisGirisiDetayliV3)
+  try {
+    const soapEnvelopeV3 = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SiparisGirisiDetayliV3 xmlns="http://tempuri.org/">
+      <pKullaniciAdi>${escapeXml(authUser)}</pKullaniciAdi>
+      <pSifre>${escapeXml(password)}</pSifre>
+      <pChIrsaliyeNo>${escapeXml(cleanOrderNum)}</pChIrsaliyeNo>
+      <pChSiparisNo>${escapeXml(cleanOrderNum)}</pChSiparisNo>
+      <pChBarkod>${escapeXml(barcode)}</pChBarkod>
+      <pPrKiymet>${params.grandTotal || 0}</pPrKiymet>
+      <pChIcerik>Ozel Olculu Perde Sistemleri</pChIcerik>
+      <pGonderiHizmetSekli>STANDART</pGonderiHizmetSekli>
+      <pTeslimSekli>1</pTeslimSekli>
+      <pFlKapidaOdeme>${isCod ? 1 : 0}</pFlKapidaOdeme>
+      <pPrKapidaTahsilatTutari>${codAmount}</pPrKapidaTahsilatTutari>
+      <pChKapidaOdemeTahsilatTipi>${isCod ? 1 : 0}</pChKapidaOdemeTahsilatTipi>
+      <pAliciMusteriAdi>${escapeXml(fullName)}</pAliciMusteriAdi>
+      <pChAdres>${escapeXml(address)}</pChAdres>
+      <pChIl>${escapeXml(city)}</pChIl>
+      <pChIlce>${escapeXml(district)}</pChIlce>
+      <pChTelCep>${phone10 || phone11}</pChTelCep>
+      <pChEmail>${escapeXml(params.customer?.email || '')}</pChEmail>
+      <pFlAlSms>1</pFlAlSms>
+      <pFlGnSms>0</pFlGnSms>
+      <pKoliAdedi>${params.itemCount || 1}</pKoliAdedi>
+    </SiparisGirisiDetayliV3>
+  </soap:Body>
+</soap:Envelope>`;
+
+    const controller1 = new AbortController();
+    const timeoutId1 = setTimeout(() => controller1.abort(), 9000);
+
+    const v3Response = await fetch('https://service.mngkargo.com.tr/musterikargosiparis/musterikargosiparis.asmx', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/xml; charset=utf-8',
+        SOAPAction: 'http://tempuri.org/SiparisGirisiDetayliV3',
+      },
+      body: soapEnvelopeV3,
+      signal: controller1.signal,
+    }).catch((err) => {
+      console.warn('MNG V3 SOAP fetch failed:', err.message);
+      return null;
+    });
+
+    clearTimeout(timeoutId1);
+
+    if (v3Response && v3Response.ok) {
+      const xmlText = await v3Response.text();
+      console.log('MNG V3 SOAP Response:', xmlText);
+
+      const resultMatch = xmlText.match(/<SiparisGirisiDetayliV3Result>(.*?)<\/SiparisGirisiDetayliV3Result>/is);
+      const resVal = resultMatch ? resultMatch[1].trim() : '';
+
+      if (resVal && !resVal.toLowerCase().includes('hata') && !resVal.toLowerCase().includes('geçersiz') && !resVal.toLowerCase().includes('yetkisiz')) {
+        const trkCode = resVal.length >= 8 && /^[0-9]+$/.test(resVal) ? resVal : barcode;
+        return {
+          success: true,
+          trackingNumber: trkCode,
+          trackingUrl: getMngTrackingUrl(trkCode),
+          barcode: barcode,
+          shipmentId: `MNG-${cleanOrderNum}`,
+          statusMessage: `Sipariş MNG Kargo sistemine başarıyla iletildi (MNG Yanıtı: ${resVal}).`,
+          rawResponse: xmlText,
+        };
+      }
+    }
+  } catch (err: any) {
+    console.error('MNG V3 error:', err);
+  }
+
+  // 3. DENEME 2: MNG Kargo standardServices (standardServices.asmx - SiparisGirisi)
   try {
     const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <SiparisGirisi xmlns="http://tempuri.org/">
-      <pKullaniciAdi>${username || customerNumber}</pKullaniciAdi>
-      <pSifre>${password}</pSifre>
-      <pMusteriNo>${customerNumber}</pMusteriNo>
-      <pSiparisNo>${cleanOrderNum}</pSiparisNo>
-      <pBarkod>${barcode}</pBarkod>
-      <pAliciAdi>${fullName}</pAliciAdi>
-      <pAliciAdres>${address}</pAliciAdres>
-      <pAliciIl>${city}</pAliciIl>
-      <pAliciIlce>${district}</pAliciIlce>
-      <pAliciTel>${recipientPhone}</pAliciTel>
+      <pKullaniciAdi>${escapeXml(authUser)}</pKullaniciAdi>
+      <pSifre>${escapeXml(password)}</pSifre>
+      <pMusteriNo>${escapeXml(customerNumber)}</pMusteriNo>
+      <pSiparisNo>${escapeXml(cleanOrderNum)}</pSiparisNo>
+      <pBarkod>${escapeXml(barcode)}</pBarkod>
+      <pAliciAdi>${escapeXml(fullName)}</pAliciAdi>
+      <pAliciAdres>${escapeXml(address)}</pAliciAdres>
+      <pAliciIl>${escapeXml(city)}</pAliciIl>
+      <pAliciIlce>${escapeXml(district)}</pAliciIlce>
+      <pAliciTel>${phone11}</pAliciTel>
       <pOdemeTipi>${isCod ? 3 : 1}</pOdemeTipi>
       <pKapidaTahsilatTutari>${codAmount}</pKapidaTahsilatTutari>
       <pParcaSayisi>${params.itemCount || 1}</pParcaSayisi>
-      <pIcerik>Özel Ölçülü Perde Sistemleri</pIcerik>
+      <pIcerik>Ozel Olculu Perde Sistemleri</pIcerik>
     </SiparisGirisi>
   </soap:Body>
 </soap:Envelope>`;
@@ -121,7 +208,7 @@ export async function sendOrderToMNGKargo(
       body: soapEnvelope,
       signal: controller.signal,
     }).catch((err) => {
-      console.warn('MNG SOAP fetch failed:', err.message);
+      console.warn('MNG Standard SOAP fetch failed:', err.message);
       return null;
     });
 
@@ -131,11 +218,9 @@ export async function sendOrderToMNGKargo(
       const xmlText = await soapResponse.text();
       console.log('MNG SOAP Response:', xmlText);
 
-      // XML içindeki sonucu incele
-      const resultMatch = xmlText.match(/<SiparisGirisiResult>(.*?)<\/SiparisGirisiResult>/i);
-      const resVal = resultMatch ? resultMatch[1] : '';
+      const resultMatch = xmlText.match(/<SiparisGirisiResult>(.*?)<\/SiparisGirisiResult>/is);
+      const resVal = resultMatch ? resultMatch[1].trim() : '';
 
-      // Eğer 1 veya takip no veya başarılı yanıt döndüyse:
       if (resVal && !resVal.toLowerCase().includes('hata') && !resVal.toLowerCase().includes('geçersiz') && !resVal.toLowerCase().includes('yetkisiz')) {
         const trackingCode = resVal.length >= 8 && /^[0-9]+$/.test(resVal) ? resVal : barcode;
         return {
@@ -144,14 +229,13 @@ export async function sendOrderToMNGKargo(
           trackingUrl: getMngTrackingUrl(trackingCode),
           barcode: barcode,
           shipmentId: `MNG-${cleanOrderNum}`,
-          statusMessage: `Sipariş MNG Kargo Web Servisine başarıyla aktarıldı (MNG Yanıtı: ${resVal}).`,
+          statusMessage: `Sipariş MNG Kargo Web Servisine aktarıldı (MNG Yanıtı: ${resVal}).`,
           rawResponse: xmlText,
         };
       } else if (resVal) {
-        // MNG doğrudan bir hata açıklaması döndü:
         return {
           success: false,
-          errorMessage: `MNG Kargo Servisi Yanıtı: ${resVal}. (Lütfen MNG Şubeniz veya MNG Bilgi İşlem ile görüşüp Web Servis / API izninizin ve IP yetkinizin açık olduğunu teyit ediniz).`,
+          errorMessage: `MNG Kargo Servisi Yanıtı: ${resVal}.`,
           rawResponse: xmlText,
         };
       }
@@ -160,7 +244,7 @@ export async function sendOrderToMNGKargo(
     console.error('MNG SOAP error:', soapError);
   }
 
-  // 3. SOAP bağlantısı yanıt vermediyse MNG REST API (Token + Shipment) dene
+  // 4. DENEME 3: MNG REST API (Token + Shipment)
   try {
     const controller2 = new AbortController();
     const timeoutId2 = setTimeout(() => controller2.abort(), 8000);
@@ -170,7 +254,7 @@ export async function sendOrderToMNGKargo(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customerNumber,
-        username: username || customerNumber,
+        username: authUser,
         password,
         identityType: 1,
       }),
@@ -190,9 +274,9 @@ export async function sendOrderToMNGKargo(
           },
           body: JSON.stringify({
             order: {
-              referenceId: barcode,
+              referenceId: cleanOrderNum,
               barcode: barcode,
-              billOfLandingId: barcode,
+              billOfLandingId: cleanOrderNum,
               isCod: isCod,
               codAmount: codAmount,
               codCollectionType: 0,
@@ -203,7 +287,7 @@ export async function sendOrderToMNGKargo(
                 address: address,
                 city: city,
                 district: district,
-                phone: recipientPhone,
+                phone: phone10 || phone11,
                 email: params.customer?.email || '',
               },
             },
@@ -233,13 +317,6 @@ export async function sendOrderToMNGKargo(
             rawResponse: errData,
           };
         }
-      } else if (tokenData.message || tokenData.error) {
-        clearTimeout(timeoutId2);
-        return {
-          success: false,
-          errorMessage: `MNG API Giriş Başarısız: ${tokenData.message || tokenData.error}. Lütfen MNG Müşteri No ve API Şifrenizi kontrol edin.`,
-          rawResponse: tokenData,
-        };
       }
     }
     clearTimeout(timeoutId2);
@@ -247,9 +324,9 @@ export async function sendOrderToMNGKargo(
     console.error('MNG REST Error:', restError);
   }
 
-  // 4. MNG sunucusuna erişilemediyse veya henüz API izni verilmediyse:
+  // 5. Sunucu yanıt vermediyse fallback mesajı
   return {
     success: false,
-    errorMessage: `MNG Kargo sunucusundan yanıt alınamadı. MNG şubenizden Web Servis kullanıcı adı/şifrenizin aktif olduğunu doğrulayınız veya elinizdeki kargo takip kodunu (örn: 827046904757) yukarıdaki alana girerek tek tıkla kaydedebilirsiniz.`,
+    errorMessage: `MNG Kargo web servisine ulaşılamadı veya yetkilendirme yanıt vermedi. Lütfen MNG şubenizden Web Servis şifrenizi teyit ediniz veya kargo takip numarasını manuel girerek siparişi kargoya veriniz.`,
   };
 }
