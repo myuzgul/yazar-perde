@@ -131,9 +131,9 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
 
   // DHL / MNG Kargo API
   mng_kargo_active: 1,
-  mng_customer_number: "",
-  mng_password: "",
-  mng_username: "",
+  mng_customer_number: "248018877",
+  mng_password: "Yazar.456",
+  mng_username: "248018877",
   mng_branch_name: "Bursa Yıldırım Şubesi",
   mng_barcode_prefix: "",
 

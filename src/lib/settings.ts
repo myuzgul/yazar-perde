@@ -15,9 +15,9 @@ export async function getSystemSettings(): Promise<SystemSettingsMap> {
 
         if (typeof defaultVal === 'number') {
           const numVal = Number(val);
-          (result as any)[item.key] = isNaN(numVal) ? defaultVal : numVal;
+          (result as any)[item.key] = isNaN(numVal) || val === '' ? defaultVal : numVal;
         } else {
-          (result as any)[item.key] = val != null ? String(val) : '';
+          (result as any)[item.key] = (val != null && String(val).trim() !== '') ? String(val) : (defaultVal || '');
         }
       }
     }

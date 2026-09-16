@@ -148,8 +148,8 @@ export default function AdminOrderDetailPage() {
           setOrder(data.data);
           setStatus(data.data.status);
           setPaymentStatus(data.data.paymentStatus);
-          setAdminNote(data.data.adminNote || '');
-          setCustomTracking(data.data.trackingNumber || '');
+          const trk = data.data.trackingNumber || '';
+          setCustomTracking(trk.startsWith('YP') || trk === data.data.orderNumber ? '' : trk);
         }
         setLoading(false);
       })
