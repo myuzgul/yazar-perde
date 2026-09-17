@@ -316,27 +316,28 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
       <style>{`
         @page {
           size: A5 portrait;
-          margin: 6mm;
+          margin: 4mm;
         }
         @media print {
           .no-print {
             display: none !important;
           }
           html, body {
-            width: 148mm;
-            height: 210mm;
+            width: 100% !important;
+            height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
+            background: #ffffff !important;
             background-color: #ffffff !important;
             color: #000000 !important;
-            font-size: 11px !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            font-size: 12px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .a5-container {
-            width: 136mm !important;
-            max-width: 136mm !important;
-            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
             padding: 0 !important;
             border: none !important;
             box-shadow: none !important;
