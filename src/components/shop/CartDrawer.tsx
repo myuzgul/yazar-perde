@@ -4,6 +4,7 @@ import React from 'react';
 import { useCart } from '@/lib/cart-context';
 import { X, Trash2, ShoppingBag, ArrowRight, Truck, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 
 interface CartDrawerProps {
   freeShippingThreshold?: number;
@@ -110,11 +111,14 @@ export default function CartDrawer({ freeShippingThreshold: initialThreshold = 1
                           <div className="font-semibold text-slate-900 font-mono">
                             {item.width} x {item.height} cm ({item.calculationResult.calculatedArea} {item.calculationResult.areaUnit === 'SQM' ? 'm²' : 'm'})
                           </div>
-                          {snap.pleatLabel && <div>Pile: {snap.pleatLabel}</div>}
-                          {snap.caseType && <div>Kasa: {snap.caseType === 'CLOSED' ? 'Kapalı Kasa' : 'Açık Kasa'}</div>}
-                          {snap.chainType && <div>Zincir: {snap.chainType === 'METAL' ? 'Metal' : 'Plastik'}</div>}
-                          {snap.mechanismDirection && <div>Yön: {snap.mechanismDirection === 'RIGHT' ? 'Sağ' : 'Sol'}</div>}
-                          {snap.skirtCut && <div>Etek: Dilimli {snap.withBeads ? '+ Boncuk' : ''}</div>}
+                          {formatCurtainOptions({
+                            curtainType: item.curtainType,
+                            selectedOptionsSnapshot: item.calculationResult.selectedOptionsSnapshot,
+                          }).map((opt, oIdx) => (
+                            <div key={oIdx}>
+                              <span className="font-medium text-slate-500">{opt.label}:</span> <strong>{opt.value}</strong>
+                            </div>
+                          ))}
                           {item.note && <div className="text-amber-800 text-[10px]">Not: {item.note}</div>}
                         </div>
                       </div>

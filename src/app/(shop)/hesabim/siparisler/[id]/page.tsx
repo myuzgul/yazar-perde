@@ -18,6 +18,7 @@ import {
   FileText,
   ExternalLink
 } from 'lucide-react';
+import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 
 interface OrderItem {
   id: string;
@@ -366,17 +367,12 @@ export default function SiparisDetayPage(props: { params: Promise<{ id: string }
                   </div>
 
                   {/* Dinamik Seçenekler */}
-                  {options && typeof options === 'object' && Object.entries(options).map(([key, val]: [string, any]) => {
-                    if (!val) return null;
-                    const label = val.name || val.label || (typeof val === 'string' ? val : null);
-                    if (!label) return null;
-                    return (
-                      <div key={key}>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase block">{key}</span>
-                        <span className="font-semibold text-slate-800">{label}</span>
-                      </div>
-                    );
-                  })}
+                  {formatCurtainOptions(item).map((opt, oIdx) => (
+                    <div key={oIdx}>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">{opt.label}</span>
+                      <span className="font-semibold text-slate-800">{opt.value}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Özel Ürün Notu */}

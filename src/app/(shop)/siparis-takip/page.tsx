@@ -16,6 +16,7 @@ import {
   Calendar
 } from 'lucide-react';
 import Link from 'next/link';
+import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 
 function OrderTrackingContent() {
   const searchParams = useSearchParams();
@@ -307,11 +308,7 @@ function OrderTrackingContent() {
 
             <div className="divide-y divide-slate-100 space-y-3">
               {order.items?.map((item: any) => {
-                let snap: Record<string, any> = {};
-                try {
-                  if (item.selectedOptionsSnapshot) snap = JSON.parse(item.selectedOptionsSnapshot);
-                } catch {}
-
+                const formattedOpts = formatCurtainOptions(item);
                 return (
                   <div key={item.id} className="pt-3 first:pt-0 flex justify-between items-start gap-4">
                     <div>
@@ -320,9 +317,16 @@ function OrderTrackingContent() {
                       <div className="text-[11px] text-slate-600 mt-1">
                         <strong>Ölçü:</strong> {item.width} x {item.height} cm ({item.calculatedArea} m²) • {item.quantity} Adet
                       </div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
-                        {[snap.pleatLabel, snap.caseType, snap.mountingLabel].filter(Boolean).join(' • ')}
-                      </div>
+                      {formattedOpts.length > 0 && (
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          {formattedOpts.map((o) => `${o.label}: ${o.value}`).join(' • ')}
+                        </div>
+                      )}
+                      {item.itemNote && (
+                        <div className="text-[10px] text-amber-800 font-medium mt-0.5">
+                          Not: {item.itemNote}
+                        </div>
+                      )}
                     </div>
                     <span className="text-xs font-black text-slate-900">₺{item.totalPrice.toFixed(2)}</span>
                   </div>

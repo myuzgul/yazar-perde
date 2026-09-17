@@ -13,6 +13,7 @@ import {
   Tag, 
   ShieldCheck 
 } from 'lucide-react';
+import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, subtotal, clearCart } = useCart();
@@ -176,16 +177,19 @@ export default function CartPage() {
                         <div className="font-bold text-slate-900 font-mono">
                           Ölçü: {item.width} x {item.height} cm ({item.calculationResult.calculatedArea} {item.calculationResult.areaUnit === 'SQM' ? 'm²' : 'm'})
                         </div>
-                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
-                          {snap.pleatLabel && <span>• Pile: <strong>{snap.pleatLabel}</strong></span>}
-                          {snap.caseType && <span>• Kasa: <strong>{snap.caseType === 'CLOSED' ? 'Kapalı Kasa' : 'Açık Kasa'}</strong></span>}
-                          {snap.chainType && <span>• Zincir: <strong>{snap.chainType === 'METAL' ? 'Metal' : 'Plastik'}</strong></span>}
-                          {snap.mechanismDirection && <span>• Yön: <strong>{snap.mechanismDirection === 'RIGHT' ? 'Sağ' : 'Sol'}</strong></span>}
-                          {snap.skirtCut && <span>• Etek: <strong>Dilimli {snap.withBeads ? '+ Boncuk' : ''}</strong></span>}
-                          {snap.plisseMeasurementLabel && <span>• Ölçü Tipi: <strong>{snap.plisseMeasurementLabel}</strong></span>}
-                          {snap.plisseColorLabel && <span>• Profil Rengi: <strong>{snap.plisseColorLabel}</strong></span>}
-                          {snap.mountingLabel && <span>• Montaj: <strong>{snap.mountingLabel}</strong></span>}
-                        </div>
+                        {(() => {
+                          const formattedOpts = formatCurtainOptions({
+                            curtainType: item.curtainType,
+                            selectedOptionsSnapshot: item.calculationResult.selectedOptionsSnapshot,
+                          });
+                          return formattedOpts.length > 0 ? (
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                              {formattedOpts.map((opt, oIdx) => (
+                                <span key={oIdx}>• {opt.label}: <strong>{opt.value}</strong></span>
+                              ))}
+                            </div>
+                          ) : null;
+                        })()}
                         {item.note && (
                           <div className="text-[11px] text-amber-800 italic mt-1">
                             Not: {item.note}

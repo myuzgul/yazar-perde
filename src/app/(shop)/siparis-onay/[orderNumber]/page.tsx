@@ -10,6 +10,7 @@ import {
   ArrowRight, 
   FileText
 } from 'lucide-react';
+import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 
 interface OrderConfirmationPageProps {
   params: Promise<{ orderNumber: string }>;
@@ -139,10 +140,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
 
         <div className="divide-y divide-slate-100 space-y-4">
           {order.items.map((item) => {
-            let snap: Record<string, any> = {};
-            try {
-              if (item.selectedOptionsSnapshot) snap = JSON.parse(item.selectedOptionsSnapshot);
-            } catch {}
+            const formattedOpts = formatCurtainOptions(item);
 
             return (
               <div key={item.id} className="pt-4 first:pt-0 flex flex-col sm:flex-row justify-between gap-4">
@@ -155,13 +153,13 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
                     <div className="font-bold text-slate-900">
                       Ölçü: {item.width} x {item.height} cm ({item.calculatedArea} m²) • {item.quantity} Adet
                     </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
-                      {snap.pleatLabel && <span>Pile: {snap.pleatLabel}</span>}
-                      {snap.caseType && <span>Kasa: {snap.caseType === 'CLOSED' ? 'Kapalı Kasa' : 'Açık Kasa'}</span>}
-                      {snap.chainType && <span>Zincir: {snap.chainType === 'METAL' ? 'Metal Zincir' : 'Plastik'}</span>}
-                      {snap.mechanismDirection && <span>Yön: {snap.mechanismDirection === 'RIGHT' ? 'Sağ' : 'Sol'}</span>}
-                      {snap.mountingLabel && <span>Montaj: {snap.mountingLabel}</span>}
-                    </div>
+                    {formattedOpts.length > 0 && (
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
+                        {formattedOpts.map((opt, oIdx) => (
+                          <span key={oIdx}>{opt.label}: <strong className="text-slate-700">{opt.value}</strong></span>
+                        ))}
+                      </div>
+                    )}
                     {item.itemNote && (
                       <div className="text-[10px] text-amber-700 italic">Not: {item.itemNote}</div>
                     )}

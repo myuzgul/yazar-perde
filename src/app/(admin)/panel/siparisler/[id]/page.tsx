@@ -26,6 +26,7 @@ import {
   Send,
   PackageCheck
 } from 'lucide-react';
+import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 
 export default function AdminOrderDetailPage() {
   const router = useRouter();
@@ -443,16 +444,18 @@ export default function AdminOrderDetailPage() {
                           <span className="text-[#1B84F8]">Hesaplanan Alan: {item.calculatedArea} m²</span>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-600 pt-1">
-                          {snap.pleatLabel && <div><strong>Pile:</strong> {snap.pleatLabel}</div>}
-                          {snap.caseType && <div><strong>Kasa:</strong> {snap.caseType === 'CLOSED' ? 'Kapalı Kasa' : 'Açık Kasa'}</div>}
-                          {snap.chainType && <div><strong>Zincir:</strong> {snap.chainType === 'METAL' ? 'Metal' : 'Plastik'}</div>}
-                          {snap.mechanismDirection && <div><strong>Yön:</strong> {snap.mechanismDirection === 'RIGHT' ? 'Sağ' : 'Sol'}</div>}
-                          {snap.mountingLabel && <div><strong>Montaj:</strong> {snap.mountingLabel}</div>}
-                          {snap.rollerType && <div><strong>Stor:</strong> {snap.rollerType === 'BLACKOUT_ROLLER' ? 'Blackout' : 'Normal'}</div>}
-                          {snap.skirtCut && <div><strong>Etek:</strong> Dilimli {snap.withBeads ? '+ Boncuk' : ''}</div>}
-                          {snap.fonWingType && <div><strong>Kanat:</strong> {snap.fonWingType === 'DOUBLE_WING' ? 'Çift Kanat' : 'Tek Kanat'}</div>}
-                        </div>
+                        {(() => {
+                          const formattedOpts = formatCurtainOptions(item);
+                          return formattedOpts.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-700 pt-1">
+                              {formattedOpts.map((opt, oIdx) => (
+                                <div key={oIdx}>
+                                  <strong className="text-slate-900">{opt.label}:</strong> <span>{opt.value}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null;
+                        })()}
 
                         {item.itemNote && (
                           <div className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-xl border border-amber-200/60 mt-2">

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import PrintButton from '@/components/admin/PrintButton';
 import Barcode from '@/components/admin/Barcode';
 import { triggerOrderNotification } from '@/lib/notification-service';
+import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 
 interface PrintPageProps {
   params: Promise<{ id: string }>;
@@ -208,54 +209,12 @@ export default async function OrderPrintPage({ params }: PrintPageProps) {
                           </span>
                         </div>
 
-                        {snap.pleatLabel && (
-                          <div>
-                            <span className="font-bold">Pile: </span>
-                            <span>{snap.pleatLabel}</span>
+                        {formatCurtainOptions(item).map((opt, oIdx) => (
+                          <div key={oIdx}>
+                            <span className="font-bold">{opt.label}: </span>
+                            <span>{opt.value}</span>
                           </div>
-                        )}
-                        {snap.caseType && (
-                          <div>
-                            <span className="font-bold">Kasa: </span>
-                            <span>{snap.caseType === 'CLOSED' ? 'Kapalı Kasa' : 'Açık Kasa'}</span>
-                          </div>
-                        )}
-                        {snap.chainType && (
-                          <div>
-                            <span className="font-bold">Zincir: </span>
-                            <span>{snap.chainType === 'METAL' ? 'Metal' : 'Plastik'} {snap.mechanismDirection ? `(${snap.mechanismDirection === 'RIGHT' ? 'Sağ' : 'Sol'})` : ''}</span>
-                          </div>
-                        )}
-                        {snap.mountingLabel && (
-                          <div>
-                            <span className="font-bold">Montaj: </span>
-                            <span>{snap.mountingLabel}</span>
-                          </div>
-                        )}
-                        {snap.plisseColorLabel && (
-                          <div>
-                            <span className="font-bold">Profil: </span>
-                            <span>{snap.plisseColorLabel}</span>
-                          </div>
-                        )}
-                        {snap.rollerType && (
-                          <div>
-                            <span className="font-bold">Stor: </span>
-                            <span>{snap.rollerType === 'BLACKOUT_ROLLER' ? 'Blackout' : 'Normal'}</span>
-                          </div>
-                        )}
-                        {snap.skirtCut && (
-                          <div>
-                            <span className="font-bold">Etek: </span>
-                            <span>Dilimli {snap.withBeads ? '+ Boncuk' : ''}</span>
-                          </div>
-                        )}
-                        {snap.fonWingType && (
-                          <div>
-                            <span className="font-bold">Kanat: </span>
-                            <span>{snap.fonWingType === 'DOUBLE_WING' ? 'Çift Kanat' : 'Tek Kanat'}</span>
-                          </div>
-                        )}
+                        ))}
                         {item.itemNote && (
                           <div className="font-bold mt-1 text-black">
                             <span>Kalem Notu: </span>
