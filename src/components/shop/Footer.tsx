@@ -92,8 +92,22 @@ export default function Footer() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-slate-500">
-        <p>© 2026 Yazar Perde Sistemleri. Tüm Hakları Saklıdır.</p>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+          <p>© 2026 Yazar Perde Sistemleri. Tüm Hakları Saklıdır.</p>
+          <span className="hidden sm:inline text-slate-700">•</span>
+          <p>
+            Created by{' '}
+            <a
+              href="https://www.mesarajans.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-400 hover:text-[#1B84F8] transition-colors font-semibold underline-offset-2 hover:underline"
+            >
+              Mesar Ajans
+            </a>
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <Link href="/sayfalar/mesafeli-satis-sozlesmesi" className="hover:text-slate-400">Mesafeli Satış Sözleşmesi</Link>
           <Link href="/sayfalar/gizlilik-politikasi" className="hover:text-slate-400">Gizlilik Politikası</Link>
           <Link href="/panel/login" className="hover:text-[#1B84F8] font-bold">Yönetici Paneli</Link>
