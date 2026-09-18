@@ -30,16 +30,8 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
   ];
 
   let extraCost = 0;
-  // Montaj seçeneği: Vidalı (Standart - 0 TL) / Kancalı (+50 TL) / Yapıştırmalı (+100 TL/m²)
-  if (input.mountingType === 'HOOK') {
-    extraCost += settings.plisse_hook_extra_price;
-    breakdown.push({
-      label: 'Kancalı Montaj Aparatı (Cam Balkon)',
-      amount: settings.plisse_hook_extra_price,
-      unit: 'Sabit',
-      description: 'Delmesiz pratik kancalı montaj aparatı seti',
-    });
-  } else if (input.mountingType === 'ADHESIVE') {
+  // Montaj seçeneği: Vidalı (Standart - 0 TL) / Kancalı (Cam Balkon - 0 TL) / Yapıştırmalı (+100 TL/m²)
+  if (input.mountingType === 'ADHESIVE') {
     const adhesivePricePerSqm = settings.plisse_adhesive_extra_sqm_price ?? 100;
     const adhesiveTotal = Number((finalSqm * adhesivePricePerSqm).toFixed(2));
     extraCost += adhesiveTotal;
@@ -57,8 +49,8 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
   const subtotal = Number((grandTotal - vatAmount).toFixed(2));
 
   let mountingLabel = 'Vidalı (Standart)';
-  if (input.mountingType === 'HOOK') mountingLabel = 'Kancalı Montaj (+50 TL)';
-  else if (input.mountingType === 'ADHESIVE') mountingLabel = 'Yapıştırmalı Montaj (+100 TL/m²)';
+  if (input.mountingType === 'HOOK') mountingLabel = 'Kancalı Montaj (Cam Balkon)';
+  else if (input.mountingType === 'ADHESIVE') mountingLabel = 'Yapıştırmalı Montaj';
 
   const PLISSE_COLOR_MAP: Record<string, string> = {
     WHITE: 'Beyaz Kasa',

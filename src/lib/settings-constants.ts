@@ -89,7 +89,7 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   bead_sqm_price: 40,
   blackout_sqm_price: 250,
 
-  plisse_hook_extra_price: 50,
+  plisse_hook_extra_price: 0,
   plisse_adhesive_extra_sqm_price: 100,
   renso_piece_price: 100,
 

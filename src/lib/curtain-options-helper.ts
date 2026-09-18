@@ -12,12 +12,6 @@ const PLISSE_COLOR_MAP: Record<string, string> = {
   BRONZE: 'Bronz Kasa',
 };
 
-const PLISSE_MOUNT_MAP: Record<string, string> = {
-  SCREW: 'Vidalı (Standart)',
-  HOOK: 'Kancalı Montaj (Cam Balkon)',
-  ADHESIVE: 'Yapıştırmalı Montaj',
-};
-
 const BRACKET_MAP: Record<string, string> = {
   PLASTIC_CORNICE: 'Plastik Korniş Aparatı',
   METAL_CEILING: 'Metal Tavan Montaj Aparatı',
@@ -35,6 +29,16 @@ const FON_MOUNT_MAP: Record<string, string> = {
   RUSTIC_RING: 'Rustik Halkalı',
   RUSTIC_ROD_POCKET: 'Rustik Borulu',
 };
+
+/**
+ * Cleans any price annotations like (+50 TL), (+100 TL/m²), (+60 TL/m) from option titles
+ */
+export function cleanOptionValue(val: string): string {
+  if (!val || typeof val !== 'string') return '';
+  return val
+    .replace(/\s*\(\+\s*\d+(\.\d+)?\s*TL[^)]*\)/gi, '')
+    .trim();
+}
 
 /**
  * Parses and returns all configured curtain options as user-friendly label/value pairs.
@@ -74,7 +78,7 @@ export function formatCurtainOptions(item: {
         ? 'Profil Dahil Ölçü Aldım'
         : null);
     if (mType) {
-      options.push({ label: 'Ölçü Şekli', value: mType });
+      options.push({ label: 'Ölçü Şekli', value: cleanOptionValue(mType) });
     }
 
     // Kasa / Profil Rengi
@@ -82,21 +86,35 @@ export function formatCurtainOptions(item: {
       snap.plisseColorLabel ||
       (snap.plisseProfileColor ? PLISSE_COLOR_MAP[snap.plisseProfileColor] || snap.plisseProfileColor : null);
     if (cColor) {
-      options.push({ label: 'Kasa Rengi', value: cColor });
+      options.push({ label: 'Kasa Rengi', value: cleanOptionValue(cColor) });
     }
 
     // Montaj Şekli
-    const mMount =
-      snap.mountingLabel ||
-      (snap.mountingType ? PLISSE_MOUNT_MAP[snap.mountingType] || snap.mountingType : null);
+    let mMount = '';
+    if (snap.mountingType === 'HOOK' || (snap.mountingLabel && String(snap.mountingLabel).includes('Kancalı'))) {
+      mMount = 'Kancalı Montaj (Cam Balkon)';
+    } else if (snap.mountingType === 'SCREW' || (snap.mountingLabel && String(snap.mountingLabel).includes('Vidalı'))) {
+      mMount = 'Vidalı (Standart)';
+    } else if (snap.mountingType === 'ADHESIVE' || (snap.mountingLabel && String(snap.mountingLabel).includes('Yapıştırmalı'))) {
+      mMount = 'Yapıştırmalı Montaj';
+    } else if (snap.mountingLabel) {
+      mMount = cleanOptionValue(snap.mountingLabel);
+    }
     if (mMount) {
       options.push({ label: 'Montaj', value: mMount });
     }
   } else if (snap.mountingLabel || snap.mountingType) {
     // Genel Montaj
-    const mMount =
-      snap.mountingLabel ||
-      (snap.mountingType ? PLISSE_MOUNT_MAP[snap.mountingType] || snap.mountingType : null);
+    let mMount = '';
+    if (snap.mountingType === 'HOOK' || (snap.mountingLabel && String(snap.mountingLabel).includes('Kancalı'))) {
+      mMount = 'Kancalı Montaj (Cam Balkon)';
+    } else if (snap.mountingType === 'SCREW' || (snap.mountingLabel && String(snap.mountingLabel).includes('Vidalı'))) {
+      mMount = 'Vidalı (Standart)';
+    } else if (snap.mountingType === 'ADHESIVE' || (snap.mountingLabel && String(snap.mountingLabel).includes('Yapıştırmalı'))) {
+      mMount = 'Yapıştırmalı Montaj';
+    } else if (snap.mountingLabel) {
+      mMount = cleanOptionValue(snap.mountingLabel);
+    }
     if (mMount) {
       options.push({ label: 'Montaj', value: mMount });
     }
@@ -104,16 +122,16 @@ export function formatCurtainOptions(item: {
 
   // 2. TÜL & FON PİLE
   if (snap.pleatLabel) {
-    options.push({ label: 'Pile', value: snap.pleatLabel });
+    options.push({ label: 'Pile', value: cleanOptionValue(snap.pleatLabel) });
   }
 
   // 3. FON PERDEYE ÖZEL
   if (snap.fonWingType) {
-    options.push({ label: 'Kanat', value: FON_WING_MAP[snap.fonWingType] || snap.fonWingType });
+    options.push({ label: 'Kanat', value: FON_WING_MAP[snap.fonWingType] || cleanOptionValue(snap.fonWingType) });
   }
 
   if (snap.fonMountingType) {
-    options.push({ label: 'Fon Montajı', value: FON_MOUNT_MAP[snap.fonMountingType] || snap.fonMountingType });
+    options.push({ label: 'Fon Montajı', value: FON_MOUNT_MAP[snap.fonMountingType] || cleanOptionValue(snap.fonMountingType) });
   }
 
   if (snap.withRenso) {
@@ -157,7 +175,7 @@ export function formatCurtainOptions(item: {
   if (snap.bracketType) {
     options.push({
       label: 'Montaj Aparatı',
-      value: BRACKET_MAP[snap.bracketType] || snap.bracketType,
+      value: BRACKET_MAP[snap.bracketType] || cleanOptionValue(snap.bracketType),
     });
   }
 
@@ -169,7 +187,7 @@ export function formatCurtainOptions(item: {
   }
 
   if (snap.skirtNote) {
-    options.push({ label: 'Etek Notu', value: snap.skirtNote });
+    options.push({ label: 'Etek Notu', value: cleanOptionValue(snap.skirtNote) });
   }
 
   // 5. KUMAŞ METRESİ BİLGİSİ

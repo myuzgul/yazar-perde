@@ -870,7 +870,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                   svgType="plisse-screw"
                 />
                 <OptionThumb
-                  title={plisse_hook_price > 0 ? `Kancalı Montaj (+${plisse_hook_price} TL)` : 'Kancalı Montaj'}
+                  title="Kancalı Montaj (Cam Balkon)"
                   desc="Cam balkon kanatlarının üzerine kancalarla asılır, camı veya profili delmeden pratik şekilde takılır."
                   selected={mountingType === 'HOOK'}
                   onSelect={() => setMountingType('HOOK')}
