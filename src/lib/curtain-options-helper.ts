@@ -36,7 +36,7 @@ const FON_MOUNT_MAP: Record<string, string> = {
 export function cleanOptionValue(val: string): string {
   if (!val || typeof val !== 'string') return '';
   return val
-    .replace(/\s*\(\+\s*\d+(\.\d+)?\s*TL[^)]*\)/gi, '')
+    .replace(/\s*\(\s*\+\s*[\d.,]+\s*(TL|₺|\/m²|\/m|adet)?[^)]*\)/gi, '')
     .trim();
 }
 

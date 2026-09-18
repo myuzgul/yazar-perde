@@ -464,15 +464,17 @@ export default function AdminOrderDetailPage() {
                         )}
 
                         {/* Maliyet Dökümü */}
-                        {breakdown.length > 0 && (
+                        {breakdown.filter((b: any) => Number(b.amount) > 0 || (b.label && b.label.includes('Kumaş'))).length > 0 && (
                           <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 space-y-0.5">
                             <span className="font-bold text-slate-700 block">Fiyat Kırılımı:</span>
-                            {breakdown.map((b: any, bIdx: number) => (
-                              <div key={bIdx} className="flex justify-between">
-                                <span>• {b.label}</span>
-                                <span className="font-mono font-bold">₺{Number(b.amount).toFixed(2)}</span>
-                              </div>
-                            ))}
+                            {breakdown
+                              .filter((b: any) => Number(b.amount) > 0 || (b.label && b.label.includes('Kumaş')))
+                              .map((b: any, bIdx: number) => (
+                                <div key={bIdx} className="flex justify-between">
+                                  <span>• {b.label}</span>
+                                  <span className="font-mono font-bold">₺{Number(b.amount).toFixed(2)}</span>
+                                </div>
+                              ))}
                           </div>
                         )}
                       </div>
