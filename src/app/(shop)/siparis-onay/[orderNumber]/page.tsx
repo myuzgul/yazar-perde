@@ -11,6 +11,7 @@ import {
   FileText
 } from 'lucide-react';
 import { formatCurtainOptions } from '@/lib/curtain-options-helper';
+import GoogleAdsPurchaseTracker from '@/components/shop/GoogleAdsPurchaseTracker';
 
 interface OrderConfirmationPageProps {
   params: Promise<{ orderNumber: string }>;
@@ -40,6 +41,15 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
+      {/* Google Ads Satın Alma (Purchase) Dönüşüm Takibi */}
+      {!isFailed && (
+        <GoogleAdsPurchaseTracker
+          orderNumber={order.orderNumber}
+          totalAmount={order.grandTotal}
+          currency="TRY"
+        />
+      )}
+
       {/* Üst Başarı / Durum Kartı */}
       <div className={`bg-white p-6 sm:p-10 rounded-3xl border shadow-md text-center mb-8 ${isFailed ? 'border-red-200 shadow-red-500/5' : 'border-slate-200/80'}`}>
         <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isFailed ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
