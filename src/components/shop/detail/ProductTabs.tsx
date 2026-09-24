@@ -59,6 +59,9 @@ export default function ProductTabs({
   // Fotoğraf Büyütme Modalı
   const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
 
+  // Taksit Tablosu Seçili Banka Kartı
+  const [selectedBankCard, setSelectedBankCard] = useState<string>('bonus');
+
   const youtubeEmbed = getYouTubeEmbedUrl(mountingVideoUrl);
 
   // Yorumları Çekme
@@ -499,133 +502,174 @@ export default function ProductTabs({
       )}
 
       {/* SEKME 4: TAKSİT TABLOSU */}
-      {activeTab === 'INSTALLMENT' && (
-        <div className="space-y-6">
-          {/* Vade Farksız 3 Taksit Banner */}
-          <div className="bg-gradient-to-r from-blue-50 via-indigo-50/70 to-emerald-50 border-2 border-[#1B84F8]/20 rounded-md p-4 sm:p-5 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-start sm:items-center gap-3.5">
-                <div className="w-10 h-10 rounded-full bg-[#1B84F8] text-white flex items-center justify-center shrink-0 shadow-sm">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm sm:text-base font-black text-slate-900">
-                      Tüm Kredi Kartlarına Vade Farksız 3 Taksit İmkanı
-                    </h3>
-                    <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0">
-                      %0 Vade Farkı
-                    </span>
+      {activeTab === 'INSTALLMENT' && (() => {
+        const rates = [
+          { count: 1, label: 'Tek Çekim', rate: 0, isHero: false, isVadeFarksiz: true, rateText: '%0 (Peşin)' },
+          { count: 2, label: '2 Taksit', rate: 0.0619, isHero: false, isVadeFarksiz: false, rateText: '%6.19' },
+          { count: 3, label: '3 Taksit', rate: 0, isHero: true, isVadeFarksiz: true, rateText: '%0 (Vade Farksız)' },
+          { count: 4, label: '4 Taksit', rate: 0.0996, isHero: false, isVadeFarksiz: false, rateText: '%9.96' },
+          { count: 5, label: '5 Taksit', rate: 0.1183, isHero: false, isVadeFarksiz: false, rateText: '%11.83' },
+          { count: 6, label: '6 Taksit', rate: 0.1372, isHero: false, isVadeFarksiz: false, rateText: '%13.72' },
+          { count: 7, label: '7 Taksit', rate: 0.1560, isHero: false, isVadeFarksiz: false, rateText: '%15.60' },
+          { count: 8, label: '8 Taksit', rate: 0.1749, isHero: false, isVadeFarksiz: false, rateText: '%17.49' },
+          { count: 9, label: '9 Taksit', rate: 0.1937, isHero: false, isVadeFarksiz: false, rateText: '%19.37' },
+          { count: 10, label: '10 Taksit', rate: 0.2126, isHero: false, isVadeFarksiz: false, rateText: '%21.26' },
+          { count: 11, label: '11 Taksit', rate: 0.2314, isHero: false, isVadeFarksiz: false, rateText: '%23.14' },
+          { count: 12, label: '12 Taksit', rate: 0.2502, isHero: false, isVadeFarksiz: false, rateText: '%25.02' },
+        ];
+
+        const bankCards = [
+          { id: 'bonus', name: 'Bonus', bank: 'Garanti BBVA, TEB, Deniz', logoText: '+bonus' },
+          { id: 'axess', name: 'Axess', bank: 'Akbank', logoText: 'axess' },
+          { id: 'cardfinans', name: 'CardFinans', bank: 'QNB Finansbank', logoText: 'CARDFINANS' },
+          { id: 'maximum', name: 'Maximum', bank: 'Türkiye İş Bankası', logoText: 'maximum' },
+          { id: 'paraf', name: 'Paraf', bank: 'Halkbank', logoText: 'Paraf' },
+          { id: 'advantage', name: 'Advantage', bank: 'HSBC', logoText: 'advantage' },
+          { id: 'saglam', name: 'Sağlam Kart', bank: 'Kuveyt Türk', logoText: 'SAĞLAM KART' },
+          { id: 'world', name: 'World', bank: 'Yapı Kredi, Vakıf, Albaraka', logoText: 'world' },
+          { id: 'bankkart', name: 'Bankkart', bank: 'Ziraat Bankası', logoText: 'bankkart' },
+        ];
+
+        const activeCard = bankCards.find((c) => c.id === selectedBankCard) || bankCards[0];
+
+        return (
+          <div className="space-y-6">
+            {/* Vade Farksız 3 Taksit Hero Banner */}
+            <div className="bg-gradient-to-r from-blue-50 via-indigo-50/70 to-emerald-50 border-2 border-[#1B84F8]/20 rounded-md p-4 sm:p-5 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-full bg-[#1B84F8] text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <CreditCard className="w-5 h-5" />
                   </div>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Bonus, World, Maximum, Axess, CardFinans, Paraf, Bankkart ve Sağlam Kart ile peşin fiyatına 3 taksitle güvenle satın alabilirsiniz.
-                  </p>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm sm:text-base font-black text-slate-900">
+                        Tüm Kredi Kartlarına Vade Farksız 3 Taksit İmkanı
+                      </h3>
+                      <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0">
+                        %0 Vade Farkı
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1">
+                      Axess, Bonus, CardFinans, Maximum, Paraf, Advantage, Sağlam Kart ve World ile <strong>peşin fiyatına 3 taksitle</strong> veya 12 aya varan taksit seçenekleriyle sipariş verebilirsiniz.
+                    </p>
+                  </div>
                 </div>
+
+                {grandTotal > 0 && (
+                  <div className="bg-white px-4 py-2.5 rounded-md border border-slate-200/80 shrink-0 text-left sm:text-center shadow-xs">
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase">3 Taksitli Aylık Tutar</span>
+                    <span className="text-base font-black text-emerald-600 block">
+                      3 x ₺{(grandTotal / 3).toFixed(2)}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-semibold">Peşin Fiyatına: ₺{grandTotal.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Banka Kartı Seçici Butonları */}
+            <div>
+              <span className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider block mb-2.5">
+                Kredi Kartı / Banka Seçiniz:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {bankCards.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedBankCard(c.id)}
+                    className={`px-3 py-2 rounded-sm text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
+                      selectedBankCard === c.id
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-white'
+                    }`}
+                  >
+                    <span>{c.name}</span>
+                    <span className={`text-[10px] font-mono opacity-70 ${selectedBankCard === c.id ? 'text-blue-200' : 'text-slate-400'}`}>
+                      ({c.bank.split(',')[0]})
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Seçili Kart İçin Detaylı Taksit Tablosu */}
+            <div className="border border-slate-200 rounded-md overflow-hidden bg-white shadow-2xs">
+              <div className="bg-slate-900 text-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-sm">{activeCard.name} Taksit Oranları</span>
+                  <span className="text-xs text-slate-300 font-normal">({activeCard.bank})</span>
+                </div>
+                <span className="text-[11px] text-emerald-400 font-bold">✓ 3 Taksit Vade Farksız Kampanyası</span>
               </div>
 
-              {grandTotal > 0 && (
-                <div className="bg-white px-4 py-2.5 rounded-md border border-slate-200/80 shrink-0 text-left sm:text-center shadow-xs">
-                  <span className="text-[10px] font-bold text-slate-400 block uppercase">3 Taksitli Aylık Ödeme</span>
-                  <span className="text-base font-black text-emerald-600 block">
-                    3 x ₺{(grandTotal / 3).toFixed(2)}
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-medium">Toplam: ₺{grandTotal.toFixed(2)}</span>
-                </div>
-              )}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-2.5 px-4">Taksit Sayısı</th>
+                      <th className="py-2.5 px-4 text-center">Vade Farkı Oranı</th>
+                      <th className="py-2.5 px-4 text-right">Aylık Taksit Tutarı</th>
+                      <th className="py-2.5 px-4 text-right">Toplam Tutar</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {rates.map((r) => {
+                      const totalWithInterest = Number((grandTotal * (1 + r.rate)).toFixed(2));
+                      const monthlyInstallment = Number((totalWithInterest / r.count).toFixed(2));
+
+                      return (
+                        <tr
+                          key={r.count}
+                          className={`transition ${
+                            r.isHero
+                              ? 'bg-emerald-50/80 font-bold text-emerald-950 border-y-2 border-emerald-300'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          <td className="py-2.5 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold">{r.label}</span>
+                              {r.isHero && (
+                                <span className="text-[9px] bg-emerald-600 text-white px-2 py-0.5 rounded font-black tracking-wide">
+                                  VADE FARKSIZ
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-4 text-center">
+                            {r.isHero ? (
+                              <span className="text-emerald-700 font-black">%0 (Peşin Fiyatına)</span>
+                            ) : (
+                              <span className="font-mono text-slate-600 font-medium">{r.rateText}</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-mono font-bold">
+                            <span className={r.isHero ? 'text-emerald-700 text-sm' : 'text-slate-900'}>
+                              {r.count} x ₺{monthlyInstallment.toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-mono font-black">
+                            <span className={r.isHero ? 'text-emerald-700 text-sm' : 'text-slate-900'}>
+                              ₺{totalWithInterest.toFixed(2)}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Tüm kredi kartı ödemeleriniz PayTR 256-Bit SSL altyapısı ve 3D Secure güvencesiyle gerçekleşmektedir.</span>
             </div>
           </div>
-
-          {/* Kart Aileleri & Taksit Tabloları */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                name: 'Bonus',
-                bank: 'Garanti BBVA, TEB, Deniz',
-                headerClass: 'border-emerald-500/30 bg-emerald-50/50 text-emerald-950',
-              },
-              {
-                name: 'World',
-                bank: 'Yapı Kredi, Albaraka, Vakıf',
-                headerClass: 'border-purple-500/30 bg-purple-50/50 text-purple-950',
-              },
-              {
-                name: 'Maximum',
-                bank: 'Türkiye İş Bankası',
-                headerClass: 'border-blue-500/30 bg-blue-50/50 text-blue-950',
-              },
-              {
-                name: 'Axess',
-                bank: 'Akbank',
-                headerClass: 'border-amber-500/30 bg-amber-50/50 text-amber-950',
-              },
-              {
-                name: 'CardFinans',
-                bank: 'QNB Finansbank',
-                headerClass: 'border-sky-500/30 bg-sky-50/50 text-sky-950',
-              },
-              {
-                name: 'Paraf',
-                bank: 'Halkbank',
-                headerClass: 'border-cyan-500/30 bg-cyan-50/50 text-cyan-950',
-              },
-              {
-                name: 'Bankkart',
-                bank: 'Ziraat Bankası',
-                headerClass: 'border-red-500/30 bg-red-50/50 text-red-950',
-              },
-              {
-                name: 'Sağlam Kart',
-                bank: 'Kuveyt Türk',
-                headerClass: 'border-teal-500/30 bg-teal-50/50 text-teal-950',
-              },
-            ].map((card) => (
-              <div key={card.name} className="border border-slate-200 rounded-md overflow-hidden bg-white shadow-2xs flex flex-col">
-                <div className={`p-2.5 border-b border-slate-100 flex items-center justify-between ${card.headerClass}`}>
-                  <span className="font-black text-xs">{card.name}</span>
-                  <span className="text-[10px] text-slate-500 font-medium truncate max-w-[120px]">{card.bank}</span>
-                </div>
-                <div className="p-3 text-xs divide-y divide-slate-100 flex-1 flex flex-col justify-between">
-                  <div className="py-1.5 flex justify-between items-center text-slate-700">
-                    <span>Tek Çekim</span>
-                    <span className="font-bold text-slate-900">₺{grandTotal.toFixed(2)}</span>
-                  </div>
-                  <div className="py-1.5 flex justify-between items-center text-slate-700">
-                    <div className="flex items-center gap-1">
-                      <span>2 Taksit</span>
-                      <span className="text-[9px] bg-slate-100 text-slate-600 px-1 rounded font-bold">Vade Farksız</span>
-                    </div>
-                    <span className="font-bold text-slate-900">2 x ₺{(grandTotal / 2).toFixed(2)}</span>
-                  </div>
-                  <div className="py-1.5 flex justify-between items-center bg-emerald-50/60 -mx-3 px-3 border-y border-emerald-100 text-emerald-900">
-                    <div className="flex items-center gap-1">
-                      <span className="font-black">3 Taksit</span>
-                      <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black">Vade Farksız</span>
-                    </div>
-                    <span className="font-black text-emerald-700">3 x ₺{(grandTotal / 3).toFixed(2)}</span>
-                  </div>
-                  <div className="py-1.5 flex justify-between items-center text-slate-500 text-[11px]">
-                    <span>6 Taksit</span>
-                    <span>6 x ₺{((grandTotal * 1.09) / 6).toFixed(2)}</span>
-                  </div>
-                  <div className="py-1.5 flex justify-between items-center text-slate-500 text-[11px]">
-                    <span>9 Taksit</span>
-                    <span>9 x ₺{((grandTotal * 1.15) / 9).toFixed(2)}</span>
-                  </div>
-                  <div className="py-1.5 flex justify-between items-center text-slate-500 text-[11px]">
-                    <span>12 Taksit</span>
-                    <span>12 x ₺{((grandTotal * 1.21) / 12).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Tüm kart işlemleriniz PayTR 256-Bit SSL güvencesiyle 3D Secure onaylı olarak gerçekleştirilir.</span>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* SEKME 5: TESLİMAT & İADE */}
       {activeTab === 'SHIPPING' && (
