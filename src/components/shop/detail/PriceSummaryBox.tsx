@@ -33,6 +33,9 @@ export default function PriceSummaryBox({
           <div className="text-2xl sm:text-3xl font-extrabold text-slate-950 mt-0.5">
             ₺{calcResult.grandTotal.toFixed(2)}
           </div>
+          <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-xs inline-flex items-center gap-1 mt-1.5 border border-emerald-200/60">
+            <span>💳</span> 3 x ₺{(calcResult.grandTotal / 3).toFixed(2)} Vade Farksız
+          </div>
         </div>
         <div className="text-right text-xs">
           <span className="font-bold text-slate-900 block font-mono">

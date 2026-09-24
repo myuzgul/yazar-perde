@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Video, Star, Camera, CheckCircle2, MessageSquarePlus, X, ZoomIn } from 'lucide-react';
+import { Video, Star, Camera, CheckCircle2, MessageSquarePlus, X, ZoomIn, CreditCard, ShieldCheck } from 'lucide-react';
 import { compressImage } from '@/lib/image-compressor';
 
 interface ReviewItem {
@@ -162,19 +162,24 @@ export default function ProductTabs({
           { id: 'DESC', label: 'Ürün Bilgileri & Özellikler' },
           { id: 'VIDEO', label: 'Montaj & Kurulum Videosu' },
           { id: 'REVIEWS', label: `Müşteri Yorumları (${totalCount})` },
-          { id: 'INSTALLMENT', label: 'Taksit Tablosu' },
+          { id: 'INSTALLMENT', label: 'Taksit Tablosu', badge: 'Vade Farksız 3 Taksit' },
           { id: 'SHIPPING', label: 'Teslimat & İade' },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`text-xs font-bold transition pb-1 border-b-2 cursor-pointer ${
+            className={`text-xs font-bold transition pb-1 border-b-2 cursor-pointer flex items-center gap-1.5 ${
               activeTab === tab.id
                 ? 'border-slate-900 text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            {tab.badge && (
+              <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
+                {tab.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -495,27 +500,130 @@ export default function ProductTabs({
 
       {/* SEKME 4: TAKSİT TABLOSU */}
       {activeTab === 'INSTALLMENT' && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
-              <tr>
-                <th className="py-2 px-3">Banka / Kart</th>
-                <th className="py-2 px-3">Taksit</th>
-                <th className="py-2 px-3 text-right">Tutar</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {['Bonus (Garanti)', 'World (Yapı Kredi)', 'Maximum (İş Bankası)', 'Axess (Akbank)'].map((bank) => (
-                <tr key={bank}>
-                  <td className="py-2 px-3 font-semibold text-slate-900">{bank}</td>
-                  <td className="py-2 px-3">3 / 6 / 12 Taksit</td>
-                  <td className="py-2 px-3 text-right font-bold text-slate-900">
-                    ₺{grandTotal.toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-6">
+          {/* Vade Farksız 3 Taksit Banner */}
+          <div className="bg-gradient-to-r from-blue-50 via-indigo-50/70 to-emerald-50 border-2 border-[#1B84F8]/20 rounded-md p-4 sm:p-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="w-10 h-10 rounded-full bg-[#1B84F8] text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm sm:text-base font-black text-slate-900">
+                      Tüm Kredi Kartlarına Vade Farksız 3 Taksit İmkanı
+                    </h3>
+                    <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0">
+                      %0 Vade Farkı
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Bonus, World, Maximum, Axess, CardFinans, Paraf, Bankkart ve Sağlam Kart ile peşin fiyatına 3 taksitle güvenle satın alabilirsiniz.
+                  </p>
+                </div>
+              </div>
+
+              {grandTotal > 0 && (
+                <div className="bg-white px-4 py-2.5 rounded-md border border-slate-200/80 shrink-0 text-left sm:text-center shadow-xs">
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">3 Taksitli Aylık Ödeme</span>
+                  <span className="text-base font-black text-emerald-600 block">
+                    3 x ₺{(grandTotal / 3).toFixed(2)}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">Toplam: ₺{grandTotal.toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Kart Aileleri & Taksit Tabloları */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                name: 'Bonus',
+                bank: 'Garanti BBVA, TEB, Deniz',
+                headerClass: 'border-emerald-500/30 bg-emerald-50/50 text-emerald-950',
+              },
+              {
+                name: 'World',
+                bank: 'Yapı Kredi, Albaraka, Vakıf',
+                headerClass: 'border-purple-500/30 bg-purple-50/50 text-purple-950',
+              },
+              {
+                name: 'Maximum',
+                bank: 'Türkiye İş Bankası',
+                headerClass: 'border-blue-500/30 bg-blue-50/50 text-blue-950',
+              },
+              {
+                name: 'Axess',
+                bank: 'Akbank',
+                headerClass: 'border-amber-500/30 bg-amber-50/50 text-amber-950',
+              },
+              {
+                name: 'CardFinans',
+                bank: 'QNB Finansbank',
+                headerClass: 'border-sky-500/30 bg-sky-50/50 text-sky-950',
+              },
+              {
+                name: 'Paraf',
+                bank: 'Halkbank',
+                headerClass: 'border-cyan-500/30 bg-cyan-50/50 text-cyan-950',
+              },
+              {
+                name: 'Bankkart',
+                bank: 'Ziraat Bankası',
+                headerClass: 'border-red-500/30 bg-red-50/50 text-red-950',
+              },
+              {
+                name: 'Sağlam Kart',
+                bank: 'Kuveyt Türk',
+                headerClass: 'border-teal-500/30 bg-teal-50/50 text-teal-950',
+              },
+            ].map((card) => (
+              <div key={card.name} className="border border-slate-200 rounded-md overflow-hidden bg-white shadow-2xs flex flex-col">
+                <div className={`p-2.5 border-b border-slate-100 flex items-center justify-between ${card.headerClass}`}>
+                  <span className="font-black text-xs">{card.name}</span>
+                  <span className="text-[10px] text-slate-500 font-medium truncate max-w-[120px]">{card.bank}</span>
+                </div>
+                <div className="p-3 text-xs divide-y divide-slate-100 flex-1 flex flex-col justify-between">
+                  <div className="py-1.5 flex justify-between items-center text-slate-700">
+                    <span>Tek Çekim</span>
+                    <span className="font-bold text-slate-900">₺{grandTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="py-1.5 flex justify-between items-center text-slate-700">
+                    <div className="flex items-center gap-1">
+                      <span>2 Taksit</span>
+                      <span className="text-[9px] bg-slate-100 text-slate-600 px-1 rounded font-bold">Vade Farksız</span>
+                    </div>
+                    <span className="font-bold text-slate-900">2 x ₺{(grandTotal / 2).toFixed(2)}</span>
+                  </div>
+                  <div className="py-1.5 flex justify-between items-center bg-emerald-50/60 -mx-3 px-3 border-y border-emerald-100 text-emerald-900">
+                    <div className="flex items-center gap-1">
+                      <span className="font-black">3 Taksit</span>
+                      <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black">Vade Farksız</span>
+                    </div>
+                    <span className="font-black text-emerald-700">3 x ₺{(grandTotal / 3).toFixed(2)}</span>
+                  </div>
+                  <div className="py-1.5 flex justify-between items-center text-slate-500 text-[11px]">
+                    <span>6 Taksit</span>
+                    <span>6 x ₺{((grandTotal * 1.09) / 6).toFixed(2)}</span>
+                  </div>
+                  <div className="py-1.5 flex justify-between items-center text-slate-500 text-[11px]">
+                    <span>9 Taksit</span>
+                    <span>9 x ₺{((grandTotal * 1.15) / 9).toFixed(2)}</span>
+                  </div>
+                  <div className="py-1.5 flex justify-between items-center text-slate-500 text-[11px]">
+                    <span>12 Taksit</span>
+                    <span>12 x ₺{((grandTotal * 1.21) / 12).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Tüm kart işlemleriniz PayTR 256-Bit SSL güvencesiyle 3D Secure onaylı olarak gerçekleştirilir.</span>
+          </div>
         </div>
       )}
 
