@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ProductCard from '@/components/shop/ProductCard';
 import Link from 'next/link';
-import { ChevronRight, Filter, ChevronDown } from 'lucide-react';
+import { ChevronRight, Filter, ChevronDown, Loader2 } from 'lucide-react';
 
 interface ShowcaseProduct {
   id: string;
@@ -25,8 +25,14 @@ interface HomepageShowcaseProps {
   products: ShowcaseProduct[];
 }
 
+const INITIAL_COUNT = 12;
+const BATCH_SIZE = 12;
+
 export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
+  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_COUNT);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const observerTargetRef = useRef<HTMLDivElement | null>(null);
 
   // Mevcut kategorileri ürünlerden otomatik ayıkla
   const categoryMap = new Map<string, { id: string; name: string; count: number }>();
@@ -51,6 +57,49 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
     if (activeCategory === 'ALL') return true;
     return p.category?.id === activeCategory;
   });
+
+  const handleCategoryChange = (catId: string) => {
+    setActiveCategory(catId);
+    setVisibleCount(INITIAL_COUNT);
+  };
+
+  const hasMore = visibleCount < filteredProducts.length;
+
+  const loadMore = useCallback(() => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, filteredProducts.length));
+      setIsLoadingMore(false);
+    }, 300);
+  }, [isLoadingMore, hasMore, filteredProducts.length]);
+
+  // Sayfa aşağı kaydırıldığında otomatik daha fazla ürün yükleme (Infinite Scroll)
+  useEffect(() => {
+    const target = observerTargetRef.current;
+    if (!target || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      {
+        rootMargin: '250px',
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, isLoadingMore, loadMore]);
+
+  const displayedProducts = filteredProducts.slice(0, visibleCount);
 
   const currentCategoryName =
     activeCategory === 'ALL'
@@ -81,7 +130,7 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
         </Link>
       </div>
 
-      {/* 2. MOBİL: Şık ve Pratik Açılır Kategori Seçici (Taşma / Kesilme Olmaz) */}
+      {/* 2. MOBİL: Şık ve Pratik Açılır Kategori Seçici */}
       <div className="block sm:hidden mb-6">
         <div className="relative">
           <div className="flex items-center justify-between bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 shadow-xs">
@@ -96,7 +145,7 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
           </div>
           <select
             value={activeCategory}
-            onChange={(e) => setActiveCategory(e.target.value)}
+            onChange={(e) => handleCategoryChange(e.target.value)}
             className="absolute inset-0 opacity-0 w-full h-full cursor-pointer text-xs"
           >
             <option value="ALL">Tüm Modeller ({products.length} Ürün)</option>
@@ -109,11 +158,11 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
         </div>
       </div>
 
-      {/* 2. MASAÜSTÜ: Ferah Hap Butonlar */}
+      {/* 2. MASAÜSTÜ: Ferah Kategori Butonları */}
       <div className="hidden sm:flex flex-wrap items-center gap-2 mb-8">
         <button
           type="button"
-          onClick={() => setActiveCategory('ALL')}
+          onClick={() => handleCategoryChange('ALL')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeCategory === 'ALL'
               ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-900'
@@ -126,7 +175,7 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
           <button
             key={cat.id}
             type="button"
-            onClick={() => setActiveCategory(cat.id)}
+            onClick={() => handleCategoryChange(cat.id)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeCategory === cat.id
                 ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-900'
@@ -139,40 +188,62 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
       </div>
 
       {/* Ürün Izgarası (Mobilde 2'li, Desktopta 4'lü) */}
-      {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-          {filteredProducts.map((product) => {
-            const coverImg = product.images.find((i) => i.isCover) || product.images[0];
-            const approvedRevs = product.reviews || [];
-            const revCount = approvedRevs.length;
-            const avgRating =
-              revCount > 0
-                ? Math.round(
-                    approvedRevs.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) /
-                      revCount
-                  )
-                : 5;
+      {displayedProducts.length > 0 ? (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            {displayedProducts.map((product) => {
+              const coverImg = product.images.find((i) => i.isCover) || product.images[0];
+              const approvedRevs = product.reviews || [];
+              const revCount = approvedRevs.length;
+              const avgRating =
+                revCount > 0
+                  ? Math.round(
+                      approvedRevs.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) /
+                        revCount
+                    )
+                  : 5;
 
-            return (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                slug={product.slug}
-                sku={product.sku}
-                curtainType={product.curtainType}
-                basePrice={product.basePrice}
-                discountPrice={product.discountPrice}
-                categoryName={product.category?.name}
-                brandName={product.brand?.name}
-                tag={product.tag}
-                imageUrl={coverImg?.imageUrl}
-                reviewCount={revCount}
-                rating={avgRating}
-              />
-            );
-          })}
-        </div>
+              return (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  slug={product.slug}
+                  sku={product.sku}
+                  curtainType={product.curtainType}
+                  basePrice={product.basePrice}
+                  discountPrice={product.discountPrice}
+                  categoryName={product.category?.name}
+                  brandName={product.brand?.name}
+                  tag={product.tag}
+                  imageUrl={coverImg?.imageUrl}
+                  reviewCount={revCount}
+                  rating={avgRating}
+                />
+              );
+            })}
+          </div>
+
+          {/* Sayfa Kaydırıldığında Tetiklenen Infinite Scroll ve Loading Göstergesi */}
+          {hasMore && (
+            <div ref={observerTargetRef} className="mt-8 flex flex-col items-center justify-center py-6">
+              {isLoadingMore ? (
+                <div className="flex items-center gap-2.5 px-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs font-semibold text-slate-700 shadow-2xs">
+                  <Loader2 className="w-4 h-4 text-[#1B84F8] animate-spin" />
+                  <span>Daha fazla model yükleniyor...</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition py-2 px-4 rounded-full border border-slate-200 hover:border-slate-300 bg-white shadow-2xs cursor-pointer"
+                >
+                  Daha Fazla Göster ({filteredProducts.length - visibleCount} ürün daha)
+                </button>
+              )}
+            </div>
+          )}
+        </>
       ) : (
         <div className="py-16 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-100">
           <p className="text-sm font-semibold">Bu kategoride henüz vitrine eklenmiş ürün bulunmuyor.</p>
