@@ -125,7 +125,7 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
 
   // E-Fatura: Dopigo & Sovos
   dopigo_active: 1,
-  dopigo_api_token: "",
+  dopigo_api_token: "55a7426344dbfc83a2d64bef51ab6a95857a4f93",
   dopigo_invoice_prefix: "YZR",
   dopigo_auto_invoice: 0,
 
