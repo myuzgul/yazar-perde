@@ -15,6 +15,7 @@ interface ShowcaseProduct {
   discountPrice: number | null;
   sortOrder: number;
   category?: { id: string; name: string; slug: string };
+  categories?: Array<{ category?: { id: string; name: string; slug: string } }>;
   brand?: { name: string } | null;
   tag?: { name: string; badgeColor: string } | null;
   images: Array<{ imageUrl: string; isCover: boolean }>;
@@ -37,25 +38,49 @@ export default function HomepageShowcase({ products }: HomepageShowcaseProps) {
   // Mevcut kategorileri ürünlerden otomatik ayıkla
   const categoryMap = new Map<string, { id: string; name: string; count: number }>();
   products.forEach((p) => {
+    const productCategoryIds = new Set<string>();
+
     if (p.category) {
-      const existing = categoryMap.get(p.category.id);
-      if (existing) {
-        existing.count += 1;
-      } else {
+      productCategoryIds.add(p.category.id);
+      if (!categoryMap.has(p.category.id)) {
         categoryMap.set(p.category.id, {
           id: p.category.id,
           name: p.category.name,
-          count: 1,
+          count: 0,
         });
       }
     }
+
+    if (p.categories) {
+      p.categories.forEach((pc) => {
+        if (pc.category) {
+          productCategoryIds.add(pc.category.id);
+          if (!categoryMap.has(pc.category.id)) {
+            categoryMap.set(pc.category.id, {
+              id: pc.category.id,
+              name: pc.category.name,
+              count: 0,
+            });
+          }
+        }
+      });
+    }
+
+    productCategoryIds.forEach((catId) => {
+      const entry = categoryMap.get(catId);
+      if (entry) {
+        entry.count += 1;
+      }
+    });
   });
 
   const categories = Array.from(categoryMap.values());
 
   const filteredProducts = products.filter((p) => {
     if (activeCategory === 'ALL') return true;
-    return p.category?.id === activeCategory;
+    if (p.category?.id === activeCategory) return true;
+    if (p.categories?.some((c) => c.category?.id === activeCategory)) return true;
+    return false;
   });
 
   const handleCategoryChange = (catId: string) => {

@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 
@@ -18,7 +18,10 @@ export async function POST(req: NextRequest) {
 
     const whereClause: Record<string, unknown> = {};
     if (categoryId && categoryId !== 'ALL') {
-      whereClause.categoryId = categoryId;
+      whereClause.OR = [
+        { categoryId: categoryId },
+        { categories: { some: { categoryId: categoryId } } },
+      ];
     }
 
     const products = await prisma.product.findMany({ where: whereClause });

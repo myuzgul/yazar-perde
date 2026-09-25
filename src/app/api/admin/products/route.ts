@@ -13,6 +13,9 @@ export async function GET(req: NextRequest) {
       where: { id },
       include: {
         category: true,
+        categories: {
+          include: { category: true },
+        },
         brand: true,
         tag: true,
         images: { orderBy: { sortOrder: 'asc' } },
@@ -22,12 +25,26 @@ export async function GET(req: NextRequest) {
   }
 
   const whereClause: Record<string, unknown> = {};
-  if (categoryId) whereClause.categoryId = categoryId;
-  if (search) {
+  if (categoryId && categoryId !== 'ALL') {
     whereClause.OR = [
+      { categoryId },
+      { categories: { some: { categoryId } } },
+    ];
+  }
+  if (search) {
+    const searchFilter = [
       { name: { contains: search } },
       { sku: { contains: search } },
     ];
+    if (whereClause.OR) {
+      whereClause.AND = [
+        { OR: whereClause.OR },
+        { OR: searchFilter },
+      ];
+      delete whereClause.OR;
+    } else {
+      whereClause.OR = searchFilter;
+    }
   }
 
   const products = await prisma.product.findMany({
@@ -35,6 +52,9 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: 'desc' },
     include: {
       category: true,
+      categories: {
+        include: { category: true },
+      },
       brand: true,
       tag: true,
       images: { orderBy: { sortOrder: 'asc' } },
@@ -52,13 +72,25 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
+    const rawCatIds: string[] = Array.isArray(body.categoryIds) && body.categoryIds.length > 0
+      ? Array.from(new Set(body.categoryIds.filter(Boolean)))
+      : (body.categoryId ? [body.categoryId] : []);
+
+    const primaryCategoryId = rawCatIds[0] || body.categoryId;
+    if (!primaryCategoryId) {
+      return NextResponse.json({ success: false, message: 'En az bir kategori seçilmelidir' }, { status: 400 });
+    }
+
     const product = await prisma.product.create({
       data: {
         name: body.name,
         sku: body.sku,
         slug,
         curtainType: body.curtainType,
-        categoryId: body.categoryId,
+        categoryId: primaryCategoryId,
+        categories: {
+          create: rawCatIds.map((cid) => ({ categoryId: cid })),
+        },
         brandId: body.brandId || null,
         tagId: body.tagId || null,
         basePrice: Number(body.basePrice),
@@ -88,7 +120,11 @@ export async function POST(req: NextRequest) {
           })),
         },
       },
-      include: { images: true },
+      include: {
+        images: true,
+        category: true,
+        categories: { include: { category: true } },
+      },
     });
 
     return NextResponse.json({ success: true, data: product });
@@ -105,8 +141,18 @@ export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Mevcut görselleri güncellemek için önce eskileri temizleyip yenileri ekliyoruz
+    const rawCatIds: string[] = Array.isArray(body.categoryIds) && body.categoryIds.length > 0
+      ? Array.from(new Set(body.categoryIds.filter(Boolean)))
+      : (body.categoryId ? [body.categoryId] : []);
+
+    const primaryCategoryId = rawCatIds[0] || body.categoryId;
+    if (!primaryCategoryId) {
+      return NextResponse.json({ success: false, message: 'En az bir kategori seçilmelidir' }, { status: 400 });
+    }
+
+    // Mevcut ilişkili verileri (görseller ve kategoriler) temizleyip yeniden ekliyoruz
     await prisma.productImage.deleteMany({ where: { productId: body.id } });
+    await prisma.productCategory.deleteMany({ where: { productId: body.id } });
 
     const product = await prisma.product.update({
       where: { id: body.id },
@@ -115,7 +161,10 @@ export async function PUT(req: NextRequest) {
         sku: body.sku,
         slug: body.slug,
         curtainType: body.curtainType,
-        categoryId: body.categoryId,
+        categoryId: primaryCategoryId,
+        categories: {
+          create: rawCatIds.map((cid) => ({ categoryId: cid })),
+        },
         brandId: body.brandId || null,
         tagId: body.tagId || null,
         basePrice: Number(body.basePrice),
@@ -145,7 +194,11 @@ export async function PUT(req: NextRequest) {
           })),
         },
       },
-      include: { images: true },
+      include: {
+        images: true,
+        category: true,
+        categories: { include: { category: true } },
+      },
     });
 
     return NextResponse.json({ success: true, data: product });

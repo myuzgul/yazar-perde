@@ -28,6 +28,7 @@ interface Product {
   discountPrice: number | null;
   isActive: boolean;
   category: { name: string };
+  categories?: Array<{ category: { id: string; name: string } }>;
   brand: { name: string } | null;
   tag: { name: string; badgeColor: string } | null;
   images: Array<{ imageUrl: string; isCover: boolean }>;
@@ -105,12 +106,13 @@ export default function UrunlerPage() {
     }
   };
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase()) ||
-      p.category?.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProducts = products.filter((p) => {
+    const s = search.toLowerCase();
+    const matchesNameOrSku = p.name.toLowerCase().includes(s) || p.sku.toLowerCase().includes(s);
+    const matchesPrimaryCat = p.category?.name?.toLowerCase().includes(s);
+    const matchesMultiCats = p.categories?.some((c) => c.category?.name?.toLowerCase().includes(s));
+    return matchesNameOrSku || matchesPrimaryCat || matchesMultiCats;
+  });
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-100 font-sans">
@@ -211,8 +213,25 @@ export default function UrunlerPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-slate-600">
-                          <div className="font-semibold text-slate-800">{product.category?.name}</div>
-                          <div className="text-[11px] text-slate-500">{product.brand?.name || 'Markasız'}</div>
+                          <div className="flex flex-wrap gap-1 items-center max-w-[220px]">
+                            {product.categories && product.categories.length > 0 ? (
+                              product.categories.map((pc, idx) => (
+                                <span
+                                  key={pc.category?.id || idx}
+                                  className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                                    idx === 0
+                                      ? 'bg-blue-50 text-blue-800 border border-blue-200 font-bold'
+                                      : 'bg-slate-100 text-slate-700'
+                                  }`}
+                                >
+                                  {pc.category?.name}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="font-semibold text-slate-800">{product.category?.name}</span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-1">{product.brand?.name || 'Markasız'}</div>
                         </td>
                         <td className="py-3 px-4">
                           {product.discountPrice ? (

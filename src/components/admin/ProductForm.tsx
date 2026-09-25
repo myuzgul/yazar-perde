@@ -17,7 +17,10 @@ import {
   Sparkles,
   GripVertical,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FolderTree,
+  Check,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -43,6 +46,8 @@ interface ProductFormData {
   slug: string;
   curtainType: string;
   categoryId: string;
+  categoryIds?: string[];
+  categories?: Array<{ categoryId: string; category?: { id: string; name: string } }>;
   brandId: string;
   tagId: string;
   basePrice: number;
@@ -51,6 +56,8 @@ interface ProductFormData {
   stockTracking: boolean;
   stockQuantity: number;
   isActive: boolean;
+  isFeatured?: boolean;
+  sortOrder?: number;
   minWidth: number;
   maxWidth: number;
   minHeight: number;
@@ -81,37 +88,58 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [categorySearch, setCategorySearch] = useState('');
+
+  const initialCategoryIds: string[] = (() => {
+    if (initialData?.categories && Array.isArray(initialData.categories) && initialData.categories.length > 0) {
+      return initialData.categories.map((c: any) => c.categoryId || c.category?.id || c.id).filter(Boolean);
+    }
+    if (initialData?.categoryIds && Array.isArray(initialData.categoryIds) && initialData.categoryIds.length > 0) {
+      return initialData.categoryIds.filter(Boolean);
+    }
+    if (initialData?.categoryId) {
+      return [initialData.categoryId];
+    }
+    return [];
+  })();
 
   const [formData, setFormData] = useState<ProductFormData>(
-    initialData || {
-      name: '',
-      sku: '',
-      slug: '',
-      curtainType: 'TULLE',
-      categoryId: '',
-      brandId: '',
-      tagId: '',
-      basePrice: 250,
-      discountPrice: null,
-      vatRate: 10,
-      stockTracking: false,
-      stockQuantity: 100,
-      isActive: true,
-      isFeatured: true,
-      sortOrder: 0,
-      minWidth: 30,
-      maxWidth: 500,
-      minHeight: 50,
-      maxHeight: 300,
-      shortDesc: '',
-      descriptionHtml: '',
-      mountingVideoUrl: '',
-      mountingGuideHtml: '',
-      seoTitle: '',
-      seoDesc: '',
-      seoKeywords: '',
-      images: [],
-    }
+    initialData
+      ? {
+          ...initialData,
+          categoryIds: initialCategoryIds,
+          categoryId: initialCategoryIds[0] || initialData.categoryId || '',
+        }
+      : {
+          name: '',
+          sku: '',
+          slug: '',
+          curtainType: 'TULLE',
+          categoryId: '',
+          categoryIds: [],
+          brandId: '',
+          tagId: '',
+          basePrice: 250,
+          discountPrice: null,
+          vatRate: 10,
+          stockTracking: false,
+          stockQuantity: 100,
+          isActive: true,
+          isFeatured: true,
+          sortOrder: 0,
+          minWidth: 30,
+          maxWidth: 500,
+          minHeight: 50,
+          maxHeight: 300,
+          shortDesc: '',
+          descriptionHtml: '',
+          mountingVideoUrl: '',
+          mountingGuideHtml: '',
+          seoTitle: '',
+          seoDesc: '',
+          seoKeywords: '',
+          images: [],
+        }
   );
 
   useEffect(() => {
@@ -122,9 +150,16 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
     ]).then(([catData, brandData, tagData]) => {
       if (catData.success) {
         setCategories(catData.data);
-        if (!formData.categoryId && catData.data.length > 0) {
-          setFormData((prev) => ({ ...prev, categoryId: catData.data[0].id }));
-        }
+        setFormData((prev) => {
+          const currentIds = prev.categoryIds && prev.categoryIds.length > 0
+            ? prev.categoryIds
+            : (prev.categoryId ? [prev.categoryId] : (catData.data.length > 0 ? [catData.data[0].id] : []));
+          return {
+            ...prev,
+            categoryIds: currentIds,
+            categoryId: currentIds[0] || '',
+          };
+        });
       }
       if (brandData.success) setBrands(brandData.data);
       if (tagData.success) setTags(tagData.data);
@@ -221,13 +256,51 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
     setFormData((prev) => ({ ...prev, images: reIndexed }));
   };
 
+  const toggleCategory = (catId: string) => {
+    const currentIds = formData.categoryIds || (formData.categoryId ? [formData.categoryId] : []);
+    let nextIds: string[];
+    if (currentIds.includes(catId)) {
+      nextIds = currentIds.filter((id) => id !== catId);
+    } else {
+      nextIds = [...currentIds, catId];
+    }
+    setFormData((prev) => ({
+      ...prev,
+      categoryIds: nextIds,
+      categoryId: nextIds[0] || '',
+    }));
+  };
+
+  const setPrimaryCategory = (catId: string) => {
+    const currentIds = formData.categoryIds || (formData.categoryId ? [formData.categoryId] : []);
+    const filtered = currentIds.filter((id) => id !== catId);
+    const nextIds = [catId, ...filtered];
+    setFormData((prev) => ({
+      ...prev,
+      categoryIds: nextIds,
+      categoryId: catId,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
+    const finalCategoryIds = formData.categoryIds && formData.categoryIds.length > 0
+      ? formData.categoryIds
+      : (formData.categoryId ? [formData.categoryId] : []);
+
+    if (finalCategoryIds.length === 0) {
+      alert('Lütfen en az 1 kategori seçiniz.');
+      setLoading(false);
+      return;
+    }
+
     const payload = {
       ...formData,
+      categoryIds: finalCategoryIds,
+      categoryId: finalCategoryIds[0],
       slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''),
     };
 
@@ -362,20 +435,123 @@ export default function ProductForm({ initialData, isEdit }: ProductFormProps) {
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Kategori *</label>
-              <select
-                required
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#1B84F8]"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.parentId ? `↳ ${c.name} (${c.parent?.name || 'Alt Kategori'})` : `📁 ${c.name}`}
-                  </option>
-                ))}
-              </select>
+            {/* Çoklu Kategori Seçimi */}
+            <div className="md:col-span-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-800">
+                  Kategoriler * <span className="text-[11px] font-normal text-slate-500">(Birden fazla kategori seçebilirsiniz)</span>
+                </label>
+                {formData.categoryIds && formData.categoryIds.length > 0 && (
+                  <span className="text-[11px] font-bold text-[#1B84F8]">
+                    {formData.categoryIds.length} Kategori Seçildi
+                  </span>
+                )}
+              </div>
+
+              {/* Seçilen Kategorilerin Rozetleri */}
+              {formData.categoryIds && formData.categoryIds.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                  {formData.categoryIds.map((cid, idx) => {
+                    const catObj = categories.find((c) => c.id === cid);
+                    const isPrimary = idx === 0;
+                    return (
+                      <span
+                        key={cid}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-2xs transition ${
+                          isPrimary
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-slate-800 border border-slate-200'
+                        }`}
+                      >
+                        {isPrimary && <Star className="w-3 h-3 fill-current text-amber-300" />}
+                        <span>{catObj ? (catObj.parent ? `${catObj.parent.name} > ${catObj.name}` : catObj.name) : 'Kategori'}</span>
+                        {isPrimary ? (
+                          <span className="text-[9px] bg-blue-700 text-blue-100 px-1 py-0.2 rounded font-bold">Ana Kategori</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setPrimaryCategory(cid)}
+                            title="Bu kategoriyi ana kategori yap"
+                            className="text-[10px] text-blue-600 hover:text-blue-800 font-bold hover:underline cursor-pointer"
+                          >
+                            (Ana Yap)
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => toggleCategory(cid)}
+                          className="hover:opacity-70 cursor-pointer ml-0.5"
+                          title="Kaldır"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-[11px] font-medium text-amber-800">
+                  ⚠️ Bu ürün için henüz hiçbir kategori seçilmedi. Lütfen aşağıdaki listeden en az 1 kategori seçiniz.
+                </div>
+              )}
+
+              {/* Kategori Arama ve Seçim Listesi */}
+              <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-2xs">
+                <div className="p-2 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                  <Search className="w-3.5 h-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    placeholder="Kategori ara..."
+                    className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
+                  />
+                  {categorySearch && (
+                    <button
+                      type="button"
+                      onClick={() => setCategorySearch('')}
+                      className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                    >
+                      Temizle
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-56 overflow-y-auto p-2 space-y-1 divide-y divide-slate-50">
+                  {categories
+                    .filter((c) => !categorySearch || c.name.toLowerCase().includes(categorySearch.toLowerCase()) || (c.parent?.name && c.parent.name.toLowerCase().includes(categorySearch.toLowerCase())))
+                    .map((c) => {
+                      const isSelected = (formData.categoryIds || []).includes(c.id);
+                      return (
+                        <label
+                          key={c.id}
+                          className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition text-xs ${
+                            isSelected
+                              ? 'bg-blue-50/80 text-blue-900 font-bold'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleCategory(c.id)}
+                              className="w-4 h-4 rounded border-slate-300 text-[#1B84F8] focus:ring-0 cursor-pointer"
+                            />
+                            <span className="truncate">
+                              {c.parentId ? `↳ ${c.name} (${c.parent?.name || 'Alt Kategori'})` : `📁 ${c.name}`}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <span className="text-[10px] text-blue-600 font-semibold shrink-0">
+                              {(formData.categoryIds || [])[0] === c.id ? '⭐ Ana' : 'Seçili'}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
             </div>
 
             <div>

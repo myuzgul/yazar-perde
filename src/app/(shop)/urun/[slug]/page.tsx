@@ -33,6 +33,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       where: { slug },
       include: {
         category: true,
+        categories: { include: { category: true } },
         brand: true,
         tag: true,
         images: { orderBy: { sortOrder: 'asc' } },
@@ -49,10 +50,18 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  // Benzer ürünler (Aynı kategorideki diğer 4 ürün)
+  // Benzer ürünler (Ürünün bağlı olduğu kategorilerdeki diğer 4 ürün)
+  const allCategoryIds = [
+    product.categoryId,
+    ...(product.categories?.map((c) => c.categoryId) || []),
+  ];
+
   const similarProducts = await prisma.product.findMany({
     where: {
-      categoryId: product.categoryId,
+      OR: [
+        { categoryId: { in: allCategoryIds } },
+        { categories: { some: { categoryId: { in: allCategoryIds } } } },
+      ],
       id: { not: product.id },
       isActive: true,
     },

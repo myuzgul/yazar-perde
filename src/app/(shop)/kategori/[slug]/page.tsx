@@ -41,9 +41,9 @@ export default async function CategoryPage(props: CategoryPageProps) {
       children: {
         where: { isActive: true },
         orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-        include: { _count: { select: { products: true } } },
+        include: { _count: { select: { products: true, productCategories: true } } },
       },
-      _count: { select: { products: true } },
+      _count: { select: { products: true, productCategories: true } },
     },
   });
 
@@ -58,17 +58,21 @@ export default async function CategoryPage(props: CategoryPageProps) {
   else if (sort === 'name_asc') orderBy = { name: 'asc' };
   else if (sort === 'name_desc') orderBy = { name: 'desc' };
 
-  // Kategoriye ve tüm bağlı alt kategorilerine ait ürünleri getir
+  // Kategoriye ve tüm bağlı alt kategorilerine ait ürünleri getir (Birincil veya İkincil çoklu kategoriler dahil)
   const targetCategoryIds = [category.id, ...(category.children?.map((c) => c.id) || [])];
 
   const products = await prisma.product.findMany({
     where: {
-      categoryId: { in: targetCategoryIds },
       isActive: true,
+      OR: [
+        { categoryId: { in: targetCategoryIds } },
+        { categories: { some: { categoryId: { in: targetCategoryIds } } } },
+      ],
     },
     orderBy,
     include: {
       category: true,
+      categories: { include: { category: true } },
       brand: true,
       tag: true,
       images: { orderBy: { sortOrder: 'asc' } },
@@ -123,7 +127,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
                     >
                       <span>{p.name}</span>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        ({p._count.products + (p.children?.reduce((acc, c) => acc + (c._count?.products || 0), 0) || 0)})
+                        ({(p._count.productCategories ?? p._count.products) + (p.children?.reduce((acc, c) => acc + (c._count.productCategories ?? c._count.products), 0) || 0)})
                       </span>
                     </Link>
 
@@ -144,7 +148,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
                             >
                               <span>{c.name}</span>
                               <span className="text-[10px] text-slate-400 font-mono">
-                                ({c._count.products})
+                                ({c._count.productCategories ?? c._count.products})
                               </span>
                             </Link>
                           );

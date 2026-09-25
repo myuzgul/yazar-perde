@@ -19,6 +19,9 @@ export default async function HomePage() {
     ],
     include: {
       category: true,
+      categories: {
+        include: { category: true },
+      },
       brand: true,
       tag: true,
       images: { orderBy: { sortOrder: 'asc' } },

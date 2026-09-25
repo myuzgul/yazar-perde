@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
       where: { id: productId },
       include: {
         images: { orderBy: { sortOrder: 'asc' } },
+        categories: true,
       },
     });
 
@@ -51,6 +52,11 @@ export async function POST(req: NextRequest) {
         slug: newSlug,
         curtainType: source.curtainType,
         categoryId: source.categoryId,
+        categories: {
+          create: (source.categories && source.categories.length > 0)
+            ? source.categories.map((c) => ({ categoryId: c.categoryId }))
+            : (source.categoryId ? [{ categoryId: source.categoryId }] : []),
+        },
         brandId: source.brandId,
         tagId: source.tagId,
         basePrice: source.basePrice,
@@ -81,6 +87,7 @@ export async function POST(req: NextRequest) {
       },
       include: {
         category: true,
+        categories: { include: { category: true } },
         brand: true,
         tag: true,
         images: { orderBy: { sortOrder: 'asc' } },
