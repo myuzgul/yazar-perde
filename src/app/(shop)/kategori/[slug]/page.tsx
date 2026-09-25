@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 
+import CategoryMobileDrawer from '@/components/shop/CategoryMobileDrawer';
+
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ sort?: string; minPrice?: string; maxPrice?: string }>;
@@ -103,8 +105,8 @@ export default async function CategoryPage(props: CategoryPageProps) {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Sol Filtreleme Alanı (Desktop) */}
-        <aside className="w-full md:w-64 shrink-0 space-y-6">
+        {/* Sol Filtreleme Alanı (Sadece Desktop) */}
+        <aside className="hidden md:block w-64 shrink-0 space-y-6">
           {/* Kategoriler Ağacı (WooCommerce Mantığı) */}
           <div className="border-b border-slate-200 pb-5">
             <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-3 flex items-center justify-between">
@@ -161,8 +163,6 @@ export default async function CategoryPage(props: CategoryPageProps) {
             </div>
           </div>
 
-
-
           {/* Markalar */}
           {brands.length > 0 && (
             <div className="pb-5">
@@ -184,14 +184,24 @@ export default async function CategoryPage(props: CategoryPageProps) {
         {/* Sağ: Başlık, Sıralama & Ürün Grid'i */}
         <section className="flex-1">
           {/* Üst Toolbar */}
-          <div className="border-b border-slate-200 pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-extrabold text-slate-900">{category.name}</h1>
-              <p className="text-xs text-slate-500 mt-0.5">{products.length} ürün listeleniyor</p>
+          <div className="border-b border-slate-200 pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900">{category.name}</h1>
+                <p className="text-xs text-slate-500 mt-0.5">{products.length} ürün listeleniyor</p>
+              </div>
+
+              {/* Mobilde Kategoriler Açılır Menü Butonu */}
+              <CategoryMobileDrawer
+                parentCategories={parentCategories as any}
+                brands={brands}
+                currentSlug={slug}
+                currentCategoryName={category.name}
+              />
             </div>
 
             {/* Sıralama Seçenekleri */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end sm:self-auto">
               <span className="text-xs text-slate-500 font-medium">Sırala:</span>
               <div className="inline-flex rounded-sm border border-slate-200 text-xs overflow-hidden">
                 <Link
