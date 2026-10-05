@@ -11,9 +11,11 @@ import {
   Truck, 
   CheckCircle2, 
   Tag, 
-  ShieldCheck 
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
 import { formatCurtainOptions } from '@/lib/curtain-options-helper';
+import { calculateCartDiscount } from '@/lib/cart-discount';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, subtotal, clearCart } = useCart();
@@ -22,7 +24,7 @@ export default function CartPage() {
   const [couponError, setCouponError] = useState('');
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
-  // Dinamik Sistem Ayarları (Kargo baremleri)
+  // Dinamik Sistem Ayarları (Kargo baremleri & Kampanyalar)
   const [settings, setSettings] = useState<any>(null);
 
   React.useEffect(() => {
@@ -37,8 +39,13 @@ export default function CartPage() {
   const freeShippingThreshold = settings?.free_shipping_threshold ?? 1500;
   const standardShippingFee = settings?.shipping_fee ?? 99.90;
   const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
-  const discountAmount = couponDiscount ? couponDiscount.amount : 0;
-  const grandTotal = Math.max(0, subtotal - discountAmount + shippingFee);
+  
+  // Otomatik Sepette İndirim Kampanyası
+  const cartDiscount = calculateCartDiscount(items, settings);
+  const cartDiscountAmount = cartDiscount.isEligible ? cartDiscount.discountAmount : 0;
+  const couponDiscountAmount = couponDiscount ? couponDiscount.amount : 0;
+  const totalDiscountAmount = cartDiscountAmount + couponDiscountAmount;
+  const grandTotal = Math.max(0, subtotal - totalDiscountAmount + shippingFee);
 
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   const freeShippingProgress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
@@ -298,6 +305,16 @@ export default function CartPage() {
                 <span>Ara Toplam (KDV Dahil):</span>
                 <span className="font-bold text-slate-900">₺{subtotal.toFixed(2)}</span>
               </div>
+
+              {cartDiscount.isEligible && cartDiscount.discountAmount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded-sm border border-emerald-200/60">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{cartDiscount.title}:</span>
+                  </span>
+                  <span>-₺{cartDiscount.discountAmount.toFixed(2)}</span>
+                </div>
+              )}
 
               {couponDiscount && (
                 <div className="flex justify-between text-emerald-600 font-bold">

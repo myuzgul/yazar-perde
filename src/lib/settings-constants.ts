@@ -71,6 +71,13 @@ export interface SystemSettingsMap {
   sms_api_key: string;
   sms_api_hash: string;
   sms_sender_title: string;
+  // Sepette İndirim Kampanyası
+  cart_discount_active: number;
+  cart_discount_rate: number;
+  cart_discount_title: string;
+  cart_discount_target_type: string;
+  cart_discount_category_ids: string;
+  cart_discount_min_amount: number;
 }
 
 export const DEFAULT_SETTINGS: SystemSettingsMap = {
@@ -152,4 +159,12 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   sms_api_key: "0cf1e359e03007ff7d0a10279b9d59e5",
   sms_api_hash: "920de97ae51132626b9b47eb7b788c968f4f0b1e5b183af9d465af1e62b66152",
   sms_sender_title: "YazarPerde",
+
+  // Sepette İndirim Kampanyası Varsayılanları
+  cart_discount_active: 0,
+  cart_discount_rate: 10,
+  cart_discount_title: "Sepette %10 İndirim",
+  cart_discount_target_type: "ALL",
+  cart_discount_category_ids: "[]",
+  cart_discount_min_amount: 0,
 };

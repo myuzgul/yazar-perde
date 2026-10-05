@@ -20,6 +20,7 @@ import {
   Sparkles,
   X
 } from 'lucide-react';
+import { calculateCartDiscount } from '@/lib/cart-discount';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -155,15 +156,19 @@ export default function CheckoutPage() {
   const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
   const codFee = paymentMethod === 'CASH_ON_DELIVERY' ? standardCodFee : 0;
   
+  // Otomatik Sepette İndirim Kampanyası
+  const cartDiscount = calculateCartDiscount(items, settings);
+  const cartDiscountAmount = cartDiscount.isEligible ? cartDiscount.discountAmount : 0;
+
   const couponDiscountAmount = couponDiscount ? couponDiscount.amount : 0;
-  const subtotalAfterCoupon = Math.max(0, subtotal - couponDiscountAmount);
+  const subtotalAfterBaseDiscounts = Math.max(0, subtotal - cartDiscountAmount - couponDiscountAmount);
   
   // Havale İndirimi Hesaplama
   const bankDiscountAmount = (paymentMethod === 'BANK_TRANSFER' && bankDiscountRate > 0)
-    ? Number(((subtotalAfterCoupon * bankDiscountRate) / 100).toFixed(2))
+    ? Number(((subtotalAfterBaseDiscounts * bankDiscountRate) / 100).toFixed(2))
     : 0;
 
-  const totalDiscount = couponDiscountAmount + bankDiscountAmount;
+  const totalDiscount = Number((cartDiscountAmount + couponDiscountAmount + bankDiscountAmount).toFixed(2));
   const grandTotal = Math.max(0, Number((subtotal - totalDiscount + shippingFee + codFee).toFixed(2)));
 
   if (items.length === 0 && !paytrIframeToken && !isSuccess) {
@@ -808,6 +813,15 @@ export default function CheckoutPage() {
                 <span>Ara Toplam:</span>
                 <span className="font-bold text-slate-900">₺{subtotal.toFixed(2)}</span>
               </div>
+              {cartDiscount.isEligible && cartDiscount.discountAmount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{cartDiscount.title}:</span>
+                  </span>
+                  <span>-₺{cartDiscount.discountAmount.toFixed(2)}</span>
+                </div>
+              )}
               {couponDiscount && (
                 <div className="flex justify-between text-emerald-600 font-bold">
                   <span>Kupon İndirimi ({couponDiscount.code}):</span>

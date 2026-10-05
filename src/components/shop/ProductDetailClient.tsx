@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '@/lib/cart-context';
 import { calculateCurtainPrice, CalculationResult } from '@/modules/pricing-engine';
 import { DEFAULT_SETTINGS } from '@/lib/settings-constants';
-import { Star, ChevronRight } from 'lucide-react';
+import { isItemEligibleForCartDiscount, parseCategoryIds } from '@/lib/cart-discount';
+import { Star, ChevronRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import ProductGallery from './detail/ProductGallery';
 import CurtainOptionsForm from './detail/CurtainOptionsForm';
@@ -119,6 +120,29 @@ export default function ProductDetailClient({ product, similarProducts, initialS
     mountingType, plisseProfileColor, plisseMeasurementType, fonWingType, fonMountingType, withRenso, settings
   ]);
 
+  const allCategoryIds = Array.from(
+    new Set(
+      [
+        product.category?.id,
+        (product as any).categoryId,
+        ...((product as any).categories?.map((c: any) => c.categoryId || c.category?.id) || []),
+      ].filter(Boolean)
+    )
+  ) as string[];
+
+  const isCartDiscountActive = Number(settings?.cart_discount_active) === 1;
+  const cartDiscountRate = Number(settings?.cart_discount_rate) || 0;
+  const cartDiscountTitle = settings?.cart_discount_title || `Sepette %${cartDiscountRate} İndirim`;
+  const cartDiscountTarget = settings?.cart_discount_target_type || 'ALL';
+  const cartDiscountCategories = parseCategoryIds(settings?.cart_discount_category_ids);
+  const isProductEligibleForDiscount =
+    isCartDiscountActive &&
+    isItemEligibleForCartDiscount(
+      { categoryId: product.category?.id || (product as any).categoryId, categoryIds: allCategoryIds },
+      cartDiscountTarget,
+      cartDiscountCategories
+    );
+
   const handleAddToCart = () => {
     if (!calcResult) return;
     const coverImage = product.images[0]?.imageUrl || '/static/sample/tulle_sample.jpg';
@@ -136,6 +160,8 @@ export default function ProductDetailClient({ product, similarProducts, initialS
       unitPrice: calcResult.unitFinalPrice,
       totalPrice: calcResult.grandTotal,
       note,
+      categoryId: product.category?.id || (product as any).categoryId,
+      categoryIds: allCategoryIds,
       calculationResult: calcResult,
     });
   };
@@ -169,6 +195,14 @@ export default function ProductDetailClient({ product, similarProducts, initialS
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 leading-tight">
               {product.name}
             </h1>
+
+            {/* Sepette İndirim Rozeti / Banner */}
+            {isProductEligibleForDiscount && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg text-xs font-bold shadow-xs mt-2.5">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                <span>{cartDiscountTitle}</span>
+              </div>
+            )}
 
             {(() => {
               const approvedReviews = (product as any).reviews || [];

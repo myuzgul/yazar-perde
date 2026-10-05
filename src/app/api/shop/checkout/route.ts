@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSystemSettings } from '@/lib/settings';
+import { calculateCartDiscount } from '@/lib/cart-discount';
 import { getPayTRIFrameToken } from '@/lib/paytr';
 import { triggerOrderNotification } from '@/lib/notification-service';
 import { getCustomerSession, hashPassword, createSessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/auth';
@@ -122,9 +123,34 @@ export async function POST(req: NextRequest) {
     const shippingFee = subtotal >= freeShippingThreshold ? 0 : standardShippingFee;
     const paymentFee = paymentMethod === 'CASH_ON_DELIVERY' ? standardCodFee : 0;
 
-    // Kupon İndirimi Hesaplama
-    let discountTotal = 0;
+    // 1. Sepette İndirim Kampanyası Hesaplama
+    const productIds = items.map((i: any) => i.productId).filter(Boolean);
+    const dbProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, categoryId: true, categories: { select: { categoryId: true } } },
+    });
+    const productCategoryMap = new Map<string, { categoryId?: string; categoryIds: string[] }>();
+    for (const p of dbProducts) {
+      const cIds = [p.categoryId, ...(p.categories?.map((c) => c.categoryId) || [])].filter(Boolean) as string[];
+      productCategoryMap.set(p.id, { categoryId: p.categoryId || undefined, categoryIds: cIds });
+    }
+
+    const enhancedItems = items.map((item: any) => {
+      const dbCat = productCategoryMap.get(item.productId);
+      return {
+        ...item,
+        categoryId: item.categoryId || dbCat?.categoryId,
+        categoryIds: item.categoryIds && item.categoryIds.length > 0 ? item.categoryIds : (dbCat?.categoryIds || []),
+      };
+    });
+
+    const cartDiscount = calculateCartDiscount(enhancedItems, settings);
+    const cartDiscountAmount = cartDiscount.isEligible ? cartDiscount.discountAmount : 0;
+    let discountTotal = cartDiscountAmount;
+
+    // 2. Kupon İndirimi Hesaplama
     let appliedCoupon: any = null;
+    let couponDiscountAmount = 0;
 
     if (body.couponCode && typeof body.couponCode === 'string') {
       const cleanCoupon = body.couponCode.trim().toUpperCase().replace(/\s+/g, '');
@@ -144,17 +170,18 @@ export async function POST(req: NextRequest) {
           if (coupon.maxDiscountAmount && calc > coupon.maxDiscountAmount) {
             calc = coupon.maxDiscountAmount;
           }
-          discountTotal = Number(calc.toFixed(2));
+          couponDiscountAmount = Number(calc.toFixed(2));
         } else if (coupon.discountType === 'FIXED_AMOUNT') {
-          discountTotal = Number(Math.min(coupon.discountValue, subtotal).toFixed(2));
+          couponDiscountAmount = Number(Math.min(coupon.discountValue, subtotal).toFixed(2));
         } else if (coupon.discountType === 'FREE_SHIPPING') {
-          discountTotal = shippingFee;
+          couponDiscountAmount = shippingFee;
         }
+        discountTotal = Number((discountTotal + couponDiscountAmount).toFixed(2));
         appliedCoupon = coupon;
       }
     }
 
-    // Havale / EFT İndirimi Hesaplama
+    // 3. Havale / EFT İndirimi Hesaplama
     let bankTransferDiscount = 0;
     const bankDiscountRate = Number(settings.bank_transfer_discount_rate) || 0;
 
@@ -170,6 +197,22 @@ export async function POST(req: NextRequest) {
     const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const orderNumber = `${dateStr}${randomSuffix}`;
+
+    // Timeline Açıklama Metni
+    const discountDetails: string[] = [];
+    if (cartDiscountAmount > 0) {
+      discountDetails.push(`${cartDiscount.title} (-₺${cartDiscountAmount.toFixed(2)})`);
+    }
+    if (appliedCoupon && couponDiscountAmount > 0) {
+      discountDetails.push(`Kupon ${appliedCoupon.code} (-₺${couponDiscountAmount.toFixed(2)})`);
+    }
+    if (paymentMethod === 'BANK_TRANSFER' && bankTransferDiscount > 0) {
+      discountDetails.push(`%${bankDiscountRate} Havale İndirimi (-₺${bankTransferDiscount.toFixed(2)})`);
+    }
+
+    const timelineDescription = discountDetails.length > 0
+      ? `Siparişiniz ${orderNumber} kodu ile başarıyla sisteme alındı (${discountDetails.join(', ')} uygulandı).`
+      : `Siparişiniz ${orderNumber} kodu ile başarıyla sisteme alındı.`;
 
     const order = await prisma.order.create({
       data: {
@@ -223,9 +266,7 @@ export async function POST(req: NextRequest) {
           create: {
             status: 'PENDING',
             title: 'Sipariş Oluşturuldu',
-            description: paymentMethod === 'BANK_TRANSFER' && bankTransferDiscount > 0
-              ? `Siparişiniz ${orderNumber} kodu ile başarıyla sisteme alındı (%${bankDiscountRate} havale indirimi uygulandı).`
-              : `Siparişiniz ${orderNumber} kodu ile başarıyla sisteme alındı.`,
+            description: timelineDescription,
           },
         },
       },

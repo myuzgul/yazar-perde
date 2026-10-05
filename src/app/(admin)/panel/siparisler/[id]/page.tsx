@@ -489,6 +489,12 @@ export default function AdminOrderDetailPage() {
                   <span>Ara Toplam:</span>
                   <span className="font-bold text-slate-900">₺{order.subtotal.toFixed(2)}</span>
                 </div>
+                {order.discountTotal > 0 && (
+                  <div className="flex justify-between text-emerald-600 font-bold">
+                    <span>Uygulanan İndirim {order.couponCode ? `(Kupon: ${order.couponCode})` : ''}:</span>
+                    <span>-₺{order.discountTotal.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Kargo Ücreti:</span>
                   <span className="font-bold text-slate-900">₺{order.shippingFee.toFixed(2)}</span>

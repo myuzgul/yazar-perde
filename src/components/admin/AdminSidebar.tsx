@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Ticket,
   Sparkles,
-  CreditCard
+  CreditCard,
+  Percent
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -35,6 +36,7 @@ export default function AdminSidebar() {
   const menuItems = [
     { label: 'Dashboard & Raporlar', href: '/panel', icon: TrendingUp },
     { label: 'Sipariş Yönetimi', href: '/panel/siparisler', icon: ShoppingBag },
+    { label: 'Sepette İndirim', href: '/panel/sepette-indirim', icon: Percent },
     { label: 'Kuponlar & İndirim', href: '/panel/kuponlar', icon: Ticket },
     { label: 'Ürün Yönetimi', href: '/panel/urunler', icon: Layers },
     { label: 'Ana Sayfa Vitrin & Sıra', href: '/panel/vitrin', icon: Sparkles },

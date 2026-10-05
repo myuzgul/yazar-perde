@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { useCart } from '@/lib/cart-context';
-import { X, Trash2, ShoppingBag, ArrowRight, Truck, CheckCircle2 } from 'lucide-react';
+import { X, Trash2, ShoppingBag, ArrowRight, Truck, CheckCircle2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurtainOptions } from '@/lib/curtain-options-helper';
+import { calculateCartDiscount } from '@/lib/cart-discount';
 
 interface CartDrawerProps {
   freeShippingThreshold?: number;
@@ -13,17 +14,25 @@ interface CartDrawerProps {
 export default function CartDrawer({ freeShippingThreshold: initialThreshold = 1500 }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, subtotal, isDrawerOpen, closeDrawer } = useCart();
   const [threshold, setThreshold] = React.useState<number>(initialThreshold);
+  const [settings, setSettings] = React.useState<any>(null);
 
   React.useEffect(() => {
     fetch('/api/settings/public')
       .then((r) => r.json())
       .then((d) => {
-        if (d.success && d.data?.free_shipping_threshold) {
-          setThreshold(Number(d.data.free_shipping_threshold));
+        if (d.success && d.data) {
+          setSettings(d.data);
+          if (d.data.free_shipping_threshold) {
+            setThreshold(Number(d.data.free_shipping_threshold));
+          }
         }
       })
       .catch(() => {});
   }, []);
+
+  const cartDiscount = calculateCartDiscount(items, settings);
+  const discountAmount = cartDiscount.isEligible ? cartDiscount.discountAmount : 0;
+  const finalSubtotal = Math.max(0, subtotal - discountAmount);
 
   if (!isDrawerOpen) return null;
 
@@ -163,9 +172,28 @@ export default function CartDrawer({ freeShippingThreshold: initialThreshold = 1
           {/* Footer */}
           {items.length > 0 && (
             <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-900">
-                <span>Ara Toplam:</span>
-                <span className="text-base font-extrabold text-slate-950">₺{subtotal.toFixed(2)}</span>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>Ara Toplam:</span>
+                  <span className="font-bold text-slate-900">₺{subtotal.toFixed(2)}</span>
+                </div>
+
+                {cartDiscount.isEligible && cartDiscount.discountAmount > 0 && (
+                  <div className="flex items-center justify-between text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded-sm border border-emerald-200/60">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{cartDiscount.title}:</span>
+                    </span>
+                    <span>-₺{cartDiscount.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between font-bold text-slate-900 pt-1.5 border-t border-slate-200/60">
+                  <span>Genel Toplam:</span>
+                  <span className="text-base font-extrabold text-slate-950">
+                    ₺{finalSubtotal.toFixed(2)}
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">

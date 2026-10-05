@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CalculationResult } from '@/modules/pricing-engine/types';
@@ -17,6 +17,8 @@ export interface CartItem {
   unitPrice: number;
   totalPrice: number;
   note?: string;
+  categoryId?: string;
+  categoryIds?: string[];
   calculationResult: CalculationResult;
 }
 
