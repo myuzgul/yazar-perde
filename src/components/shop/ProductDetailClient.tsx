@@ -143,6 +143,21 @@ export default function ProductDetailClient({ product, similarProducts, initialS
       cartDiscountCategories
     );
 
+  const cartDiscountAmount = isProductEligibleForDiscount && calcResult
+    ? Number(((calcResult.grandTotal * cartDiscountRate) / 100).toFixed(2))
+    : 0;
+  const cartDiscountedPrice = isProductEligibleForDiscount && calcResult
+    ? Math.max(0, Number((calcResult.grandTotal - cartDiscountAmount).toFixed(2)))
+    : (calcResult?.grandTotal || 0);
+
+  const cartDiscountInfo = isProductEligibleForDiscount && cartDiscountAmount > 0 ? {
+    active: true,
+    rate: cartDiscountRate,
+    title: cartDiscountTitle,
+    discountAmount: cartDiscountAmount,
+    discountedPrice: cartDiscountedPrice,
+  } : null;
+
   const handleAddToCart = () => {
     if (!calcResult) return;
     const coverImage = product.images[0]?.imageUrl || '/static/sample/tulle_sample.jpg';
@@ -284,6 +299,7 @@ export default function ProductDetailClient({ product, similarProducts, initialS
             note={note}
             setNote={setNote}
             onAddToCart={handleAddToCart}
+            cartDiscountInfo={cartDiscountInfo}
           />
         </div>
       </div>
@@ -294,7 +310,7 @@ export default function ProductDetailClient({ product, similarProducts, initialS
         descriptionHtml={product.descriptionHtml}
         mountingVideoUrl={product.mountingVideoUrl}
         mountingGuideHtml={product.mountingGuideHtml}
-        grandTotal={calcResult ? calcResult.grandTotal : product.basePrice}
+        grandTotal={cartDiscountInfo?.active ? cartDiscountInfo.discountedPrice : (calcResult ? calcResult.grandTotal : product.basePrice)}
       />
 
       {/* BENZER ÜRÜNLER */}
