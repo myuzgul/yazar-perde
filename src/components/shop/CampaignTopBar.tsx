@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Sparkles, Clock, X, ArrowRight, Flame } from 'lucide-react';
+import { Clock, X, Flame } from 'lucide-react';
 import { isCampaignLive } from '@/lib/cart-discount';
 
 interface CampaignTopBarProps {
@@ -57,64 +57,52 @@ export default function CampaignTopBar({ initialSettings }: CampaignTopBarProps)
 
   const rate = Number(settings?.cart_discount_rate || 10);
   const title = settings?.cart_discount_title || `Sepette %${rate} İndirim`;
-  const bannerText = settings?.cart_discount_banner_text || `🎉 BÜYÜK FIRSAT! Tüm özel dikim perde siparişlerinizde ${title} avantajını kaçırmayın!`;
+  const bannerText = settings?.cart_discount_banner_text || `🔥 SEPETTE BÜYÜK FIRSAT! Tüm perde siparişlerinizde ${title} fırsatını kaçırmayın!`;
 
   return (
-    <aside aria-label="Kampanya Duyuru Çubuğu" className="relative bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white text-xs font-medium py-2 px-4 shadow-md overflow-hidden z-40 transition-all duration-300">
-      {/* Arka Plan Hareketli Işıltı Efekti */}
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.15)_50%,transparent_100%)] animate-[shimmer_3s_infinite]" />
+    <aside aria-label="Kampanya Duyuru Çubuğu" className="relative bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white text-[11px] sm:text-xs font-semibold py-1 sm:py-1.5 px-3 sm:px-4 shadow-xs overflow-hidden z-40 transition-all">
+      {/* Hareketli Işıltı Efekti */}
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.12)_50%,transparent_100%)] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5 relative z-10">
-        {/* Sol / Ana Mesaj */}
-        <div className="flex items-center gap-2 text-center md:text-left flex-wrap justify-center">
-          <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider shadow-xs">
-            <Flame className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
-            <span>FIRSAT KAMPANYASI</span>
-          </span>
-          <span className="font-extrabold text-white text-xs sm:text-sm drop-shadow-xs">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 relative z-10">
+        {/* Tıklanabilir İnce Duyuru Alanı */}
+        <Link
+          href="/kategori/tul-perdeler"
+          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2.5 text-center truncate hover:opacity-95 transition"
+        >
+          <Flame className="w-3.5 h-3.5 text-amber-300 shrink-0 animate-pulse" />
+          
+          <span className="truncate drop-shadow-xs">
             {bannerText}
           </span>
-        </div>
 
-        {/* Sağ: Geri Sayım Sayacı & Keşfet Butonu */}
-        <div className="flex items-center gap-3 shrink-0">
+          {/* Geri Sayım Sayacı (Kompakt Tek Satır) */}
           {timeLeft && (
-            <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-xs px-3 py-1 rounded-lg border border-white/20 text-[11px] font-bold text-amber-200">
-              <Clock className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-              <span className="hidden sm:inline">Kalan Süre:</span>
-              <div className="flex items-center gap-1 font-mono text-white font-black">
-                {timeLeft.days > 0 && (
-                  <>
-                    <span className="bg-white/20 px-1.5 py-0.5 rounded text-[11px]">{String(timeLeft.days).padStart(2, '0')}g</span>
-                    <span>:</span>
-                  </>
-                )}
-                <span className="bg-white/20 px-1.5 py-0.5 rounded text-[11px]">{String(timeLeft.hours).padStart(2, '0')}s</span>
-                <span>:</span>
-                <span className="bg-white/20 px-1.5 py-0.5 rounded text-[11px]">{String(timeLeft.minutes).padStart(2, '0')}d</span>
-                <span>:</span>
-                <span className="bg-white/20 px-1.5 py-0.5 rounded text-[11px] text-amber-300">{String(timeLeft.seconds).padStart(2, '0')}s</span>
-              </div>
-            </div>
+            <span className="inline-flex items-center gap-1 bg-black/30 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-mono text-amber-200 font-bold shrink-0 ml-1">
+              <Clock className="w-3 h-3 text-amber-300 shrink-0" />
+              {timeLeft.days > 0 && `${timeLeft.days}g `}
+              {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+            </span>
           )}
 
-          <Link
-            href="/kategori/tul-perdeler"
-            className="inline-flex items-center gap-1 bg-white text-slate-950 hover:bg-amber-100 px-3.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider transition shadow-sm hover:scale-105 transform active:scale-95"
-          >
-            <span>Alışverişe Başla</span>
-            <ArrowRight className="w-3 h-3 text-red-600" />
-          </Link>
+          <span className="hidden sm:inline-block text-[10px] font-bold text-amber-200 underline shrink-0 ml-1">
+            İncele →
+          </span>
+        </Link>
 
-          <button
-            type="button"
-            onClick={() => setDismissed(true)}
-            className="p-1 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition cursor-pointer"
-            title="Duyuruyu Kapat"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        {/* Kapatma Butonu (Sağda Küçük ve İnce) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDismissed(true);
+          }}
+          className="p-0.5 rounded text-white/75 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
+          title="Kapat"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       </div>
     </aside>
   );
