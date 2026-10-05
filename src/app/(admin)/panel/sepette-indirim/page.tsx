@@ -10,13 +10,15 @@ import {
   ShoppingBag, 
   FolderTree, 
   Search, 
-  AlertCircle, 
+  Calendar,
+  Clock,
+  Flame,
   HelpCircle,
   Tag,
-  Check,
-  X
+  Volume2,
+  AlertCircle
 } from 'lucide-react';
-import { parseCategoryIds } from '@/lib/cart-discount';
+import { parseCategoryIds, isDiscountDateValid } from '@/lib/cart-discount';
 
 interface CategoryItem {
   id: string;
@@ -38,6 +40,16 @@ export default function SepetteIndirimPage() {
   const [targetType, setTargetType] = useState<'ALL' | 'CATEGORIES'>('ALL');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [minAmount, setMinAmount] = useState<number>(0);
+
+  // Tarih ve Zamanlama State
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+
+  // Site Geneli Duyuru Çubuğu State
+  const [showTopBar, setShowTopBar] = useState<boolean>(true);
+  const [bannerText, setBannerText] = useState<string>(
+    '🎉 SEPETTE BÜYÜK FIRSAT! Tüm özel dikim perde siparişlerinizde sepette anında net indirim avantajını kaçırmayın!'
+  );
 
   // Kategori Listesi & Arama
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -79,6 +91,18 @@ export default function SepetteIndirimPage() {
         if (map.cart_discount_min_amount !== undefined) {
           setMinAmount(Number(map.cart_discount_min_amount) || 0);
         }
+        if (map.cart_discount_start_date !== undefined) {
+          setStartDate(map.cart_discount_start_date || '');
+        }
+        if (map.cart_discount_end_date !== undefined) {
+          setEndDate(map.cart_discount_end_date || '');
+        }
+        if (map.cart_discount_banner_text !== undefined) {
+          setBannerText(map.cart_discount_banner_text || '');
+        }
+        if (map.cart_discount_show_top_bar !== undefined) {
+          setShowTopBar(Number(map.cart_discount_show_top_bar) === 1);
+        }
       }
     } catch (err) {
       console.error('Veri yükleme hatası:', err);
@@ -104,6 +128,62 @@ export default function SepetteIndirimPage() {
   const handleClearCategories = () => {
     setSelectedCategoryIds([]);
   };
+
+  // Hızlı Tarih Seçimleri
+  const setQuickDateRange = (days: number) => {
+    const now = new Date();
+    const startStr = now.toISOString().slice(0, 16);
+    const end = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    end.setHours(23, 59, 0, 0);
+    const endStr = end.toISOString().slice(0, 16);
+
+    setStartDate(startStr);
+    setEndDate(endStr);
+  };
+
+  const clearDates = () => {
+    setStartDate('');
+    setEndDate('');
+  };
+
+  // Tarih Durumu Kontrolü
+  const isDateValid = isDiscountDateValid(startDate, endDate);
+  const nowTime = new Date().getTime();
+  const startTime = startDate ? new Date(startDate).getTime() : null;
+  const endTime = endDate ? new Date(endDate).getTime() : null;
+
+  let dateStatusBadge = {
+    color: 'bg-slate-100 text-slate-600',
+    text: 'Süresiz (Manuel Aç/Kapa)',
+  };
+
+  if (startTime && nowTime < startTime) {
+    const diffDays = Math.ceil((startTime - nowTime) / (1000 * 60 * 60 * 24));
+    dateStatusBadge = {
+      color: 'bg-amber-100 text-amber-800 border-amber-200',
+      text: `⏳ Başlamasına ${diffDays} gün var`,
+    };
+  } else if (endTime && nowTime > endTime) {
+    dateStatusBadge = {
+      color: 'bg-red-100 text-red-800 border-red-200',
+      text: '⛔ Kampanya Süresi Doldu',
+    };
+  } else if (startTime || endTime) {
+    if (endTime) {
+      const remainingDays = Math.ceil((endTime - nowTime) / (1000 * 60 * 60 * 24));
+      dateStatusBadge = {
+        color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        text: `🟢 Aktif (${remainingDays} gün kaldı)`,
+      };
+    } else {
+      dateStatusBadge = {
+        color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        text: '🟢 Aktif',
+      };
+    }
+  }
+
+  const isActuallyRunning = isActive && isDateValid;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,6 +227,30 @@ export default function SepetteIndirimPage() {
         label: 'Sepette İndirim Minimum Sepet Tutarı',
         group: 'CAMPAIGN',
       },
+      {
+        key: 'cart_discount_start_date',
+        value: startDate,
+        label: 'Sepette İndirim Başlangıç Tarihi',
+        group: 'CAMPAIGN',
+      },
+      {
+        key: 'cart_discount_end_date',
+        value: endDate,
+        label: 'Sepette İndirim Bitiş Tarihi',
+        group: 'CAMPAIGN',
+      },
+      {
+        key: 'cart_discount_show_top_bar',
+        value: showTopBar ? '1' : '0',
+        label: 'Site Geneli Üst Kampanya Çubuğu Gösterimi',
+        group: 'CAMPAIGN',
+      },
+      {
+        key: 'cart_discount_banner_text',
+        value: bannerText.trim(),
+        label: 'Site Geneli Kampanya Duyuru Metni',
+        group: 'CAMPAIGN',
+      },
     ];
 
     try {
@@ -171,7 +275,7 @@ export default function SepetteIndirimPage() {
 
   // Canlı Simülasyon Değerleri
   const samplePrice = 1000;
-  const sampleDiscountAmount = isActive ? (samplePrice * discountRate) / 100 : 0;
+  const sampleDiscountAmount = isActuallyRunning ? (samplePrice * discountRate) / 100 : 0;
   const sampleGrandTotal = samplePrice - sampleDiscountAmount;
 
   return (
@@ -184,11 +288,11 @@ export default function SepetteIndirimPage() {
           <div>
             <div className="flex items-center gap-2 text-[#1B84F8] text-xs font-semibold mb-1">
               <Sparkles className="w-4 h-4" />
-              <span>OTOMATİK KAMPANYA MOTORU</span>
+              <span>OTOMATİK KAMPANYA VE DUYURU MOTORU</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Sepette İndirim Kampanyası</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Sepette İndirim & Kampanya Yönetimi</h1>
             <p className="text-xs sm:text-sm text-slate-500">
-              Müşterileriniz ürünleri sepete eklediğinde belirlediğiniz oranda otomatik sepet indirimi uygulayın.
+              Tarih aralıklı sepet indirimi tanımlayın ve site genelinde geri sayımlı duyuru havası oluşturun.
             </p>
           </div>
 
@@ -216,22 +320,35 @@ export default function SepetteIndirimPage() {
           <form onSubmit={handleSave} className="space-y-6">
             {/* 1. KAMPANYA DURUMU VE ANA KONTROL KARTI */}
             <div className={`p-6 rounded-2xl border transition-all shadow-sm ${
-              isActive 
+              isActuallyRunning 
                 ? 'bg-emerald-50/50 border-emerald-200' 
+                : isActive && !isDateValid
+                ? 'bg-amber-50/50 border-amber-200'
                 : 'bg-white border-slate-200'
             }`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                    isActive ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'bg-slate-100 text-slate-400'
+                    isActuallyRunning 
+                      ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' 
+                      : isActive && !isDateValid
+                      ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+                      : 'bg-slate-100 text-slate-400'
                   }`}>
                     <Percent className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Kampanya Durumu</h3>
-                    <p className="text-xs text-slate-500">
-                      {isActive
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-slate-900">Kampanya Durumu</h3>
+                      <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${dateStatusBadge.color}`}>
+                        {dateStatusBadge.text}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {isActuallyRunning
                         ? 'Sepette indirim kampanyası şu an sitede AKTİF ve müşterilere uygulanıyor.'
+                        : isActive && !isDateValid
+                        ? 'Anahtar AÇIK ancak seçili tarih aralığı dışında olduğu için indirim henüz veya artık uygulanmıyor.'
                         : 'Sepette indirim kampanyası şu an KAPALI.'}
                     </p>
                   </div>
@@ -241,7 +358,7 @@ export default function SepetteIndirimPage() {
                   <span className={`text-xs font-bold px-3 py-1 rounded-full ${
                     isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
                   }`}>
-                    {isActive ? '● AKTİF' : '○ PASİF'}
+                    {isActive ? '● AÇIK' : '○ KAPALI'}
                   </span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -259,11 +376,128 @@ export default function SepetteIndirimPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* SOL: AYARLAR FORMU (8 Kolon) */}
               <div className="lg:col-span-8 space-y-6">
-                {/* 2. İNDİRİM DETAYLARI KARTI */}
+                
+                {/* 2. TARİH ARALIĞI VE ZAMANLAMA KARTI */}
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-[#1B84F8]" />
+                      <span>Kampanya Geçerlilik Tarihleri (Zamanlama)</span>
+                    </h3>
+                    <span className="text-[10px] text-slate-400 font-medium">Opsiyonel</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Başlangıç Tarihi & Saati
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1B84F8]"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        Boş bırakılırsa kampanya hemen başlar.
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Bitiş Tarihi & Saati (Geri Sayım Sayacı)
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1B84F8]"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        Tarih dolduğunda kampanya ve duyuru otomatik kapanır.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Hızlı Tarih Seçim Butonları */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-[11px] font-bold text-slate-500">Hızlı Süre Tanımla:</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => setQuickDateRange(3)}
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                      >
+                        ⚡ 3 Günlük Flaş İndirim
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setQuickDateRange(7)}
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                      >
+                        📅 1 Hafta
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setQuickDateRange(15)}
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                      >
+                        📅 15 Gün
+                      </button>
+                      {(startDate || endDate) && (
+                        <button
+                          type="button"
+                          onClick={clearDates}
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition cursor-pointer"
+                        >
+                          Süresiz Yap (Tarihleri Temizle)
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. SİTE GENELİ DUYURU ÇUBUĞU (TOP BAR) KARTI */}
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Volume2 className="w-4 h-4 text-[#1B84F8]" />
+                      <span>Site Geneli Kampanya Duyuru Çubuğu (Top Bar)</span>
+                    </h3>
+                    
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showTopBar}
+                        onChange={(e) => setShowTopBar(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#1B84F8]"></div>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Duyuru Çubuğu Metni *
+                    </label>
+                    <input
+                      type="text"
+                      value={bannerText}
+                      onChange={(e) => setBannerText(e.target.value)}
+                      placeholder="Örn: 🎉 BÜYÜK FIRSAT! Tüm perde siparişlerinizde sepette anında net indirim avantajını kaçırmayın!"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1B84F8]"
+                    />
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Bu metin sitenin en tepesinde renkli ve hareketli duyuru çubuğu olarak tüm ziyaretçilere gösterilir. Kampanya kapatıldığında veya süresi bittiğinde otomatik kaybolur.
+                    </span>
+                  </div>
+                </div>
+
+                {/* 4. İNDİRİM DETAYLARI KARTI */}
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center gap-2">
                     <Tag className="w-4 h-4 text-[#1B84F8]" />
-                    <span>İndirim Oranı ve Kampanya Metni</span>
+                    <span>İndirim Oranı ve Rozet Metni</span>
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -359,7 +593,7 @@ export default function SepetteIndirimPage() {
                   </div>
                 </div>
 
-                {/* 3. UYGULANACAK KATEGORİ KAPSAMI KARTI */}
+                {/* 5. UYGULANACAK KATEGORİ KAPSAMI KARTI */}
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center gap-2">
                     <FolderTree className="w-4 h-4 text-[#1B84F8]" />
@@ -507,17 +741,53 @@ export default function SepetteIndirimPage() {
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 space-y-4 sticky top-6">
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-2">
                     <ShoppingBag className="w-4 h-4 text-emerald-600" />
-                    <span>Canlı Sepet Simülasyonu</span>
+                    <span>Canlı Kampanya Önizlemesi</span>
                   </h3>
+
+                  {/* Üst Duyuru Çubuğu Önizlemesi */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Site Tepesi Duyuru Şeridi
+                    </span>
+                    {showTopBar && isActuallyRunning ? (
+                      <div className="p-3 bg-gradient-to-r from-red-600 to-amber-600 text-white rounded-xl text-xs space-y-1.5 shadow-sm">
+                        <div className="flex items-center gap-1 font-black text-[11px]">
+                          <Flame className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
+                          <span>FIRSAT KAMPANYASI</span>
+                        </div>
+                        <p className="text-[11px] leading-snug font-bold">
+                          {bannerText || `🎉 Tüm siparişlerinizde ${title} fırsatı!`}
+                        </p>
+                        {endDate && (
+                          <div className="inline-flex items-center gap-1 text-[10px] font-mono bg-black/30 px-2 py-0.5 rounded text-amber-200">
+                            <Clock className="w-3 h-3" />
+                            <span>Geri sayım sayacı aktif</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-slate-100 text-slate-500 rounded-xl text-xs text-center italic">
+                        {isActive && !isDateValid ? 'Tarih aralığı dışında (Gösterilmiyor)' : 'Duyuru Çubuğu Kapalı'}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Örnek Ürün Rozeti */}
                   <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Ürün Kartı Rozet Görünümü
+                      Ürün Detay Fiyat Alanı
                     </span>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-600 text-white rounded-md text-[11px] font-bold shadow-xs">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{title || `Sepette %${discountRate} İndirim`}</span>
+                    <div className="space-y-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs text-slate-400 line-through">₺1.000,00</span>
+                        <span className="text-lg font-black text-emerald-600">
+                          ₺{(sampleGrandTotal).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-600 text-white rounded-md text-[10px] font-bold shadow-xs">
+                        <Sparkles className="w-3 h-3" />
+                        <span>{title || `Sepette %${discountRate} İndirim`}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -534,7 +804,7 @@ export default function SepetteIndirimPage() {
                         <span className="font-bold text-white">₺{samplePrice.toFixed(2)}</span>
                       </div>
 
-                      {isActive ? (
+                      {isActuallyRunning ? (
                         <div className="flex justify-between text-emerald-400 font-bold">
                           <span>{title}:</span>
                           <span>-₺{sampleDiscountAmount.toFixed(2)}</span>
@@ -563,7 +833,7 @@ export default function SepetteIndirimPage() {
                   <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-[11px] text-blue-900 flex items-start gap-2">
                     <HelpCircle className="w-4 h-4 text-[#1B84F8] shrink-0 mt-0.5" />
                     <p className="leading-relaxed">
-                      Sepette indirim uygulandığında hem <strong>Sepet Çekmecesi (Drawer)</strong>, hem <strong>/sepet sayfası</strong>, hem de <strong>/odeme sayfası</strong> otomatik olarak güncellenir.
+                      Belirlenen bitiş tarihine ulaşıldığında indirim motoru ve üst duyuru çubuğu otomatik olarak kapanacaktır.
                     </p>
                   </div>
 

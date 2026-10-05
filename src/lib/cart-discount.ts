@@ -31,6 +31,31 @@ export function parseCategoryIds(raw: any): string[] {
   return [];
 }
 
+export function isDiscountDateValid(startDate?: string | null, endDate?: string | null): boolean {
+  const now = new Date();
+  if (startDate && startDate.trim()) {
+    const start = new Date(startDate);
+    if (!isNaN(start.getTime()) && now < start) {
+      return false; // Henüz başlamadı
+    }
+  }
+  if (endDate && endDate.trim()) {
+    const end = new Date(endDate);
+    if (!isNaN(end.getTime()) && now > end) {
+      return false; // Süresi doldu
+    }
+  }
+  return true;
+}
+
+export function isCampaignLive(settings: any): boolean {
+  if (!settings) return false;
+  const active = Number(settings.cart_discount_active ?? 0) === 1;
+  const rate = Number(settings.cart_discount_rate ?? 0);
+  if (!active || rate <= 0) return false;
+  return isDiscountDateValid(settings.cart_discount_start_date, settings.cart_discount_end_date);
+}
+
 export function isItemEligibleForCartDiscount(
   item: { categoryId?: string; categoryIds?: string[] },
   targetType: string,
@@ -61,8 +86,9 @@ export function calculateCartDiscount(
   const targetType = (settings?.cart_discount_target_type === 'CATEGORIES' ? 'CATEGORIES' : 'ALL') as 'ALL' | 'CATEGORIES';
   const categoryIds = parseCategoryIds(settings?.cart_discount_category_ids);
   const minAmount = Number(settings?.cart_discount_min_amount ?? 0);
+  const isDateValid = isDiscountDateValid(settings?.cart_discount_start_date, settings?.cart_discount_end_date);
 
-  if (!active || rate <= 0 || !items || items.length === 0) {
+  if (!active || !isDateValid || rate <= 0 || !items || items.length === 0) {
     return {
       isActive: false,
       rate,

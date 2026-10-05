@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '@/lib/cart-context';
 import { calculateCurtainPrice, CalculationResult } from '@/modules/pricing-engine';
 import { DEFAULT_SETTINGS } from '@/lib/settings-constants';
-import { isItemEligibleForCartDiscount, parseCategoryIds } from '@/lib/cart-discount';
+import { isItemEligibleForCartDiscount, parseCategoryIds, isCampaignLive } from '@/lib/cart-discount';
 import { Star, ChevronRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import ProductGallery from './detail/ProductGallery';
@@ -130,7 +130,7 @@ export default function ProductDetailClient({ product, similarProducts, initialS
     )
   ) as string[];
 
-  const isCartDiscountActive = Number(settings?.cart_discount_active) === 1;
+  const isCartDiscountActive = isCampaignLive(settings);
   const cartDiscountRate = Number(settings?.cart_discount_rate) || 0;
   const cartDiscountTitle = settings?.cart_discount_title || `Sepette %${cartDiscountRate} İndirim`;
   const cartDiscountTarget = settings?.cart_discount_target_type || 'ALL';

@@ -78,6 +78,10 @@ export interface SystemSettingsMap {
   cart_discount_target_type: string;
   cart_discount_category_ids: string;
   cart_discount_min_amount: number;
+  cart_discount_start_date: string;
+  cart_discount_end_date: string;
+  cart_discount_banner_text: string;
+  cart_discount_show_top_bar: number;
 }
 
 export const DEFAULT_SETTINGS: SystemSettingsMap = {
@@ -167,4 +171,8 @@ export const DEFAULT_SETTINGS: SystemSettingsMap = {
   cart_discount_target_type: "ALL",
   cart_discount_category_ids: "[]",
   cart_discount_min_amount: 0,
+  cart_discount_start_date: "",
+  cart_discount_end_date: "",
+  cart_discount_banner_text: "🎉 SEPETTE BÜYÜK FIRSAT! Tüm özel dikim siparişlerinizde sepette anında net indirim avantajını kaçırmayın!",
+  cart_discount_show_top_bar: 1,
 };
