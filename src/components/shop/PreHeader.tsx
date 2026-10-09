@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ interface PreHeaderProps {
 export default function PreHeader({
   slogan = 'Özel Ölçülü Dikim Atölyesi • Kusursuz Uyum Garantisi',
   discountText = '1.500 TL Üzeri Ücretsiz Kargo',
-  phone = '+90 212 510 22 55',
+  phone = '0541 494 51 73',
 }: PreHeaderProps) {
   return (
     <div className="bg-slate-900 text-slate-300 text-[11px] py-1.5 px-4 border-b border-slate-800">

@@ -457,11 +457,11 @@ export default function Header({ cartCount = 0, onOpenCart, onOpenAuth }: Header
             {/* Alt Telefon Destek Butonu */}
             <div className="p-4 border-t border-slate-200 bg-slate-50">
               <a
-                href="tel:+902125102255"
+                href="tel:+905414945173"
                 className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-md text-xs font-semibold"
               >
                 <Phone className="w-3.5 h-3.5 text-[#1B84F8]" />
-                <span>+90 212 510 22 55</span>
+                <span>0541 494 51 73</span>
               </a>
             </div>
           </div>
