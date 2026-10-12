@@ -64,7 +64,7 @@ export interface CalculationInput {
   withBeads?: boolean;         // Boncuk istiyor mu? (etek dilimi varsa)
   rollerType?: RollerType;     // Çiftli sistem için
   mountingType?: MountingType; // Plise için (SCREW / HOOK / ADHESIVE)
-  plisseProfileColor?: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE'; // Plise Kasa Rengi
+  plisseProfileColor?: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE' | 'BLACK'; // Plise Kasa Rengi
   plisseMeasurementType?: 'PROFILE_INCLUDED' | 'INNER_GLASS'; // Plise Ölçü Alma Yöntemi (Profil Dahil / İç Cam)
   fonWingType?: FonWingType;   // Fon için (LEFT / RIGHT / DOUBLE)
   fonMountingType?: FonMountingType;

@@ -50,7 +50,8 @@ export async function POST(
 
       const pleat = snap.pleatLabel ? `Pile: ${snap.pleatLabel}` : '';
       const caseType = snap.caseType ? `Kasa: ${snap.caseType === 'CLOSED' ? 'Kapalı' : 'Açık'}` : '';
-      const details = [pleat, caseType, `${item.width}x${item.height} cm (${item.calculatedArea} m²)`].filter(Boolean).join(' • ');
+      const plisseColor = snap.plisseColorLabel ? `Kasa: ${snap.plisseColorLabel}` : '';
+      const details = [pleat, caseType, plisseColor, `${item.width}x${item.height} cm (${item.calculatedArea} m²)`].filter(Boolean).join(' • ');
 
       return {
         name: item.productName,

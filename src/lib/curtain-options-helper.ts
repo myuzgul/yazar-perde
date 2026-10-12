@@ -8,8 +8,12 @@ const PLISSE_COLOR_MAP: Record<string, string> = {
   CREAM: 'Krem Kasa',
   GRAY: 'Gri Kasa',
   ANTHRACITE: 'Antrasit Kasa',
+  BLACK: 'Siyah Kasa',
   BROWN: 'Kahve Kasa',
   BRONZE: 'Bronz Kasa',
+  SIYAH: 'Siyah Kasa',
+  siyah: 'Siyah Kasa',
+  black: 'Siyah Kasa',
 };
 
 const BRACKET_MAP: Record<string, string> = {

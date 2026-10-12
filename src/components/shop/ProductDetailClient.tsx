@@ -74,7 +74,7 @@ export default function ProductDetailClient({ product, similarProducts, initialS
   const [withBeads, setWithBeads] = useState<boolean>(false);
   const [rollerType, setRollerType] = useState<'NORMAL_ROLLER' | 'BLACKOUT_ROLLER'>('NORMAL_ROLLER');
   const [mountingType, setMountingType] = useState<'SCREW' | 'HOOK' | 'ADHESIVE'>('SCREW');
-  const [plisseProfileColor, setPlisseProfileColor] = useState<'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE'>('WHITE');
+  const [plisseProfileColor, setPlisseProfileColor] = useState<'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE' | 'BLACK'>('WHITE');
   const [plisseMeasurementType, setPlisseMeasurementType] = useState<'PROFILE_INCLUDED' | 'INNER_GLASS'>('PROFILE_INCLUDED');
   const [fonWingType, setFonWingType] = useState<'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING'>('DOUBLE_WING');
   const [fonMountingType, setFonMountingType] = useState<'CORNICE' | 'RUSTIC_RING' | 'RUSTIC_ROD_POCKET'>('CORNICE');

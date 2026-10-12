@@ -31,8 +31,8 @@ interface CurtainOptionsFormProps {
   setRollerType: (v: 'NORMAL_ROLLER' | 'BLACKOUT_ROLLER') => void;
   mountingType: 'SCREW' | 'HOOK' | 'ADHESIVE';
   setMountingType: (v: 'SCREW' | 'HOOK' | 'ADHESIVE') => void;
-  plisseProfileColor?: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE';
-  setPlisseProfileColor?: (v: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE') => void;
+  plisseProfileColor?: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE' | 'BLACK';
+  setPlisseProfileColor?: (v: 'WHITE' | 'CREAM' | 'GRAY' | 'ANTHRACITE' | 'BROWN' | 'BRONZE' | 'BLACK') => void;
   plisseMeasurementType?: 'PROFILE_INCLUDED' | 'INNER_GLASS';
   setPlisseMeasurementType?: (v: 'PROFILE_INCLUDED' | 'INNER_GLASS') => void;
   fonWingType: 'LEFT_WING' | 'RIGHT_WING' | 'DOUBLE_WING';
@@ -776,7 +776,7 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
                 {[
                   {
                     id: 'WHITE' as const,
@@ -805,6 +805,13 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                     swatch: '#1F2937',
                     textColor: '#94A3B8',
                     border: 'border-slate-700',
+                  },
+                  {
+                    id: 'BLACK' as const,
+                    name: 'Siyah',
+                    swatch: '#050505',
+                    textColor: '#FFFFFF',
+                    border: 'border-slate-500',
                   },
                   {
                     id: 'BROWN' as const,

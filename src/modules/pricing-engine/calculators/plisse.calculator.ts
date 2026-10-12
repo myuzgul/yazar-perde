@@ -57,6 +57,7 @@ export function calculatePlissePrice(input: CalculationInput, settings: PricingS
     CREAM: 'Krem Kasa',
     GRAY: 'Gri Kasa',
     ANTHRACITE: 'Antrasit Kasa',
+    BLACK: 'Siyah Kasa',
     BROWN: 'Kahve Kasa',
     BRONZE: 'Bronz Kasa',
   };
