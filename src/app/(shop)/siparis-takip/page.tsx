@@ -21,18 +21,17 @@ import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 function OrderTrackingContent() {
   const searchParams = useSearchParams();
   const initialOrderNumber = searchParams.get('orderNumber') || '';
-  const initialPhone = searchParams.get('phone') || '';
 
   const [orderNumber, setOrderNumber] = useState(initialOrderNumber);
-  const [phoneOrEmail, setPhoneOrEmail] = useState(initialPhone);
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSearch = async (e?: React.FormEvent) => {
+  const handleSearch = async (e?: React.FormEvent, searchVal?: string) => {
     if (e) e.preventDefault();
-    if (!orderNumber || !phoneOrEmail) {
-      setError('Lütfen sipariş numaranızı ve telefon/e-posta bilginizi giriniz.');
+    const queryNum = (searchVal !== undefined ? searchVal : orderNumber).trim();
+    if (!queryNum) {
+      setError('Lütfen sipariş numaranızı giriniz.');
       return;
     }
 
@@ -43,14 +42,14 @@ function OrderTrackingContent() {
       const res = await fetch('/api/shop/order-tracking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderNumber, phoneOrEmail }),
+        body: JSON.stringify({ orderNumber: queryNum }),
       });
       const data = await res.json();
       if (data.success && data.data) {
         setOrder(data.data);
       } else {
         setOrder(null);
-        setError(data.error || 'Sipariş bulunamadı. Lütfen bilgilerinizi kontrol ediniz.');
+        setError(data.error || 'Sipariş bulunamadı. Lütfen sipariş numaranızı kontrol ediniz.');
       }
     } catch {
       setError('Sorgulama yapılırken bir bağlantı hatası oluştu.');
@@ -60,10 +59,10 @@ function OrderTrackingContent() {
   };
 
   useEffect(() => {
-    if (initialOrderNumber && initialPhone) {
-      handleSearch();
+    if (initialOrderNumber) {
+      handleSearch(undefined, initialOrderNumber);
     }
-  }, [initialOrderNumber, initialPhone]);
+  }, [initialOrderNumber]);
 
   const getStepStatus = (stepIndex: number, currentStatus: string) => {
     // 1: Sipariş Alındı (PENDING / CONFIRMED)
@@ -119,33 +118,19 @@ function OrderTrackingContent() {
       {/* Sorgulama Formu */}
       <form
         onSubmit={handleSearch}
-        className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs mb-8 space-y-4"
+        className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs mb-8 space-y-4 max-w-xl mx-auto"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 mb-1">
-              Sipariş Numarası *
-            </label>
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            Sipariş Numarası
+          </label>
+          <div className="relative">
             <input
               type="text"
               placeholder="Örn: YP2609101234"
               value={orderNumber}
               onChange={(e) => setOrderNumber(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold uppercase focus:outline-hidden focus:border-[#1B84F8]"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 mb-1">
-              Telefon veya E-Posta *
-            </label>
-            <input
-              type="text"
-              placeholder="Sipariş verirken girdiğiniz telefon veya e-posta"
-              value={phoneOrEmail}
-              onChange={(e) => setPhoneOrEmail(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-hidden focus:border-[#1B84F8]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm font-bold uppercase tracking-wider text-slate-900 focus:outline-hidden focus:border-[#1B84F8] focus:bg-white transition"
               required
             />
           </div>
@@ -161,7 +146,7 @@ function OrderTrackingContent() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#1B84F8] hover:bg-[#156cd1] disabled:opacity-50 text-white py-3.5 rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow-md shadow-[#1B84F8]/25 transition cursor-pointer uppercase tracking-wider"
+          className="w-full bg-[#1B84F8] hover:bg-[#156cd1] disabled:opacity-50 text-white py-3.5 rounded-2xl text-xs font-black flex items-center justify-center gap-2 shadow-md shadow-[#1B84F8]/25 transition cursor-pointer uppercase tracking-wider"
         >
           <Search className="w-4 h-4" />
           <span>{loading ? 'Sorgulanıyor...' : 'Siparişimi Sorgula'}</span>
