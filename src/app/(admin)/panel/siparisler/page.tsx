@@ -223,10 +223,13 @@ export default function AdminOrdersPage() {
       );
     }
 
-    if (method === 'CASH_ON_DELIVERY') {
+    const isCod = method === 'CASH_ON_DELIVERY' || String(method || '').toUpperCase().includes('CASH') || String(method || '').toUpperCase().includes('KAPIDA');
+    if (isCod) {
       return (
         <div className="flex flex-col text-[10px]">
-          <span className="font-bold text-slate-800">Kapıda Ödeme</span>
+          <span className="font-extrabold text-red-700 bg-red-100 border border-red-300 px-2 py-0.5 rounded text-[10px] w-fit shadow-2xs">
+            Kapıda Ödeme
+          </span>
         </div>
       );
     }
@@ -393,11 +396,20 @@ export default function AdminOrdersPage() {
                   {orders.map((order) => {
                     const shippingAddr = order.addresses?.find((a: any) => !a.isBilling);
                     const isSelected = selectedOrderIds.includes(order.id);
+                    const isCod = order.paymentMethod === 'CASH_ON_DELIVERY' || String(order.paymentMethod || '').toUpperCase().includes('CASH') || String(order.paymentMethod || '').toUpperCase().includes('KAPIDA');
 
                     return (
                       <tr 
                         key={order.id} 
-                        className={`transition ${isSelected ? 'bg-blue-50/50' : 'hover:bg-slate-50/80'}`}
+                        className={`transition ${
+                          isCod
+                            ? isSelected
+                              ? 'bg-red-100/90 border-l-4 border-l-red-600'
+                              : 'bg-red-50 hover:bg-red-100/80 border-l-4 border-l-red-500'
+                            : isSelected
+                            ? 'bg-blue-50/50'
+                            : 'hover:bg-slate-50/80'
+                        }`}
                       >
                         <td className="py-3 px-4 text-center">
                           <input
