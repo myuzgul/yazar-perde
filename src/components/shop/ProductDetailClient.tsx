@@ -168,9 +168,34 @@ export default function ProductDetailClient({ product, similarProducts, initialS
     discountedPrice: cartDiscountedPrice,
   } : null;
 
+  // Meta Pixel ViewContent Takibi
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'ViewContent', {
+        content_name: product.name,
+        content_ids: [product.sku || product.id],
+        content_category: product.category?.name || 'Perde',
+        content_type: 'product',
+        value: Number(product.discountPrice || product.basePrice || 0),
+        currency: 'TRY',
+      });
+    }
+  }, [product]);
+
   const handleAddToCart = () => {
     if (!hasSelectedDimensions || !calcResult) return;
     const coverImage = product.images[0]?.imageUrl || '/static/sample/tulle_sample.jpg';
+
+    // Meta Pixel AddToCart Takibi
+    if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'AddToCart', {
+        content_name: product.name,
+        content_ids: [product.sku || product.id],
+        content_type: 'product',
+        value: Number(calcResult.grandTotal || 0),
+        currency: 'TRY',
+      });
+    }
 
     addItem({
       productId: product.id,

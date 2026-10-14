@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { formatCurtainOptions } from '@/lib/curtain-options-helper';
 import GoogleAdsPurchaseTracker from '@/components/shop/GoogleAdsPurchaseTracker';
+import MetaPixelPurchaseTracker from '@/components/shop/MetaPixelPurchaseTracker';
 
 interface OrderConfirmationPageProps {
   params: Promise<{ orderNumber: string }>;
@@ -41,13 +42,21 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
-      {/* Google Ads Satın Alma (Purchase) Dönüşüm Takibi */}
+      {/* Reklam Dönüşüm Takip Kodları (Google Ads & Meta Pixel) */}
       {!isFailed && (
-        <GoogleAdsPurchaseTracker
-          orderNumber={order.orderNumber}
-          totalAmount={order.grandTotal}
-          currency="TRY"
-        />
+        <>
+          <GoogleAdsPurchaseTracker
+            orderNumber={order.orderNumber}
+            totalAmount={order.grandTotal}
+            currency="TRY"
+          />
+          <MetaPixelPurchaseTracker
+            orderNumber={order.orderNumber}
+            totalAmount={order.grandTotal}
+            currency="TRY"
+            items={order.items}
+          />
+        </>
       )}
 
       {/* Üst Başarı / Durum Kartı */}

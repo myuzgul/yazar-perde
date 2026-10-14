@@ -80,6 +80,23 @@ export default function CheckoutPage() {
   // Dinamik Sistem Ayarları (Kargo & Kapıda Ödeme)
   const [settings, setSettings] = useState<any>(null);
 
+  // Meta Pixel InitiateCheckout Takibi
+  const initiateCheckoutTrackedRef = React.useRef(false);
+  useEffect(() => {
+    if (items.length > 0 && !initiateCheckoutTrackedRef.current) {
+      if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'InitiateCheckout', {
+          content_ids: items.map((i) => i.sku || i.productId),
+          content_type: 'product',
+          num_items: items.length,
+          value: Number(subtotal || 0),
+          currency: 'TRY',
+        });
+        initiateCheckoutTrackedRef.current = true;
+      }
+    }
+  }, [items, subtotal]);
+
   useEffect(() => {
     fetch('/api/auth/me')
       .then((res) => res.json())
