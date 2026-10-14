@@ -87,19 +87,19 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
   const renso_price = settings?.renso_piece_price ?? 100;
 
   // Akıllı Input String State
-  const [widthInput, setWidthInput] = useState<string>(String(width || 120));
-  const [heightInput, setHeightInput] = useState<string>(String(height || 220));
+  const [widthInput, setWidthInput] = useState<string>(width ? String(width) : '');
+  const [heightInput, setHeightInput] = useState<string>(height ? String(height) : '');
   const [inputMode, setInputMode] = useState<'SELECT' | 'CUSTOM'>('SELECT');
 
   // Görsel Büyütme Modalı State
   const [modalData, setModalData] = useState<PreviewModalData | null>(null);
 
   useEffect(() => {
-    setWidthInput(String(width));
+    setWidthInput(width ? String(width) : '');
   }, [width]);
 
   useEffect(() => {
-    setHeightInput(String(height));
+    setHeightInput(height ? String(height) : '');
   }, [height]);
 
   // Ölçü adımı: Plise perde için 0.5 cm, diğerleri için 1 cm
@@ -135,10 +135,17 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     const num = parseFloat(val);
     if (!isNaN(num) && num > 0) {
       setWidth(num);
+    } else {
+      setWidth(0);
     }
   };
 
   const handleWidthBlur = () => {
+    if (!widthInput || widthInput.trim() === '') {
+      setWidth(0);
+      setWidthInput('');
+      return;
+    }
     const num = parseFloat(widthInput);
     if (isNaN(num) || num < minWidth) {
       setWidth(minWidth);
@@ -154,10 +161,17 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
     const num = parseFloat(val);
     if (!isNaN(num) && num > 0) {
       setHeight(num);
+    } else {
+      setHeight(0);
     }
   };
 
   const handleHeightBlur = () => {
+    if (!heightInput || heightInput.trim() === '') {
+      setHeight(0);
+      setHeightInput('');
+      return;
+    }
     const num = parseFloat(heightInput);
     if (isNaN(num) || num < minHeight) {
       setHeight(minHeight);
@@ -277,14 +291,19 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
 
             {inputMode === 'SELECT' ? (
               <select
-                value={width}
+                value={width || ''}
                 onChange={(e) => {
                   const val = Number(e.target.value);
                   setWidth(val);
-                  setWidthInput(String(val));
+                  setWidthInput(val ? String(val) : '');
                 }}
-                className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 px-3 text-xs font-bold text-slate-900 bg-white"
+                className={`w-full border rounded-sm py-2 px-3 text-xs font-bold bg-white transition ${
+                  !width ? 'border-amber-400 text-slate-500' : 'border-slate-300 focus:border-slate-800 text-slate-900'
+                }`}
               >
+                <option value="" disabled>
+                  Lütfen ölçü giriniz
+                </option>
                 {widthOptions.map((w) => (
                   <option key={w} value={w}>
                     {w} cm
@@ -296,11 +315,13 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                 <input
                   type="text"
                   inputMode="decimal"
-                  placeholder={`${minWidth}-${maxWidth}`}
+                  placeholder="Lütfen ölçü giriniz"
                   value={widthInput}
                   onChange={(e) => handleWidthChange(e.target.value)}
                   onBlur={handleWidthBlur}
-                  className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 pl-3 pr-8 text-xs font-bold text-slate-900 bg-white"
+                  className={`w-full border rounded-sm py-2 pl-3 pr-8 text-xs font-bold bg-white transition ${
+                    !width ? 'border-amber-400 placeholder:text-slate-400 text-slate-900' : 'border-slate-300 focus:border-slate-800 text-slate-900'
+                  }`}
                 />
                 <span className="absolute right-3 text-xs text-slate-400 font-semibold pointer-events-none">cm</span>
               </div>
@@ -320,14 +341,19 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
 
               {inputMode === 'SELECT' ? (
                 <select
-                  value={height}
+                  value={height || ''}
                   onChange={(e) => {
                     const val = Number(e.target.value);
                     setHeight(val);
-                    setHeightInput(String(val));
+                    setHeightInput(val ? String(val) : '');
                   }}
-                  className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 px-3 text-xs font-bold text-slate-900 bg-white"
+                  className={`w-full border rounded-sm py-2 px-3 text-xs font-bold bg-white transition ${
+                    !height ? 'border-amber-400 text-slate-500' : 'border-slate-300 focus:border-slate-800 text-slate-900'
+                  }`}
                 >
+                  <option value="" disabled>
+                    Lütfen ölçü giriniz
+                  </option>
                   {heightOptions.map((h) => (
                     <option key={h} value={h}>
                       {h} cm
@@ -339,11 +365,13 @@ export default function CurtainOptionsForm(props: CurtainOptionsFormProps) {
                   <input
                     type="text"
                     inputMode="decimal"
-                    placeholder={`${minHeight}-${maxHeight}`}
+                    placeholder="Lütfen ölçü giriniz"
                     value={heightInput}
                     onChange={(e) => handleHeightChange(e.target.value)}
                     onBlur={handleHeightBlur}
-                    className="w-full border border-slate-300 focus:border-slate-800 rounded-sm py-2 pl-3 pr-8 text-xs font-bold text-slate-900 bg-white"
+                    className={`w-full border rounded-sm py-2 pl-3 pr-8 text-xs font-bold bg-white transition ${
+                      !height ? 'border-amber-400 placeholder:text-slate-400 text-slate-900' : 'border-slate-300 focus:border-slate-800 text-slate-900'
+                    }`}
                   />
                   <span className="absolute right-3 text-xs text-slate-400 font-semibold pointer-events-none">cm</span>
                 </div>

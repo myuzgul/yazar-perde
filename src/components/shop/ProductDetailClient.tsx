@@ -60,10 +60,15 @@ export default function ProductDetailClient({ product, similarProducts, initialS
       .catch(() => {});
   }, []);
 
-  const [width, setWidth] = useState<number>(product.minWidth > 100 ? product.minWidth : 120);
-  const [height, setHeight] = useState<number>(product.minHeight > 100 ? product.minHeight : 220);
+  const isFixedPrice = product.curtainType === 'FIXED_PRICE';
+  const isHeightRequired = product.curtainType !== 'STRING' && product.curtainType !== 'RUSTIC' && !isFixedPrice;
+
+  const [width, setWidth] = useState<number>(isFixedPrice ? (product.minWidth || 100) : 0);
+  const [height, setHeight] = useState<number>(isFixedPrice ? (product.minHeight || 200) : 0);
   const [quantity, setQuantity] = useState<number>(1);
   const [note, setNote] = useState<string>('');
+
+  const hasSelectedDimensions = isFixedPrice || (width > 0 && (!isHeightRequired || height > 0));
 
   const [tullePleatType, setTullePleatType] = useState<any>('PLEAT_1X2_5');
   const [mechanismDirection, setMechanismDirection] = useState<'LEFT' | 'RIGHT'>('RIGHT');
@@ -83,14 +88,18 @@ export default function ProductDetailClient({ product, similarProducts, initialS
   const [calcResult, setCalcResult] = useState<CalculationResult | null>(null);
 
   useEffect(() => {
+    if (!hasSelectedDimensions) {
+      setCalcResult(null);
+      return;
+    }
     const effectiveBasePrice = product.discountPrice || product.basePrice;
     try {
       const result = calculateCurtainPrice(
         {
           curtainType: product.curtainType as any,
           basePrice: effectiveBasePrice,
-          width: Number(width) || 100,
-          height: Number(height) || 200,
+          width: Number(width),
+          height: Number(height),
           quantity,
           tullePleatType,
           mechanismDirection,
@@ -117,7 +126,8 @@ export default function ProductDetailClient({ product, similarProducts, initialS
   }, [
     product, width, height, quantity, tullePleatType, mechanismDirection,
     caseType, chainType, bracketType, skirtCut, withBeads, rollerType,
-    mountingType, plisseProfileColor, plisseMeasurementType, fonWingType, fonMountingType, withRenso, settings
+    mountingType, plisseProfileColor, plisseMeasurementType, fonWingType, fonMountingType, withRenso, settings,
+    hasSelectedDimensions
   ]);
 
   const allCategoryIds = Array.from(
@@ -159,7 +169,7 @@ export default function ProductDetailClient({ product, similarProducts, initialS
   } : null;
 
   const handleAddToCart = () => {
-    if (!calcResult) return;
+    if (!hasSelectedDimensions || !calcResult) return;
     const coverImage = product.images[0]?.imageUrl || '/static/sample/tulle_sample.jpg';
 
     addItem({
@@ -294,6 +304,8 @@ export default function ProductDetailClient({ product, similarProducts, initialS
           {/* Dinamik Fiyat ve Sepete Ekle Kutusu */}
           <PriceSummaryBox
             calcResult={calcResult}
+            basePrice={product.discountPrice || product.basePrice}
+            hasSelectedDimensions={hasSelectedDimensions}
             quantity={quantity}
             setQuantity={setQuantity}
             note={note}
